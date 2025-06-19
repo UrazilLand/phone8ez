@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from 'react';
 import { DataSet } from '@/types/dashboard';
-import DataInputHeader from './DataInputHeader';
+import ModelHeader from './ModelHeader';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 
-interface DataInputSheetProps {
+interface ModelSheetProps {
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
 }
 
-export default function DataInputSheet({ dataSets, setDataSets }: DataInputSheetProps) {
+export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
   return (
     <div className="flex flex-col w-full h-full">
-      <DataInputHeader dataSets={dataSets} setDataSets={setDataSets} />
+      <ModelHeader dataSets={dataSets} setDataSets={setDataSets} />
       
       {/* 테이블 카드 */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 mb-4 h-[800px]">

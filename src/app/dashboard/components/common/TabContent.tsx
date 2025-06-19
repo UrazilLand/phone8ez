@@ -23,7 +23,7 @@ export default function TabContent({
   dataInputTabRef 
 }: TabContentProps) {
   return (
-    <div className="flex-1 p-4">
+    <div className="flex-1 px-4">
       {activeTab === 'local' && (
         <DataInputTab 
           dataSets={dataSets}
@@ -39,7 +39,12 @@ export default function TabContent({
           publicData={publicData}
         />
       )}
-      {activeTab === 'model' && <ModelDataTab />}
+      {activeTab === 'model' && (
+        <ModelDataTab 
+          dataSets={dataSets}
+          setDataSets={setDataSets}
+        />
+      )}
       {activeTab === 'visualization' && <VisualizationTab />}
     </div>
   );

@@ -7,6 +7,28 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  safelist: [
+    // BUTTON_THEME 클래스들
+    'bg-blue-600',
+    'border-blue-600',
+    'text-white',
+    'font-extrabold',
+    'hover:bg-blue-700',
+    'transition-colors',
+    'bg-white',
+    'border-blue-600',
+    'text-blue-600',
+    'hover:bg-blue-100',
+    'border-red-600',
+    'text-red-600',
+    'hover:bg-red-100',
+    'bg-red-600',
+    'hover:bg-red-700',
+    'bg-gray-100',
+    'border-gray-300',
+    'text-gray-400',
+    'cursor-not-allowed'
+  ],
   prefix: "",
   theme: {
     container: {
