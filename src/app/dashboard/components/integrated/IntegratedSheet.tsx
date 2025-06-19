@@ -75,12 +75,6 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
     });
   }, [setCurrentSheetData, toast]);
 
-  const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
-    const newSheetData = currentSheetData.map(row => [...row]);
-    newSheetData[rowIndex][colIndex] = value;
-    setCurrentSheetData(newSheetData);
-  };
-
   return (
     <div className="flex flex-col w-full h-full">
       <IntegratedHeader
@@ -116,12 +110,9 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
                           {SHEET_HEADER_LABELS[rowIndex]}
                         </span>
                       ) : (
-                        <input
-                          type="text"
-                          value={cell}
-                          onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                          className="w-full h-full px-2 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        />
+                        <div className="w-full h-full px-2 flex items-center justify-center text-gray-600">
+                          {cell}
+                        </div>
                       )}
                     </td>
                   ))}
