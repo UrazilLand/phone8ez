@@ -50,7 +50,7 @@ export default function DataCardModal({
                 <button
                   onClick={onRefreshSupportData}
                   disabled={isLoading}
-                  className={`${BUTTON_THEME.secondary} flex items-center gap-2 px-3 py-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`${BUTTON_THEME.secondary} flex items-center justify-center gap-2 px-3 py-1 text-sm min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                   {isLoading ? '로딩중...' : '최신 데이터 불러오기'}
@@ -74,7 +74,7 @@ export default function DataCardModal({
                 <button
                   onClick={onRefreshSupportData}
                   disabled={isLoading}
-                  className={`${BUTTON_THEME.secondary} flex items-center gap-2 px-3 py-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`${BUTTON_THEME.secondary} flex items-center justify-center gap-2 px-3 py-1 text-sm min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                   {isLoading ? '로딩중...' : '최신 데이터 불러오기'}

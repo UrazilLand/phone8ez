@@ -195,6 +195,9 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
   };
 
   const handleRefreshSupportData = async () => {
+    // 이미 로딩 중이면 중복 호출 방지
+    if (isLoading) return;
+    
     try {
       console.log('공시 데이터 새로고침 시작');
       setIsLoading(true);
@@ -219,7 +222,10 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
       console.error('공시 데이터 로드 실패:', error);
       setError(error instanceof Error ? error.message : '공시 데이터를 불러오는데 실패했습니다.');
     } finally {
-      setIsLoading(false);
+      // 약간의 지연을 두어 상태 변경을 안정화
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
     }
   };
 
