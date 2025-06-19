@@ -12,7 +12,7 @@ export default function SubscriptionCard() {
       <div className="text-xs text-gray-400">구독 만료일 없음</div>
       <Link
         href="/#pricing"
-        className={`${BUTTON_THEME.primary} w-full mt-auto text-center flex items-center justify-center h-8`}
+        className={`${BUTTON_THEME.primary} w-full mt-auto text-center flex items-center justify-center h-10`}
         aria-label="구독 플랜 변경"
       >
         구독하기
