@@ -60,5 +60,6 @@ export const BUTTON_THEME = {
   secondary: "bg-white border-2 border-blue-600 text-blue-600 font-extrabold rounded hover:bg-blue-100 transition-colors",
   danger: "bg-white border-2 border-red-600 text-red-600 font-extrabold rounded hover:bg-red-100 transition-colors",
   danger_fill: "bg-red-600 border-2 border-red-600 text-white font-extrabold rounded hover:bg-red-700 transition-colors",
-  disabled: "bg-gray-100 border-2 border-gray-300 text-gray-400 font-extrabold rounded cursor-not-allowed"
+  disabled: "bg-gray-100 border-2 border-gray-300 text-gray-400 font-extrabold rounded cursor-not-allowed",
+  gray: "bg-gray-100 border-2 border-gray-300 text-gray-600 font-extrabold rounded hover:bg-gray-200 transition-colors"
 }; 
