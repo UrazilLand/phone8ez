@@ -1,15 +1,15 @@
 "use client";
-import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef } from 'react';
 import { DataSet } from '@/types/dashboard';
 import { getAvailableDates, getSupportAmountsByDate, type SupportAmountData } from '../../utils/support-amounts';
 import { savePublicDataToStorage } from '../../utils/dashboardUtils';
 import DataCardBody from './DataCardBody';
+import DataCardModal from './DataCardModal';
+import PreviewModal from './PreviewModal';
 
 interface DataCardProps {
   dataSets: DataSet[];
-  setDataSets: Dispatch<SetStateAction<DataSet[]>>;
+  setDataSets: React.Dispatch<React.SetStateAction<DataSet[]>>;
   onLoadData: (data: DataSet['data'] | DataSet['data'][]) => void;
   onTabChange?: (tab: 'data' | 'integrated') => void;
   onReloadIntegrated?: () => void;
@@ -27,7 +27,7 @@ function getDownloadFileName() {
   return `phone8ez_${YY}${MM}${DD}_${HH}${mm}.json`;
 }
 
-export default function DataCard({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated }: DataCardProps) {
+export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated }: DataCardProps) {
   const [selectedDataSet, setSelectedDataSet] = useState<DataSet | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,10 +108,23 @@ export default function DataCard({ dataSets, setDataSets, onLoadData, onTabChang
   };
 
   // 토글 스위치 핸들러
-  const handleToggle = () => setIsCloudMode((prev) => !prev);
+  const handleToggle = () => {
+    // TODO: Cloud 모드 전환 시 구독 상태 확인
+    // - 구독자가 아닌 경우 알림 표시
+    // - 구독자인 경우 Cloud 모드로 전환
+    setIsCloudMode((prev) => !prev);
+  };
 
   // 다운로드 버튼 핸들러 (JSON)
   const handleDownload = () => {
+    if (isCloudMode) {
+      // TODO: Cloud 저장 기능 구현
+      // - DB 연결 후 구현 예정
+      // - 구독자 전용 기능
+      return;
+    }
+
+    // 로컬 파일 다운로드 기능
     if (!dataSets.length) return alert('저장된 데이터가 없습니다.');
     const filename = getDownloadFileName();
     const blob = new Blob([JSON.stringify(dataSets)], { type: 'application/json;charset=utf-8;' });
@@ -125,6 +138,14 @@ export default function DataCard({ dataSets, setDataSets, onLoadData, onTabChang
 
   // 업로드 버튼 핸들러
   const handleUpload = () => {
+    if (isCloudMode) {
+      // TODO: Cloud 불러오기 기능 구현
+      // - DB 연결 후 구현 예정
+      // - 구독자 전용 기능
+      return;
+    }
+
+    // 로컬 파일 업로드 기능
     if (fileInputRef.current) fileInputRef.current.value = '';
     fileInputRef.current?.click();
   };
@@ -163,8 +184,19 @@ export default function DataCard({ dataSets, setDataSets, onLoadData, onTabChang
   };
 
   const handleSupportDataLoad = async () => {
+    // 바로 모달 열기
+    setSupportModalOpen(true);
+    
+    // 기존 데이터가 있으면 먼저 표시
+    const raw = localStorage.getItem('publicData');
+    if (raw) {
+      setSupportData(JSON.parse(raw));
+    }
+  };
+
+  const handleRefreshSupportData = async () => {
     try {
-      console.log('공시 데이터 로드 시작');
+      console.log('공시 데이터 새로고침 시작');
       setIsLoading(true);
       setError(null);
       
@@ -183,7 +215,6 @@ export default function DataCard({ dataSets, setDataSets, onLoadData, onTabChang
       setSupportData(data);
       savePublicDataToStorage(data);
       console.log('publicData 저장됨:', data);
-      setSupportModalOpen(true);
     } catch (error) {
       console.error('공시 데이터 로드 실패:', error);
       setError(error instanceof Error ? error.message : '공시 데이터를 불러오는데 실패했습니다.');
@@ -221,81 +252,22 @@ export default function DataCard({ dataSets, setDataSets, onLoadData, onTabChang
         style={{ display: 'none' }}
       />
 
-      {/* 미리보기 모달 */}
-      <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>데이터셋 상세 정보</DialogTitle>
-          </DialogHeader>
-          {selectedDataSet && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-semibold">{selectedDataSet.name}</h3>
-                  <p className="text-sm text-gray-500">타입: {selectedDataSet.type}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleLoadDataSet(selectedDataSet)}
-                  >
-                    불러오기
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteDataSet(selectedDataSet)}
-                  >
-                    삭제
-                  </Button>
-                </div>
-              </div>
-              <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto max-h-96">
-                {JSON.stringify(selectedDataSet.data, null, 2)}
-              </pre>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <DataCardModal
+        supportModalOpen={supportModalOpen}
+        setSupportModalOpen={setSupportModalOpen}
+        supportData={supportData}
+        onRefreshSupportData={handleRefreshSupportData}
+        isLoading={isLoading}
+        error={error}
+      />
 
-      {/* 공시 데이터 모달 */}
-      <Dialog open={supportModalOpen} onOpenChange={setSupportModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>공시 지원금 데이터</DialogTitle>
-          </DialogHeader>
-          {supportData && (
-            <div className="space-y-4">
-              <div className="text-sm text-gray-600">
-                데이터 업데이트: {(() => {
-                  if (!supportData.fileName) return '-';
-                  const base = supportData.fileName.split('_')[0];
-                  const match = base.match(/^(\d{4})(\d{2})(\d{2})$/);
-                  if (!match) return supportData.fileName;
-                  return `${match[1]}. ${match[2]}. ${match[3]}`;
-                })()}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from(new Set(supportData.models.map(m => m.modelName))).map((modelName, index) => (
-                  <div key={index} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-center h-8">
-                    <div className="font-normal text-black text-center w-full text-nowrap truncate">
-                      {modelName}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 에러 메시지 */}
-      {error && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
-          {error}
-        </div>
-      )}
+      <PreviewModal
+        previewModalOpen={previewModalOpen}
+        setPreviewModalOpen={setPreviewModalOpen}
+        selectedDataSet={selectedDataSet}
+        onLoadDataSet={handleLoadDataSet}
+        onDeleteDataSet={handleDeleteDataSet}
+      />
     </>
   );
-}
+} 

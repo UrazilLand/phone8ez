@@ -7,7 +7,7 @@ import DashboardHeader from './components/common/DashboardHeader';
 import DashboardTabs from './components/common/DashboardTabs';
 import TabContent from './components/common/TabContent';
 import SubscriptionCard from './components/cards/SubscriptionCard';
-import DataCard from './components/cards/DataCard';
+import DataCardContainer from './components/cards/DataCardContainer';
 
 export default function Dashboard() {
   const {
@@ -50,9 +50,9 @@ export default function Dashboard() {
       <DashboardHeader />
 
       {/* 상단 카드 2개 */}
-      <div className="flex flex-col md:flex-row justify-center items-end gap-4 md:gap-8 mb-6 w-full">
-        <div className="h-48 min-h-[12rem] flex flex-col w-full md:w-[36rem] max-w-full md:max-w-[90vw]">
-          <DataCard 
+      <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 md:gap-4 mb-4 w-full">
+        <div className="flex flex-col w-full md:w-[36rem] max-w-full md:max-w-[90vw]">
+          <DataCardContainer 
             dataSets={memoizedDataSets}
             setDataSets={setDataSets}
             onLoadData={handleLoadData}
@@ -60,7 +60,9 @@ export default function Dashboard() {
             onReloadIntegrated={handleReloadIntegrated}
           />
         </div>
-        <SubscriptionCard />
+        <div className="flex flex-col w-full md:w-[24rem] max-w-full md:max-w-[70vw]">
+          <SubscriptionCard />
+        </div>
       </div>
 
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />

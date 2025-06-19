@@ -1,7 +1,7 @@
-import { RefreshCw, Download, Upload, Database, Cloud } from 'lucide-react';
+import { RefreshCw, Download, Upload, Database, Cloud, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataSet } from '@/types/dashboard';
-import { cardStyles, flexColGap2, buttonStyles } from '@/styles/common';
+import { cardStyles, flexColGap2, BUTTON_THEME } from '@/styles/common';
 
 interface DataCardBodyProps {
   dataSets: DataSet[];
@@ -64,17 +64,27 @@ export default function DataCardBody({
         </div>
       </div>
 
-      {/* 데이터셋 슬라이드와 공시 데이터 버튼 */}
-      <div className="flex gap-4">
+      {/* 데이터셋 슬라이드 */}
+      <div className="flex items-center gap-2 mb-4">
         <div
           ref={scrollRef}
-          className="flex-1 overflow-x-auto overflow-y-hidden"
+          className="overflow-x-auto flex-1"
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseLeave}
-          style={{ cursor: 'grab' }}
+          style={{ 
+            cursor: 'grab',
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
         >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
           <div className="flex gap-2 min-w-max">
             {dataSets.length === 0 ? (
               <div className="text-center text-gray-400 py-2 w-full">
@@ -98,38 +108,35 @@ export default function DataCardBody({
             )}
           </div>
         </div>
-
-        {/* 공시 데이터 버튼 */}
+        
+        {/* 공시 버튼 - 슬라이드 오른쪽 고정 */}
         <button
           onClick={onSupportDataLoad}
-          disabled={isLoading}
-          className="px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-800 flex-shrink-0 flex items-center gap-2"
+          className={`${BUTTON_THEME.primary} flex items-center justify-center gap-2 px-4 h-10 flex-shrink-0`}
         >
-          {isLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
+          <FileText className="w-4 h-4" />
           공시
         </button>
       </div>
 
       {/* 하단 버튼 그룹 */}
-      <div className="mt-4 flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
+      <div className="flex gap-2">
+        <button
           onClick={onDownload}
-          className="flex-1 flex items-center gap-2"
+          disabled={isCloudMode}
+          className={`${BUTTON_THEME.secondary} h-8 flex-1 flex items-center justify-center gap-2 min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           <Download className="w-4 h-4" />
-          다운로드
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
+          {isCloudMode ? 'Cloud 저장하기' : '파일 다운로드'}
+        </button>
+        <button
           onClick={onUpload}
-          className="flex-1 flex items-center gap-2"
+          disabled={isCloudMode}
+          className={`${BUTTON_THEME.secondary} h-8 flex-1 flex items-center justify-center gap-2 min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           <Upload className="w-4 h-4" />
-          업로드
-        </Button>
+          {isCloudMode ? 'Cloud 불러오기' : '파일 업로드'}
+        </button>
       </div>
     </div>
   );

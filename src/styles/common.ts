@@ -1,11 +1,6 @@
 export const cardStyles = "bg-white rounded-xl shadow pt-5 pr-5 pl-5 pb-0";
 export const flexColGap2 = "flex flex-col gap-2";
 export const flexRowGap2 = "flex flex-row gap-2";
-export const buttonStyles = {
-  primary: "bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-3 py-2 transition",
-  secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded px-3 py-2 transition",
-  disabled: "bg-gray-100 text-gray-400 rounded px-3 py-2 cursor-not-allowed"
-};
 
 // 레이아웃 관련 상수
 export const DEFAULT_ROW_COUNT = 20;
@@ -60,8 +55,10 @@ export const COMPANY_TEXT_COLORS = [
 ];
 
 // 버튼 스타일 테마
-export const BUTTON_THEME_1 = "bg-blue-600 border-2 border-blue-600 text-white font-extrabold rounded px-2 py-2 hover:bg-blue-700 transition-colors";
-export const BUTTON_THEME_1_RED = "bg-red-600 border-2 border-red-600 text-white font-extrabold rounded px-2 py-2 hover:bg-red-700 transition-colors";
-export const BUTTON_THEME_2 = "bg-white border-2 border-blue-600 text-blue-600 font-extrabold rounded px-2 py-2 hover:bg-blue-100 transition-colors";
-export const BUTTON_THEME_2_RED = "bg-red-0 border-2 border-red-600 text-red-600 font-extrabold rounded px-2 py-2 hover:bg-red-100 transition-colors";
-export const BUTTON_THEME_3 = "bg-white border-2 border-blue-600 text-blue-600 font-extrabold rounded hover:bg-blue-600 hover:text-white transition-colors"; 
+export const BUTTON_THEME = {
+  primary: "bg-blue-600 border-2 border-blue-600 text-white font-extrabold rounded hover:bg-blue-700 transition-colors",
+  secondary: "bg-white border-2 border-blue-600 text-blue-600 font-extrabold rounded hover:bg-blue-100 transition-colors",
+  danger: "bg-white border-2 border-red-600 text-red-600 font-extrabold rounded hover:bg-red-100 transition-colors",
+  danger_fill: "bg-red-600 border-2 border-red-600 text-white font-extrabold rounded hover:bg-red-700 transition-colors",
+  disabled: "bg-gray-100 border-2 border-gray-300 text-gray-400 font-extrabold rounded cursor-not-allowed"
+}; 
