@@ -8,6 +8,7 @@ import DashboardTabs from './components/common/DashboardTabs';
 import TabContent from './components/common/TabContent';
 import SubscriptionCard from './components/cards/SubscriptionCard';
 import DataCardContainer from './components/cards/DataCardContainer';
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function Dashboard() {
   const {
@@ -46,35 +47,37 @@ export default function Dashboard() {
   const memoizedPublicData = useMemo(() => publicData, [publicData]);
 
   return (
-    <div className="flex flex-col min-h-screen max-w-7xl mx-auto py-10 px-4">
-      <DashboardHeader />
+    <TooltipProvider>
+      <div className="flex flex-col min-h-screen max-w-7xl mx-auto py-10 px-4">
+        <DashboardHeader />
 
-      {/* 상단 카드 2개 */}
-      <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 md:gap-4 mb-4 w-full">
-        <div className="flex flex-col w-full md:w-[36rem] max-w-full md:max-w-[90vw]">
-          <DataCardContainer 
-            dataSets={memoizedDataSets}
-            setDataSets={setDataSets}
-            onLoadData={handleLoadData}
-            onTabChange={handleTabChange}
-            onReloadIntegrated={handleReloadIntegrated}
-          />
+        {/* 상단 카드 2개 */}
+        <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 md:gap-4 mb-4 w-full">
+          <div className="flex flex-col w-full md:w-[36rem] max-w-full md:max-w-[90vw]">
+            <DataCardContainer 
+              dataSets={memoizedDataSets}
+              setDataSets={setDataSets}
+              onLoadData={handleLoadData}
+              onTabChange={handleTabChange}
+              onReloadIntegrated={handleReloadIntegrated}
+            />
+          </div>
+          <div className="flex flex-col w-full md:w-[24rem] max-w-full md:max-w-[70vw]">
+            <SubscriptionCard />
+          </div>
         </div>
-        <div className="flex flex-col w-full md:w-[24rem] max-w-full md:max-w-[70vw]">
-          <SubscriptionCard />
-        </div>
+
+        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <TabContent 
+          activeTab={activeTab}
+          dataSets={memoizedDataSets}
+          setDataSets={setDataSets}
+          reloadKey={reloadKey}
+          publicData={memoizedPublicData}
+          dataInputTabRef={dataInputTabRef}
+        />
       </div>
-
-      <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-      <TabContent 
-        activeTab={activeTab}
-        dataSets={memoizedDataSets}
-        setDataSets={setDataSets}
-        reloadKey={reloadKey}
-        publicData={memoizedPublicData}
-        dataInputTabRef={dataInputTabRef}
-      />
-    </div>
+    </TooltipProvider>
   );
 }
