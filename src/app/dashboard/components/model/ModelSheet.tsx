@@ -26,8 +26,8 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
                       key={colIndex}
                       className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
                         colIndex === 0 ? 
-                          (rowIndex < 5 ? 'text-center font-bold w-40 bg-gray-50' : 'text-left w-40') : 
-                          'text-center w-20'
+                          (rowIndex < 5 ? 'text-center font-bold w-40 bg-gray-50 min-w-[160px]' : 'text-left w-40 min-w-[160px]') : 
+                          'text-center w-20 min-w-[80px]'
                       }`}
                     >
                       {/* A열에 1~5행에 라벨 배치 */}
@@ -37,7 +37,11 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
                         </span>
                       ) : (
                         /* 나머지 셀은 빈 공간 */
-                        ''
+                        <div className={`w-full h-full px-2 flex items-center ${
+                          colIndex > 0 ? 'justify-center' : 'justify-start'
+                        }`}>
+                          {''}
+                        </div>
                       )}
                     </td>
                   ))}

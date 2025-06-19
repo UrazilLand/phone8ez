@@ -101,8 +101,8 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
                       key={colIndex}
                       className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
                         colIndex === 0 ? 
-                          (rowIndex < 5 ? 'text-center font-bold w-40 bg-gray-50' : 'text-left w-40') : 
-                          'text-center w-20'
+                          (rowIndex < 5 ? 'text-center font-bold w-40 bg-gray-50 min-w-[160px]' : 'text-left w-40 min-w-[160px]') : 
+                          'text-center w-20 min-w-[80px]'
                       }`}
                     >
                       {colIndex === 0 && rowIndex < 5 ? (
@@ -110,7 +110,9 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
                           {SHEET_HEADER_LABELS[rowIndex]}
                         </span>
                       ) : (
-                        <div className="w-full h-full px-2 flex items-center justify-center text-gray-600">
+                        <div className={`w-full h-full px-2 flex items-center ${
+                          colIndex > 0 ? 'justify-center' : 'justify-start'
+                        } text-gray-600`}>
                           {cell}
                         </div>
                       )}
