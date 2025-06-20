@@ -8,8 +8,9 @@ import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { 
-  findMatchingData,
-  createCellWithMonthlyFee 
+  extractCompaniesByCarrier, 
+  extractPlansByCarrierAndCompany, 
+  extractMonthlyFeesByCarrier
 } from '@/app/dashboard/utils/integrated/dataExtraction';
 import { getDynamicCellStyle } from '@/app/dashboard/utils/common/colorUtils';
 import {
@@ -29,19 +30,21 @@ interface IntegratedSheetProps {
   reloadKey: number;
 }
 
+const getInitialSheetData = (dataSets: DataSet[]): string[][] => {
+  const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
+  if (integratedDataSet && integratedDataSet.data.sheetData && integratedDataSet.data.sheetData.length > 0) {
+    return integratedDataSet.data.sheetData;
+  }
+  return Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
+};
+
 export default function IntegratedSheet({ dataSets, setDataSets, publicData, reloadKey }: IntegratedSheetProps) {
   const { toast } = useToast();
   
-  // 시트 데이터 상태 관리
-  const [sheetData, setSheetData] = useState<string[][]>(
-    Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''))
-  );
-
-  // 필터 모달 상태 관리
+  const [sheetData, setSheetData] = useState<string[][]>(() => getInitialSheetData(dataSets));
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isOverwriteModalOpen, setIsOverwriteModalOpen] = useState(false);
 
-  // Undo/Redo 상태 관리
   const [
     currentSheetData,
     setCurrentSheetData,
@@ -51,28 +54,22 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     canRedo
   ] = useUndo<string[][]>(sheetData);
 
-  // 1. 컴포넌트 첫 마운트 시 데이터 로드
   useEffect(() => {
-    const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
-    if (integratedDataSet && integratedDataSet.data.sheetData) {
-      setCurrentSheetData(integratedDataSet.data.sheetData);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setCurrentSheetData(sheetData);
+  }, [sheetData, setCurrentSheetData]);
 
-  // 2. '불러오기' 클릭 시 (reloadKey 변경 시) 데이터 로드
   useEffect(() => {
-    if (reloadKey > 0) { // 초기 렌더링 방지
+    if (reloadKey > 0) {
       const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
       if (integratedDataSet && integratedDataSet.data.sheetData) {
-        setCurrentSheetData(integratedDataSet.data.sheetData);
+        setSheetData(integratedDataSet.data.sheetData);
         toast({
           title: "데이터 불러오기 완료",
           description: "통합 데이터를 시트에 불러왔습니다.",
         });
       }
     }
-  }, [reloadKey, dataSets, setCurrentSheetData, toast]);
+  }, [reloadKey, dataSets, toast]);
 
   const handleSave = () => {
     const existingIntegratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
@@ -139,12 +136,12 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
 
   const handleReset = useCallback(() => {
     const emptySheet = Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
-    setCurrentSheetData(emptySheet);
+    setSheetData(emptySheet);
     toast({
       title: "초기화 완료",
       description: "시트가 초기화되었습니다.",
     });
-  }, [setCurrentSheetData, toast]);
+  }, [toast]);
 
   const handleOpenFilterModal = () => {
     setIsFilterModalOpen(true);
@@ -156,6 +153,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
 
   const applySelectedDataToSheet = (allSelections: Record<string, any>) => {
     const filteredColumns: string[][] = [];
+    const monthlyFeesForColumns: { fee1: number | null, fee2: number | null }[] = [];
     const carriers = ['SK', 'KT', 'LG'];
 
     // 1. SK, KT, LG 순서로 모든 통신사 필터링
@@ -191,6 +189,13 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                   columnData.push(sourceSheet[row]?.[sourceCol] || '');
                 }
                 filteredColumns.push(columnData);
+                
+                // 해당 열에 대한 월 요금 정보 저장
+                const planSelection = plans[sourcePlanName];
+                monthlyFeesForColumns.push({
+                  fee1: planSelection?.monthlyFee1 || null,
+                  fee2: planSelection?.monthlyFee2 || null,
+                });
               }
             }
           }
@@ -205,15 +210,30 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
       .fill(null)
       .map(() => Array(finalColCount).fill(''));
 
-    // 4. 필터링된 데이터를 새 시트의 1~5행에 복사
+    // 4. 필터링된 데이터를 새 시트에 복사하고, 월 요금 정보를 3행에 함께 저장
     filteredColumns.forEach((columnData, index) => {
       const destCol = index + 1; // B열부터 시작
-      for (let row = 0; row < 5; row++) {
-        newSheetData[row][destCol] = columnData[row];
+      
+      // 1, 2, 4, 5행은 그대로 복사
+      newSheetData[0][destCol] = columnData[0];
+      newSheetData[1][destCol] = columnData[1];
+      newSheetData[3][destCol] = columnData[3];
+      newSheetData[4][destCol] = columnData[4];
+
+      // 3행(요금제) 데이터는 월 요금과 함께 저장
+      const planNameOnly = columnData[2]?.split('|')[0] || '';
+      const fees = monthlyFeesForColumns[index];
+      let planCellData = planNameOnly;
+      if (fees.fee1 !== null) {
+        planCellData += `|${fees.fee1}`;
       }
+      if (fees.fee2 !== null) {
+        planCellData += `|${fees.fee2}`;
+      }
+      newSheetData[2][destCol] = planCellData;
     });
 
-    setCurrentSheetData(newSheetData);
+    setSheetData(newSheetData);
     toast({
       title: "데이터 필터링 완료",
       description: `총 ${requiredDataCols}개의 열이 시트에 적용되었습니다.`,
@@ -267,7 +287,8 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                               : 'text-gray-600'
                           }`}
                         >
-                          {cell}
+                          {/* 3행(rowIndex===2)의 경우, '|' 앞의 요금제 이름만 표시 */}
+                          {rowIndex === 2 && colIndex > 0 ? cell.split('|')[0] : cell}
                         </div>
                       )}
                     </td>

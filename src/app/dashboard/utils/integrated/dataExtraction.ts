@@ -177,4 +177,41 @@ export function extractMonthlyFeeFromCell(cellValue: string): number | null {
     return isNaN(monthlyFee) ? null : monthlyFee;
   }
   return null;
+}
+
+/**
+ * 공시 데이터에서 요금제와 월 요금에 맞는 지원금 정보를 찾아 반환합니다.
+ * @param planName 요금제 이름
+ * @param monthlyFee1 월 요금 1
+ * @param monthlyFee2 월 요금 2
+ * @param supportAmountData 공시 지원금 데이터
+ * @returns 매칭되는 지원금 정보 객체의 배열
+ */
+export function findSupportData(
+  planName: string, 
+  monthlyFee1: number | null, 
+  monthlyFee2: number | null, 
+  supportAmountData: any[]
+): { row: number; support: number; monthlyFee: number }[] {
+  const results: { row: number; support: number; monthlyFee: number }[] = [];
+
+  const processFee = (monthlyFee: number | null) => {
+    if (monthlyFee === null) return;
+
+    for (const model of supportAmountData) {
+      if (model.plan === planName && model.monthlyFee === monthlyFee) {
+        results.push({
+          row: model.row,
+          support: model.support,
+          monthlyFee: model.monthlyFee
+        });
+        // 일치하는 첫 번째 모델만 사용하려면 여기서 break 가능
+      }
+    }
+  };
+
+  processFee(monthlyFee1);
+  processFee(monthlyFee2);
+
+  return results;
 } 
