@@ -29,6 +29,33 @@ export interface DataSet {
   };
 }
 
+// 데이터 선택 모달 관련 타입들
+export interface SelectedData {
+  carrier: string;
+  companies: string[];
+  plans: string[];
+  monthlyFees: number[];
+}
+
+export interface DataSelectionState {
+  selectedCarrier: string;
+  selectedCompanies: string[];
+  selectedPlans: string[];
+  selectedMonthlyFee1: number | null;
+  selectedMonthlyFee2: number | null;
+}
+
+export interface ExtractedData {
+  companies: string[];
+  plans: string[];
+  monthlyFees: number[];
+}
+
+export interface CellData {
+  value: string;
+  monthlyFee?: number;
+}
+
 export type TabType = 'local' | 'integrated' | 'model' | 'visualization';
 
 export interface Tab {

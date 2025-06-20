@@ -1,325 +1,361 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BUTTON_THEME, CARRIER_OPTIONS, CONTRACT_OPTIONS, JOIN_TYPE_OPTIONS, COMPANY_OPTIONS } from '@/styles/common';
-import { X, Filter, Search, RotateCcw, Database, FileText } from 'lucide-react';
+import { BUTTON_THEME } from '@/styles/common';
+import { Filter, RotateCcw, Building2, CreditCard, DollarSign } from 'lucide-react';
+import { DataSet } from '@/types/dashboard';
+import { SupportAmountData } from '@/app/dashboard/utils/support-amounts';
+import { 
+  extractCompaniesByCarrier, 
+  extractPlansByCarrierAndCompany, 
+  extractMonthlyFeesByCarrier 
+} from '@/app/dashboard/utils/integrated/dataExtraction';
 
+// --- 타입 정의 ---
+interface PlanSelection {
+  monthlyFee1: number | null;
+  monthlyFee2: number | null;
+}
+
+type PlanSelections = Record<string, PlanSelection>; // { [planName]: PlanSelection }
+
+interface CarrierSpecificState {
+    selectedCompany: string | null;
+    selectionsByCompany: Record<string, PlanSelections>; // { [companyName]: PlanSelections }
+}
+
+interface ExtractedDataByCarrier {
+  companies: string[];
+  plansByCompany: Record<string, string[]>; // { [companyName]: plans[] }
+  monthlyFees: number[];
+}
+
+const getInitialCarrierState = (): CarrierSpecificState => ({
+    selectedCompany: null,
+    selectionsByCompany: {},
+});
+
+// --- 컴포넌트 Props ---
 interface DataSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyFilters: (filters: FilterSettings) => void;
-  dataSets: any[];
-  publicData: any;
+  onApply: (selectedData: {
+    carrier: string;
+    company: string | null;
+    plans: PlanSelections;
+  }) => void;
+  dataSets: DataSet[];
+  publicData: SupportAmountData | null;
 }
 
-export interface FilterSettings {
-  searchKeyword: string;
-  carriers: string[];
-  contracts: string[];
-  joinTypes: string[];
-  companies: string[];
-  dateRange: {
-    start: string;
-    end: string;
-  };
-}
-
-export default function DataSelectionModal({ isOpen, onClose, onApplyFilters, dataSets, publicData }: DataSelectionModalProps) {
-  const [filters, setFilters] = useState<FilterSettings>({
-    searchKeyword: '',
-    carriers: [],
-    contracts: [],
-    joinTypes: [],
-    companies: [],
-    dateRange: {
-      start: '',
-      end: ''
-    }
+export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets, publicData }: DataSelectionModalProps) {
+  const [activeTab, setActiveTab] = useState('SK');
+  
+  const [selectionByCarrier, setSelectionByCarrier] = useState<Record<string, CarrierSpecificState>>({
+    SK: getInitialCarrierState(),
+    KT: getInitialCarrierState(),
+    LG: getInitialCarrierState(),
   });
 
-  const [activeTab, setActiveTab] = useState('SK');
+  // 모든 데이터를 미리 추출하여 저장
+  const [extractedDataByCarrier, setExtractedDataByCarrier] = useState<Record<string, ExtractedDataByCarrier>>({
+    SK: { companies: [], plansByCompany: {}, monthlyFees: [] },
+    KT: { companies: [], plansByCompany: {}, monthlyFees: [] },
+    LG: { companies: [], plansByCompany: {}, monthlyFees: [] },
+  });
 
-  const handleApplyFilters = () => {
-    onApplyFilters(filters);
+  // 모달 열릴 때 모든 데이터를 한 번에 추출
+  useEffect(() => {
+    if (isOpen) {
+      const carriers = ['SK', 'KT', 'LG'];
+      const newExtractedData: Record<string, ExtractedDataByCarrier> = {
+        SK: { companies: [], plansByCompany: {}, monthlyFees: [] },
+        KT: { companies: [], plansByCompany: {}, monthlyFees: [] },
+        LG: { companies: [], plansByCompany: {}, monthlyFees: [] },
+      };
+
+      carriers.forEach(carrier => {
+        // 업체명 추출
+        const companies = extractCompaniesByCarrier(dataSets, carrier);
+        
+        // 각 업체별 요금제 추출
+        const plansByCompany: Record<string, string[]> = {};
+        companies.forEach(company => {
+          plansByCompany[company] = extractPlansByCarrierAndCompany(dataSets, carrier, company);
+        });
+        
+        // 월 요금제 추출
+        const monthlyFees = extractMonthlyFeesByCarrier(publicData, carrier);
+
+        newExtractedData[carrier] = {
+          companies,
+          plansByCompany,
+          monthlyFees
+        };
+      });
+
+      setExtractedDataByCarrier(newExtractedData);
+    }
+  }, [isOpen, dataSets, publicData]);
+
+  // --- 이벤트 핸들러 ---
+  const handleCompanySelect = (company: string) => {
+    setSelectionByCarrier(prev => ({
+        ...prev,
+        [activeTab]: {
+            ...prev[activeTab],
+            selectedCompany: company,
+        }
+    }));
+  };
+
+  const handlePlanToggle = (plan: string) => {
+    const { selectedCompany, selectionsByCompany } = selectionByCarrier[activeTab];
+    if (!selectedCompany) return;
+
+    const currentCompanySelections = selectionsByCompany[selectedCompany] || {};
+    const isSelected = plan in currentCompanySelections;
+    const newSelections = { ...currentCompanySelections };
+
+    if (isSelected) {
+        delete newSelections[plan];
+    } else {
+        newSelections[plan] = { monthlyFee1: null, monthlyFee2: null };
+    }
+
+    setSelectionByCarrier(prev => ({
+        ...prev,
+        [activeTab]: {
+            ...prev[activeTab],
+            selectionsByCompany: { ...selectionsByCompany, [selectedCompany]: newSelections }
+        }
+    }));
+  };
+
+  const handleMonthlyFeeChange = (plan: string, feeType: 'monthlyFee1' | 'monthlyFee2', fee: string | null) => {
+    const { selectedCompany, selectionsByCompany } = selectionByCarrier[activeTab];
+    if (!selectedCompany) return;
+
+    const feeAsNumber = fee ? parseInt(fee, 10) : null;
+    const currentCompanySelections = selectionsByCompany[selectedCompany] || {};
+    const currentPlanSelection = currentCompanySelections[plan] || { monthlyFee1: null, monthlyFee2: null };
+    
+    const newPlanSelection = { ...currentPlanSelection, [feeType]: feeAsNumber };
+    const newSelections = { ...currentCompanySelections, [plan]: newPlanSelection };
+
+    setSelectionByCarrier(prev => ({
+        ...prev,
+        [activeTab]: {
+            ...prev[activeTab],
+            selectionsByCompany: { ...selectionsByCompany, [selectedCompany]: newSelections }
+        }
+    }));
+  };
+
+  const handleApply = () => {
+    const { selectedCompany, selectionsByCompany } = selectionByCarrier[activeTab];
+    if (!selectedCompany) return;
+
+    const plans = selectionsByCompany[selectedCompany] || {};
+    onApply({ carrier: activeTab, company: selectedCompany, plans });
     onClose();
   };
-
-  const handleResetFilters = () => {
-    setFilters({
-      searchKeyword: '',
-      carriers: [],
-      contracts: [],
-      joinTypes: [],
-      companies: [],
-      dateRange: {
-        start: '',
-        end: ''
-      }
-    });
+  
+  const handleReset = () => {
+    setSelectionByCarrier(prev => ({ ...prev, [activeTab]: getInitialCarrierState() }));
   };
 
-  const toggleCarrier = (carrier: string) => {
-    setFilters(prev => ({
-      ...prev,
-      carriers: prev.carriers.includes(carrier)
-        ? prev.carriers.filter(c => c !== carrier)
-        : [...prev.carriers, carrier]
-    }));
-  };
-
-  const toggleContract = (contract: string) => {
-    setFilters(prev => ({
-      ...prev,
-      contracts: prev.contracts.includes(contract)
-        ? prev.contracts.filter(c => c !== contract)
-        : [...prev.contracts, contract]
-    }));
-  };
-
-  const toggleJoinType = (joinType: string) => {
-    setFilters(prev => ({
-      ...prev,
-      joinTypes: prev.joinTypes.includes(joinType)
-        ? prev.joinTypes.filter(j => j !== joinType)
-        : [...prev.joinTypes, joinType]
-    }));
-  };
-
-  const toggleCompany = (company: string) => {
-    setFilters(prev => ({
-      ...prev,
-      companies: prev.companies.includes(company)
-        ? prev.companies.filter(c => c !== company)
-        : [...prev.companies, company]
-    }));
-  };
-
-  const renderCarrierTabContent = (carrier: string) => {
-    return (
-      <div className="space-y-4">
-        {/* 데이터 카드 저장된 값 */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Database className="w-4 h-4" />
-            데이터 카드 저장된 값
-          </div>
-          <div className="bg-gray-50 rounded-lg p-3 min-h-[100px]">
-            {dataSets && dataSets.length > 0 ? (
-              <div className="space-y-2">
-                {dataSets
-                  .filter(dataset => dataset.data?.carrier === carrier)
-                  .map((dataset, index) => (
-                    <div key={dataset.id} className="flex items-center justify-between p-2 bg-white rounded border">
-                      <span className="text-sm">{dataset.name}</span>
-                      <Button size="sm" variant="outline" className="text-xs">
-                        선택
-                      </Button>
-                    </div>
-                  ))}
-                {dataSets.filter(dataset => dataset.data?.carrier === carrier).length === 0 && (
-                  <p className="text-gray-500 text-sm">저장된 데이터가 없습니다.</p>
-                )}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">저장된 데이터가 없습니다.</p>
-            )}
-          </div>
-        </div>
-
-        {/* 공시 자료 */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <FileText className="w-4 h-4" />
-            공시 자료
-          </div>
-          <div className="bg-gray-50 rounded-lg p-3 min-h-[100px]">
-            {publicData && publicData[carrier] ? (
-              <div className="space-y-2">
-                {Object.entries(publicData[carrier]).map(([key, value]: [string, any], index) => (
-                  <div key={key} className="flex items-center justify-between p-2 bg-white rounded border">
-                    <span className="text-sm">{key}</span>
-                    <Button size="sm" variant="outline" className="text-xs">
-                      선택
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">공시 자료가 없습니다.</p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // --- 렌더링을 위한 변수 ---
+  const activeSelection = selectionByCarrier[activeTab];
+  const selectedPlans = activeSelection.selectedCompany ? activeSelection.selectionsByCompany[activeSelection.selectedCompany] || {} : {};
+  const currentCarrierData = extractedDataByCarrier[activeTab];
+  const currentPlans = activeSelection.selectedCompany ? currentCarrierData.plansByCompany[activeSelection.selectedCompany] || [] : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-2xl h-[600px] overflow-hidden bg-white">
+        <DialogHeader className="flex-shrink-0 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-gray-800">
             <Filter className="w-5 h-5" />
             데이터 선택
           </DialogTitle>
+          <DialogDescription className="text-left text-gray-600">
+            적용할 업체의 요금제를 선택하고, 각 요금제에 맞는 월 요금을 지정하세요. (최대 2개까지 선택 가능)
+          </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="SK" className="text-red-600 font-bold">SK</TabsTrigger>
-            <TabsTrigger value="KT" className="text-black font-bold">KT</TabsTrigger>
-            <TabsTrigger value="LG" className="text-pink-700 font-bold">LG</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg flex-shrink-0">
+            <TabsTrigger value="SK" className="data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-sm rounded-md">SK</TabsTrigger>
+            <TabsTrigger value="KT" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm rounded-md">KT</TabsTrigger>
+            <TabsTrigger value="LG" className="data-[state=active]:bg-white data-[state=active]:text-pink-700 data-[state=active]:shadow-sm rounded-md">LG</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="SK" className="mt-4">
-            {renderCarrierTabContent('SK')}
-          </TabsContent>
+          <TabsContent value={activeTab} className="mt-4 flex-1 overflow-hidden">
+            <div className="grid grid-cols-4 gap-4 h-full">
+              
+              {/* 1열: 업체명 */}
+              <div className="space-y-3 h-full flex flex-col">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+                  <Building2 className="w-4 h-4" />
+                  업체명 선택
+                </div>
+                <div className="space-y-2 flex-1 overflow-y-auto pr-2">
+                  {currentCarrierData.companies.map((company) => (
+                    <Button
+                      key={company}
+                      onClick={() => handleCompanySelect(company)}
+                      className={`w-full justify-center text-center h-8 ${activeSelection.selectedCompany === company ? BUTTON_THEME.primary : BUTTON_THEME.secondary}`}
+                    >
+                      {company}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
-          <TabsContent value="KT" className="mt-4">
-            {renderCarrierTabContent('KT')}
-          </TabsContent>
+              {/* 2열: 요금제 */}
+              <div className="space-y-3 h-full flex flex-col">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+                  <CreditCard className="w-4 h-4" />
+                  요금제 선택
+                </div>
+                <div className="space-y-2 flex-1 overflow-y-auto pr-2 text-gray-800">
+                  {activeSelection.selectedCompany ? (
+                    currentPlans.length > 0 ? (
+                      currentPlans.map((plan) => {
+                        const isSelected = plan in selectedPlans;
+                        return (
+                          <Button
+                            key={plan}
+                            onClick={() => handlePlanToggle(plan)}
+                            variant={isSelected ? 'default' : 'outline'}
+                            className={`w-full justify-center text-center h-8 ${isSelected ? BUTTON_THEME.primary : ''}`}
+                          >
+                            {plan}
+                          </Button>
+                        );
+                      })
+                    ) : (
+                      <div className="text-gray-500 text-sm p-2">해당 업체의 요금제가 없습니다.</div>
+                    )
+                  ) : (
+                    <div className="text-gray-500 text-sm p-2">왼쪽에서 업체를 선택하세요.</div>
+                  )}
+                </div>
+              </div>
 
-          <TabsContent value="LG" className="mt-4">
-            {renderCarrierTabContent('LG')}
+              {/* 3열: 월 요금제 1 */}
+              <div className="space-y-3 h-full flex flex-col">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+                  <DollarSign className="w-4 h-4" />
+                  월 요금제 1
+                </div>
+                <div className="space-y-2 flex-1 overflow-y-auto pr-2">
+                  {activeSelection.selectedCompany ? (
+                    currentPlans.length > 0 ? (
+                      currentPlans.map((plan) => {
+                        const isSelected = plan in selectedPlans;
+                        const planSelection = selectedPlans[plan];
+                        
+                        return (
+                          <div key={plan} className="h-8 flex items-center">
+                            {isSelected ? (
+                              <Select
+                                value={planSelection?.monthlyFee1?.toString() || ""}
+                                onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee1', value)}
+                              >
+                                <SelectTrigger className="text-gray-800 h-8 text-center justify-center">
+                                  <SelectValue placeholder="월 요금 선택" className="text-center" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {currentCarrierData.monthlyFees
+                                    .sort((a, b) => b - a)
+                                    .map((fee) => (
+                                    <SelectItem key={fee} value={fee.toString()}>{fee.toLocaleString()}원</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <div className="w-full h-8 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-sm">
+                                -
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-gray-500 text-sm p-2">해당 업체의 요금제가 없습니다.</div>
+                    )
+                  ) : (
+                    <div className="text-gray-500 text-sm p-2">왼쪽에서 업체를 선택하세요.</div>
+                  )}
+                </div>
+              </div>
+
+              {/* 4열: 월 요금제 2 */}
+              <div className="space-y-3 h-full flex flex-col">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+                  <DollarSign className="w-4 h-4" />
+                  월 요금제 2
+                </div>
+                <div className="space-y-2 flex-1 overflow-y-auto pr-2">
+                  {activeSelection.selectedCompany ? (
+                    currentPlans.length > 0 ? (
+                      currentPlans.map((plan) => {
+                        const isSelected = plan in selectedPlans;
+                        const planSelection = selectedPlans[plan];
+                        
+                        return (
+                          <div key={plan} className="h-8 flex items-center">
+                            {isSelected ? (
+                              <Select
+                                value={planSelection?.monthlyFee2?.toString() || ""}
+                                onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee2', value)}
+                              >
+                                <SelectTrigger className="text-gray-800 h-8 text-center justify-center">
+                                  <SelectValue placeholder="월 요금 선택" className="text-center" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {currentCarrierData.monthlyFees
+                                    .sort((a, b) => b - a)
+                                    .map((fee) => (
+                                    <SelectItem key={fee} value={fee.toString()}>{fee.toLocaleString()}원</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <div className="w-full h-8 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-sm">
+                                -
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-gray-500 text-sm p-2">해당 업체의 요금제가 없습니다.</div>
+                    )
+                  ) : (
+                    <div className="text-gray-500 text-sm p-2">왼쪽에서 업체를 선택하세요.</div>
+                  )}
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 
-        {/* 필터 옵션들 */}
-        <div className="space-y-4 border-t pt-4">
-          <div className="text-sm font-medium text-gray-700">추가 필터 옵션</div>
-          
-          {/* 검색 키워드 */}
-          <div className="space-y-2">
-            <Label htmlFor="search">검색 키워드</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                id="search"
-                placeholder="모델명, 요금제, 업체명 등으로 검색..."
-                value={filters.searchKeyword}
-                onChange={(e) => setFilters(prev => ({ ...prev, searchKeyword: e.target.value }))}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* 계약 유형 필터 */}
-          <div className="space-y-2">
-            <Label>계약 유형</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {CONTRACT_OPTIONS.map((contract) => (
-                <div key={contract.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`contract-${contract.value}`}
-                    checked={filters.contracts.includes(contract.value)}
-                    onCheckedChange={() => toggleContract(contract.value)}
-                  />
-                  <Label 
-                    htmlFor={`contract-${contract.value}`}
-                    className={`text-sm cursor-pointer ${contract.style}`}
-                  >
-                    {contract.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 가입 유형 필터 */}
-          <div className="space-y-2">
-            <Label>가입 유형</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {JOIN_TYPE_OPTIONS.map((joinType) => (
-                <div key={joinType.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`joinType-${joinType.value}`}
-                    checked={filters.joinTypes.includes(joinType.value)}
-                    onCheckedChange={() => toggleJoinType(joinType.value)}
-                  />
-                  <Label 
-                    htmlFor={`joinType-${joinType.value}`}
-                    className="text-sm cursor-pointer"
-                  >
-                    {joinType.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 업체명 필터 */}
-          <div className="space-y-2">
-            <Label>업체명</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-              {COMPANY_OPTIONS.map((company) => (
-                <div key={company.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`company-${company.value}`}
-                    checked={filters.companies.includes(company.value)}
-                    onCheckedChange={() => toggleCompany(company.value)}
-                  />
-                  <Label 
-                    htmlFor={`company-${company.value}`}
-                    className={`text-sm cursor-pointer ${company.style}`}
-                  >
-                    {company.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 날짜 범위 */}
-          <div className="space-y-2">
-            <Label>날짜 범위</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="start-date" className="text-sm">시작일</Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={filters.dateRange.start}
-                  onChange={(e) => setFilters(prev => ({ 
-                    ...prev, 
-                    dateRange: { ...prev.dateRange, start: e.target.value }
-                  }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="end-date" className="text-sm">종료일</Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={filters.dateRange.end}
-                  onChange={(e) => setFilters(prev => ({ 
-                    ...prev, 
-                    dateRange: { ...prev.dateRange, end: e.target.value }
-                  }))}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 버튼 영역 */}
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button 
-            variant="outline" 
-            onClick={handleResetFilters}
-            className="flex items-center gap-2"
-          >
+        <div className="flex justify-between gap-2 pt-2 border-t mt-2 flex-shrink-0">
+          <Button onClick={handleReset} className={`${BUTTON_THEME.danger_fill} flex items-center gap-2`}>
             <RotateCcw className="w-4 h-4" />
             초기화
           </Button>
           <Button 
-            onClick={handleApplyFilters}
+            onClick={handleApply}
             className={`${BUTTON_THEME.primary} flex items-center gap-2`}
+            disabled={!activeSelection.selectedCompany || Object.keys(selectedPlans).length === 0}
           >
             <Filter className="w-4 h-4" />
             선택 완료
@@ -328,4 +364,4 @@ export default function DataSelectionModal({ isOpen, onClose, onApplyFilters, da
       </DialogContent>
     </Dialog>
   );
-} 
+}

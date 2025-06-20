@@ -3,10 +3,14 @@
 import { useUndo } from '@/hooks/use-undo';
 import { DataSet, SheetData } from '@/types/dashboard';
 import IntegratedHeader from './IntegratedHeader';
-import DataSelectionModal, { FilterSettings } from './DataSelectionModal';
+import DataSelectionModal from './DataSelectionModal';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 import { useState, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { 
+  findMatchingData,
+  createCellWithMonthlyFee 
+} from '@/app/dashboard/utils/integrated/dataExtraction';
 
 interface IntegratedSheetProps {
   dataSets: DataSet[];
@@ -24,17 +28,6 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
 
   // 필터 모달 상태 관리
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [currentFilters, setCurrentFilters] = useState<FilterSettings>({
-    searchKeyword: '',
-    carriers: [],
-    contracts: [],
-    joinTypes: [],
-    companies: [],
-    dateRange: {
-      start: '',
-      end: ''
-    }
-  });
 
   // Undo/Redo 상태 관리
   const [
@@ -98,15 +91,52 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
     setIsFilterModalOpen(false);
   };
 
-  const handleApplyFilters = (filters: FilterSettings) => {
-    setCurrentFilters(filters);
-    toast({
-      title: "데이터 선택",
-      description: "데이터가 성공적으로 선택되었습니다.",
-    });
+  const applySelectedDataToSheet = (selectedData: {
+    carrier: string;
+    company: string | null;
+    plans: Record<string, { monthlyFee1: number | null; monthlyFee2: number | null }>;
+  }) => {
+    const { carrier, company, plans } = selectedData;
+    if (!company) return;
+
+    const newSheetData = currentSheetData.map(row => [...row]);
     
-    // 여기에 실제 필터링 로직을 추가할 수 있습니다
-    console.log('적용된 필터:', filters);
+    let targetCol = 1;
+    while (targetCol < newSheetData[0].length && newSheetData[0][targetCol] && newSheetData[0][targetCol] !== '') {
+        targetCol++;
+    }
+
+    Object.entries(plans).forEach(([planName, feeSelection]) => {
+      const matchingData = findMatchingData(dataSets, carrier, company, planName);
+      
+      if (matchingData) {
+        // 첫 번째 월 요금제로 데이터 추가
+        if (feeSelection.monthlyFee1 !== null && targetCol < newSheetData[0].length) {
+          newSheetData[0][targetCol] = matchingData[0][0]; // 통신사
+          newSheetData[1][targetCol] = matchingData[1][0]; // 지원구분
+          newSheetData[2][targetCol] = createCellWithMonthlyFee(matchingData[2][0], feeSelection.monthlyFee1); // 요금제 + 월요금1
+          newSheetData[3][targetCol] = matchingData[3][0]; // 가입유형
+          newSheetData[4][targetCol] = matchingData[4][0]; // 업체명
+          targetCol++;
+        }
+
+        // 두 번째 월 요금제로 데이터 추가 (있는 경우)
+        if (feeSelection.monthlyFee2 !== null && targetCol < newSheetData[0].length) {
+          newSheetData[0][targetCol] = matchingData[0][0]; // 통신사
+          newSheetData[1][targetCol] = matchingData[1][0]; // 지원구분
+          newSheetData[2][targetCol] = createCellWithMonthlyFee(matchingData[2][0], feeSelection.monthlyFee2); // 요금제 + 월요금2
+          newSheetData[3][targetCol] = matchingData[3][0]; // 가입유형
+          newSheetData[4][targetCol] = matchingData[4][0]; // 업체명
+          targetCol++;
+        }
+      }
+    });
+
+    setCurrentSheetData(newSheetData);
+    toast({
+      title: "데이터 적용 완료",
+      description: "선택된 데이터가 통합시트에 적용되었습니다.",
+    });
   };
 
   return (
@@ -164,7 +194,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
       <DataSelectionModal
         isOpen={isFilterModalOpen}
         onClose={handleCloseFilterModal}
-        onApplyFilters={handleApplyFilters}
+        onApply={applySelectedDataToSheet}
         dataSets={dataSets}
         publicData={publicData}
       />

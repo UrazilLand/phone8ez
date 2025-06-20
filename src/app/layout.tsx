@@ -38,6 +38,27 @@ export default function RootLayout({
           </MainLayout>
           <Toaster />
         </DarkModeProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // 메시지 채널 에러 무시
+              window.addEventListener('error', function(e) {
+                if (e.message.includes('message channel closed')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+              
+              // Promise rejection 에러 무시
+              window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+            `,
+          }}
+        />
       </body>
     </html>
   );
