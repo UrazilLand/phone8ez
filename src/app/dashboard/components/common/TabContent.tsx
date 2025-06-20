@@ -4,11 +4,12 @@ import DataInputTab from '../data-input';
 import IntegratedDataTab from '../integrated';
 import ModelDataTab from '../model';
 import VisualizationTab from '../visualization';
+import React from 'react';
 
 interface TabContentProps {
   activeTab: TabType;
   dataSets: DataSet[];
-  setDataSets: (dataSets: DataSet[]) => void;
+  setDataSets: React.Dispatch<React.SetStateAction<DataSet[]>>;
   reloadKey: number;
   publicData: SupportAmountData | null;
   dataInputTabRef: any;
@@ -22,31 +23,37 @@ export default function TabContent({
   publicData, 
   dataInputTabRef 
 }: TabContentProps) {
+  const tabStyle = (tabName: TabType) => ({
+    display: activeTab === tabName ? 'block' : 'none',
+  });
+
   return (
-    <div className="flex-1 px-4">
-      {activeTab === 'local' && (
+    <div className="flex-1 px-4 mt-4">
+      <div style={tabStyle('local')}>
         <DataInputTab 
           ref={dataInputTabRef}
           dataSets={dataSets}
           setDataSets={setDataSets}
         />
-      )}
-      {activeTab === 'integrated' && (
+      </div>
+      <div style={tabStyle('integrated')}>
         <IntegratedDataTab
           dataSets={dataSets}
           setDataSets={setDataSets}
-          activeTab={activeTab}
+          activeTab={'integrated'}
           reloadKey={reloadKey}
           publicData={publicData}
         />
-      )}
-      {activeTab === 'model' && (
+      </div>
+      <div style={tabStyle('model')}>
         <ModelDataTab 
           dataSets={dataSets}
           setDataSets={setDataSets}
         />
-      )}
-      {activeTab === 'visualization' && <VisualizationTab />}
+      </div>
+      <div style={tabStyle('visualization')}>
+        <VisualizationTab />
+      </div>
     </div>
   );
 } 

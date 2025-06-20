@@ -5,7 +5,7 @@ import { DataSet, SheetData } from '@/types/dashboard';
 import IntegratedHeader from './IntegratedHeader';
 import DataSelectionModal from './DataSelectionModal';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { 
   findMatchingData,
@@ -26,9 +26,10 @@ interface IntegratedSheetProps {
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
   publicData: any;
+  reloadKey: number;
 }
 
-export default function IntegratedSheet({ dataSets, setDataSets, publicData }: IntegratedSheetProps) {
+export default function IntegratedSheet({ dataSets, setDataSets, publicData, reloadKey }: IntegratedSheetProps) {
   const { toast } = useToast();
   
   // 시트 데이터 상태 관리
@@ -49,6 +50,29 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
     canUndo,
     canRedo
   ] = useUndo<string[][]>(sheetData);
+
+  // 1. 컴포넌트 첫 마운트 시 데이터 로드
+  useEffect(() => {
+    const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
+    if (integratedDataSet && integratedDataSet.data.sheetData) {
+      setCurrentSheetData(integratedDataSet.data.sheetData);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2. '불러오기' 클릭 시 (reloadKey 변경 시) 데이터 로드
+  useEffect(() => {
+    if (reloadKey > 0) { // 초기 렌더링 방지
+      const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
+      if (integratedDataSet && integratedDataSet.data.sheetData) {
+        setCurrentSheetData(integratedDataSet.data.sheetData);
+        toast({
+          title: "데이터 불러오기 완료",
+          description: "통합 데이터를 시트에 불러왔습니다.",
+        });
+      }
+    }
+  }, [reloadKey, dataSets, setCurrentSheetData, toast]);
 
   const handleSave = () => {
     const existingIntegratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
