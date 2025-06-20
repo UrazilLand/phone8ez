@@ -392,7 +392,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     }
   }));
 
-  const handleSave = () => {
+  const handleSave = (dataName?: string) => {
     // 시트 데이터를 DataSet 형식으로 변환하여 저장
     const newSheetData: SheetData = {
       sheetData: currentSheetData,
@@ -414,7 +414,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
     const newDataSet: DataSet = {
       id: Date.now().toString(),
-      name: `데이터 세트 ${dataSets.length + 1}`,
+      name: dataName || `데이터 세트 ${dataSets.length + 1}`,
       type: 'normal',
       createdAt: new Date().toISOString(),
       data: newSheetData,

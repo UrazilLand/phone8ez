@@ -13,7 +13,7 @@ import SaveDataModal from './SaveDataModal';
 interface DataInputHeaderProps {
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
-  onSave: (dataName: string) => void;
+  onSave: (dataName?: string) => void;
   onReset: () => void;
   onUndo: () => void;
   onRedo: () => void;
