@@ -3,8 +3,17 @@
 import { useUndo } from '@/hooks/use-undo';
 import { DataSet, SheetData } from '@/types/dashboard';
 import DataInputHeader from './DataInputHeader';
-import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
-import { useState, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
+import { 
+  SHEET_HEADER_LABELS, 
+  DEFAULT_ROW_COUNT, 
+  DEFAULT_COLUMN_COUNT,
+  PLAN_BG_COLORS,
+  COMPANY_TEXT_COLORS,
+  CARRIER_OPTIONS,
+  CONTRACT_OPTIONS,
+  JOIN_TYPE_OPTIONS
+} from '@/styles/common';
+import { useState, useCallback, useRef, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
 
 interface DataInputSheetProps {
@@ -33,6 +42,167 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     canUndo,
     canRedo
   ] = useUndo<string[][]>(sheetData);
+
+  // 1,2,3,4,5행의 색상 매핑 생성
+  const colorMapping = useMemo(() => {
+    const mapping: { [key: string]: string } = {};
+    let planColorIndex = 0;
+    let companyColorIndex = 0;
+
+    // 1행(통신사) 색상 매핑 - CARRIER_OPTIONS 사용
+    const carrierValues = new Set<string>();
+    for (let col = 1; col < currentSheetData[0]?.length; col++) {
+      const value = currentSheetData[0][col]?.trim();
+      if (value && !carrierValues.has(value)) {
+        carrierValues.add(value);
+        const carrierOption = CARRIER_OPTIONS.find(option => option.value === value);
+        if (carrierOption) {
+          mapping[`carrier_${value}`] = carrierOption.style;
+        }
+      }
+    }
+
+    // 2행(지원 구분) 색상 매핑 - CONTRACT_OPTIONS 사용
+    const contractValues = new Set<string>();
+    for (let col = 1; col < currentSheetData[1]?.length; col++) {
+      const value = currentSheetData[1][col]?.trim();
+      if (value && !contractValues.has(value)) {
+        contractValues.add(value);
+        const contractOption = CONTRACT_OPTIONS.find(option => option.value === value);
+        if (contractOption) {
+          mapping[`contract_${value}`] = contractOption.style;
+        }
+      }
+    }
+
+    // 3행(요금제) 색상 매핑 - PLAN_BG_COLORS 사용 (배경색)
+    const planValues = new Set<string>();
+    for (let col = 1; col < currentSheetData[2]?.length; col++) {
+      const value = currentSheetData[2][col]?.trim();
+      if (value && !planValues.has(value)) {
+        planValues.add(value);
+        mapping[`plan_${value}`] = PLAN_BG_COLORS[planColorIndex % PLAN_BG_COLORS.length];
+        planColorIndex++;
+      }
+    }
+
+    // 4행(가입 유형) 색상 매핑 - JOIN_TYPE_OPTIONS 사용
+    const joinTypeValues = new Set<string>();
+    for (let col = 1; col < currentSheetData[3]?.length; col++) {
+      const value = currentSheetData[3][col]?.trim();
+      if (value && !joinTypeValues.has(value)) {
+        joinTypeValues.add(value);
+        const joinTypeOption = JOIN_TYPE_OPTIONS.find(option => option.value === value);
+        if (joinTypeOption) {
+          mapping[`joinType_${value}`] = joinTypeOption.style;
+        }
+      }
+    }
+
+    // 5행(업체명) 색상 매핑 - COMPANY_TEXT_COLORS 사용 (텍스트 색상)
+    const companyValues = new Set<string>();
+    for (let col = 1; col < currentSheetData[4]?.length; col++) {
+      const value = currentSheetData[4][col]?.trim();
+      if (value && !companyValues.has(value)) {
+        companyValues.add(value);
+        mapping[`company_${value}`] = COMPANY_TEXT_COLORS[companyColorIndex % COMPANY_TEXT_COLORS.length];
+        companyColorIndex++;
+      }
+    }
+
+    console.log('Color mapping updated:', mapping);
+    console.log('PLAN_BG_COLORS:', PLAN_BG_COLORS);
+    console.log('COMPANY_TEXT_COLORS:', COMPANY_TEXT_COLORS);
+    return mapping;
+  }, [currentSheetData]);
+
+  // 셀의 색상 스타일을 반환하는 함수 (B열부터 적용)
+  const getCellStyle = (rowIndex: number, colIndex: number, value: string) => {
+    if (colIndex === 0) return {}; // A열은 색상 적용 안함
+    
+    const trimmedValue = value?.trim();
+    if (!trimmedValue) return {};
+
+    const style: React.CSSProperties = {};
+
+    if (rowIndex === 0) { // 1행 (통신사) - CARRIER_OPTIONS 스타일 적용
+      const colorClass = colorMapping[`carrier_${trimmedValue}`];
+      console.log(`1행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
+      
+      // CARRIER_OPTIONS의 스타일을 인라인 스타일로 변환
+      if (colorClass === 'text-red-600 font-bold') {
+        style.color = '#dc2626';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-black font-bold') {
+        style.color = '#000000';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-pink-700 font-bold') {
+        style.color = '#be185d';
+        style.fontWeight = 'bold';
+      }
+      
+    } else if (rowIndex === 1) { // 2행 (지원 구분) - CONTRACT_OPTIONS 스타일 적용
+      const colorClass = colorMapping[`contract_${trimmedValue}`];
+      console.log(`2행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
+      
+      // CONTRACT_OPTIONS의 스타일을 인라인 스타일로 변환
+      if (colorClass === 'text-green-700 font-bold') {
+        style.color = '#15803d';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-cyan-600 font-bold') {
+        style.color = '#0891b2';
+        style.fontWeight = 'bold';
+      }
+      
+    } else if (rowIndex === 2) { // 3행 (요금제) - 배경색 적용
+      const colorClass = colorMapping[`plan_${trimmedValue}`];
+      console.log(`3행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
+      
+      // PLAN_BG_COLORS의 배경색을 인라인 스타일로 변환
+      if (colorClass === 'bg-blue-300') style.backgroundColor = '#93c5fd';
+      else if (colorClass === 'bg-indigo-300') style.backgroundColor = '#a5b4fc';
+      else if (colorClass === 'bg-purple-300') style.backgroundColor = '#c4b5fd';
+      else if (colorClass === 'bg-pink-300') style.backgroundColor = '#f9a8d4';
+      else if (colorClass === 'bg-red-300') style.backgroundColor = '#fca5a5';
+      else if (colorClass === 'bg-orange-300') style.backgroundColor = '#fdba74';
+      else if (colorClass === 'bg-green-300') style.backgroundColor = '#86efac';
+      else if (colorClass === 'bg-teal-300') style.backgroundColor = '#5eead4';
+      
+    } else if (rowIndex === 3) { // 4행 (가입 유형) - JOIN_TYPE_OPTIONS 스타일 적용
+      const colorClass = colorMapping[`joinType_${trimmedValue}`];
+      console.log(`4행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
+      
+      // JOIN_TYPE_OPTIONS의 스타일을 인라인 스타일로 변환
+      if (colorClass === 'bg-blue-500 text-white') {
+        style.backgroundColor = '#3b82f6';
+        style.color = '#ffffff';
+      } else if (colorClass === 'bg-green-600 text-white') {
+        style.backgroundColor = '#16a34a';
+        style.color = '#ffffff';
+      } else if (colorClass === 'bg-red-500 text-white') {
+        style.backgroundColor = '#ef4444';
+        style.color = '#ffffff';
+      }
+      
+    } else if (rowIndex === 4) { // 5행 (업체명) - 텍스트 색상 적용
+      const colorClass = colorMapping[`company_${trimmedValue}`];
+      console.log(`5행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
+      
+      // COMPANY_TEXT_COLORS의 텍스트 색상을 인라인 스타일로 변환
+      if (colorClass === 'text-blue-800') style.color = '#1e40af';
+      else if (colorClass === 'text-pink-800') style.color = '#9d174d';
+      else if (colorClass === 'text-indigo-800') style.color = '#3730a3';
+      else if (colorClass === 'text-red-800') style.color = '#991b1b';
+      else if (colorClass === 'text-purple-800') style.color = '#6b21a8';
+      else if (colorClass === 'text-teal-800') style.color = '#115e59';
+      else if (colorClass === 'text-orange-800') style.color = '#9a3412';
+      else if (colorClass === 'text-green-800') style.color = '#166534';
+      else if (colorClass === 'text-amber-800') style.color = '#92400e';
+      else if (colorClass === 'text-cyan-800') style.color = '#155e75';
+    }
+
+    return style;
+  };
 
   useImperativeHandle(ref, () => ({
     fillAllData: (modalData: any) => {
@@ -221,6 +391,11 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     const newSheetData = currentSheetData.map(row => [...row]);
     newSheetData[rowIndex][colIndex] = value;
     setCurrentSheetData(newSheetData);
+    
+    // 1~5행이 변경된 경우 색상 매핑 업데이트를 위해 강제 리렌더링
+    if (rowIndex >= 0 && rowIndex <= 4) {
+      console.log(`셀 변경: ${rowIndex}행 ${colIndex}열 = "${value}"`);
+    }
   };
   
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -356,9 +531,13 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                           type="text"
                           value={cell}
                           onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                          className={`w-full h-full px-2 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                          className={`w-full h-full px-2 border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
                             colIndex > 0 ? 'text-center' : ''
                           }`}
+                          style={{
+                            ...getCellStyle(rowIndex, colIndex, cell),
+                            fontWeight: rowIndex < 5 ? '600' : 'normal'
+                          }}
                         />
                       )}
                     </td>
