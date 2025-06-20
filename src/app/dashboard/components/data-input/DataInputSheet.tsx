@@ -56,7 +56,12 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       const value = currentSheetData[0][col]?.trim();
       if (value && !carrierValues.has(value)) {
         carrierValues.add(value);
-        const carrierOption = CARRIER_OPTIONS.find(option => option.value === value);
+        // variants 배열을 사용하여 대소문자와 변형들을 모두 매칭
+        const carrierOption = CARRIER_OPTIONS.find(option => 
+          option.variants && option.variants.some(variant => 
+            variant.toLowerCase() === value.toLowerCase()
+          )
+        );
         if (carrierOption) {
           mapping[`carrier_${value}`] = carrierOption.style;
         }
@@ -247,6 +252,10 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
   useImperativeHandle(ref, () => ({
     fillAllData: (modalData: any) => {
       console.log('fillAllData called with:', modalData);
+      
+      // 마지막으로 적용된 데이터 저장
+      setLastAppliedData(modalData);
+      
       const { 
         carrier, supportItems, joinItems, 
         planSubInputs, planRepeatCount, 
@@ -429,7 +438,38 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
   const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
     const newSheetData = currentSheetData.map(row => [...row]);
+    
+    // 열 자동 추가 로직 - 6행부터만 적용
+    let shouldExtendColumns = false;
+    if (rowIndex >= 5 && colIndex >= newSheetData[rowIndex].length) {
+      shouldExtendColumns = true;
+    }
+    
+    // 데이터 설정
     newSheetData[rowIndex][colIndex] = value;
+    
+    // 열 자동 추가
+    if (shouldExtendColumns) {
+      const maxCols = Math.max(...newSheetData.map(row => row.length), colIndex + 1);
+      console.log(`6행 ${colIndex}열에 데이터 입력으로 열 자동 추가: ${maxCols}열까지 확장`);
+      
+      newSheetData.forEach((row, idx) => {
+        while (row.length < maxCols) {
+          row.push('');
+        }
+      });
+      
+      // 1~5행 자동채움 함수 재호출
+      if (lastAppliedData && ref && 'current' in ref && ref.current) {
+        console.log('열 자동 추가 후 1~5행 자동채움 재호출');
+        setTimeout(() => {
+          if (ref.current) {
+            ref.current.fillAllData(lastAppliedData);
+          }
+        }, 0);
+      }
+    }
+    
     setCurrentSheetData(newSheetData);
     
     // 1~5행이 변경된 경우 색상 매핑 업데이트를 위해 강제 리렌더링
@@ -437,7 +477,10 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       console.log(`셀 변경: ${rowIndex}행 ${colIndex}열 = "${value}"`);
     }
   };
-  
+
+  // 마지막으로 적용된 데이터를 저장하는 상태
+  const [lastAppliedData, setLastAppliedData] = useState<any>(null);
+
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
     
@@ -519,7 +562,17 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     
     // 붙여넣은 데이터의 최대 열 개수 계산
     const maxColsInPastedData = Math.max(...pastedData.map(row => row.length));
-  }, [currentSheetData, setCurrentSheetData, toast]);
+    
+    // 6행부터 붙여넣기로 열이 추가된 경우 1~5행 자동채움 함수 재호출
+    if (startRowIndex >= 5 && maxColsInPastedData > 0 && lastAppliedData && ref && 'current' in ref && ref.current) {
+      console.log('붙여넣기로 열 추가 후 1~5행 자동채움 재호출');
+      setTimeout(() => {
+        if (ref.current) {
+          ref.current.fillAllData(lastAppliedData);
+        }
+      }, 0);
+    }
+  }, [currentSheetData, setCurrentSheetData, toast, lastAppliedData, ref]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'v') {

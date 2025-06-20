@@ -10,9 +10,24 @@ export const SHEET_HEADER_LABELS = ['통신사', '지원 구분', '요금제', '
 
 // 통신사 관련 상수
 export const CARRIER_OPTIONS = [
-  { value: 'SK', label: 'SK', style: 'text-red-600 font-bold' },
-  { value: 'KT', label: 'KT', style: 'text-black font-bold' },
-  { value: 'LG', label: 'LG', style: 'text-pink-700 font-bold' },
+  { 
+    value: 'SK', 
+    label: 'SK', 
+    style: 'text-red-600 font-bold',
+    variants: ['SK', 'sk', 'SKT', 'skt', 'Skt', 'sKt']
+  },
+  { 
+    value: 'KT', 
+    label: 'KT', 
+    style: 'text-black font-bold',
+    variants: ['KT', 'kt', 'Kt', 'kT']
+  },
+  { 
+    value: 'LG', 
+    label: 'LG', 
+    style: 'text-pink-700 font-bold',
+    variants: ['LG', 'lg', 'Lg', 'lG', 'LGU+', 'lgu+', 'Lgu+', 'LG U+', 'lg u+', 'LG U', 'lg u']
+  },
 ];
 
 // 계약 유형 관련 상수
