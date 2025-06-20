@@ -39,8 +39,6 @@ export function extractPlansByCarrierAndCompany(dataSets: DataSet[], carrier: st
   const plans: string[] = [];
   const seenPlans = new Set<string>();
   
-  console.log('요금제 추출 시작:', { carrier, company, dataSetsCount: dataSets.length });
-  
   dataSets.forEach(dataSet => {
     const sheetData = dataSet.data.sheetData;
     if (sheetData && sheetData.length >= 5 && sheetData[0].length > 1) {
@@ -48,25 +46,17 @@ export function extractPlansByCarrierAndCompany(dataSets: DataSet[], carrier: st
         const dataCarrier = sheetData[0]?.[col]?.trim();
         const dataCompany = sheetData[4]?.[col]?.trim();
         
-        console.log(`데이터셋 ${dataSets.indexOf(dataSet)}:`, { 
-          dataCarrier, 
-          dataCompany, 
-          matches: dataCarrier === carrier && dataCompany === company 
-        });
-        
         if (dataCarrier === carrier && dataCompany === company) {
           const plan = sheetData[2]?.[col]?.trim();
           if (plan && !seenPlans.has(plan)) {
             plans.push(plan);
             seenPlans.add(plan);
-            console.log('요금제 추가:', plan);
           }
         }
       }
     }
   });
   
-  console.log('최종 요금제 목록:', plans);
   return plans;
 }
 

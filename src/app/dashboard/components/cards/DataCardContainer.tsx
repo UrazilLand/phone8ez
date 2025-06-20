@@ -78,18 +78,13 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
 
   const handleLoadDataSet = (dataSet: DataSet) => {
     try {
-      console.log('데이터셋 로드:', dataSet);
       if (dataSet.type === 'integrated') {
-        console.log('통합 데이터 로드 시도');
         if (onTabChange) {
-          console.log('통합 데이터 탭으로 전환');
           onTabChange('integrated');
         }
         if (onReloadIntegrated) onReloadIntegrated();
       } else {
-        console.log('일반 데이터 로드');
         if (onTabChange) {
-          console.log('데이터 입력 탭으로 전환');
           onTabChange('local');
         }
         onLoadData(dataSet.data);
@@ -110,13 +105,8 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
   const handleDeleteDataSet = (dataSet: DataSet) => {
     // 삭제 확인
     if (window.confirm(`"${dataSet.name}" 데이터셋을 삭제하시겠습니까?`)) {
-      console.log('삭제 전 데이터셋 개수:', dataSets.length);
-      console.log('삭제할 데이터셋:', dataSet);
-      
       setDataSets((prev: DataSet[]) => {
         const filtered = prev.filter((d: DataSet) => d.id !== dataSet.id);
-        console.log('삭제 후 데이터셋 개수:', filtered.length);
-        console.log('남은 데이터셋들:', filtered.map(d => ({ id: d.id, name: d.name, type: d.type })));
         return filtered;
       });
       
@@ -223,25 +213,20 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
     if (isLoading) return;
     
     try {
-      console.log('공시 데이터 새로고침 시작');
       setIsLoading(true);
       setError(null);
       
       const dates = await getAvailableDates();
-      console.log('사용 가능한 날짜:', dates);
       
       if (!dates || dates.length === 0) {
         throw new Error('사용 가능한 공시 데이터가 없습니다.');
       }
       
       const latestDate = dates[0];
-      console.log('최신 날짜 데이터 요청:', latestDate);
       const data = await getSupportAmountsByDate(latestDate);
-      console.log('받아온 데이터:', data);
       
       setSupportData(data);
       savePublicDataToStorage(data);
-      console.log('publicData 저장됨:', data);
     } catch (error) {
       console.error('공시 데이터 로드 실패:', error);
       setError(error instanceof Error ? error.message : '공시 데이터를 불러오는데 실패했습니다.');
