@@ -91,51 +91,69 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
     setIsFilterModalOpen(false);
   };
 
-  const applySelectedDataToSheet = (selectedData: {
-    carrier: string;
-    company: string | null;
-    plans: Record<string, { monthlyFee1: number | null; monthlyFee2: number | null }>;
-  }) => {
-    const { carrier, company, plans } = selectedData;
-    if (!company) return;
+  const applySelectedDataToSheet = (allSelections: Record<string, any>) => {
+    const filteredColumns: string[][] = [];
+    const carriers = ['SK', 'KT', 'LG'];
 
-    const newSheetData = currentSheetData.map(row => [...row]);
-    
-    let targetCol = 1;
-    while (targetCol < newSheetData[0].length && newSheetData[0][targetCol] && newSheetData[0][targetCol] !== '') {
-        targetCol++;
-    }
+    // 1. SK, KT, LG 순서로 모든 통신사 필터링
+    carriers.forEach(carrier => {
+      const selection = allSelections[carrier];
+      const company = selection?.selectedCompany;
+      const selectionsByCompany = selection?.selectionsByCompany;
 
-    Object.entries(plans).forEach(([planName, feeSelection]) => {
-      const matchingData = findMatchingData(dataSets, carrier, company, planName);
-      
-      if (matchingData) {
-        // 첫 번째 월 요금제로 데이터 추가
-        if (feeSelection.monthlyFee1 !== null && targetCol < newSheetData[0].length) {
-          newSheetData[0][targetCol] = matchingData[0][0]; // 통신사
-          newSheetData[1][targetCol] = matchingData[1][0]; // 지원구분
-          newSheetData[2][targetCol] = createCellWithMonthlyFee(matchingData[2][0], feeSelection.monthlyFee1); // 요금제 + 월요금1
-          newSheetData[3][targetCol] = matchingData[3][0]; // 가입유형
-          newSheetData[4][targetCol] = matchingData[4][0]; // 업체명
-          targetCol++;
+      if (company && selectionsByCompany) {
+        const plans = selectionsByCompany[company];
+        if (plans && Object.keys(plans).length > 0) {
+          const selectedPlanNames = Object.keys(plans);
+
+          // 2. 모든 데이터셋에서 필터 조건에 맞는 열 데이터를 임시 배열에 수집
+          for (const dataSet of dataSets) {
+            const sourceSheet = dataSet.data.sheetData;
+            if (!sourceSheet || sourceSheet.length < 5) continue;
+
+            for (let sourceCol = 1; sourceCol < sourceSheet[0].length; sourceCol++) {
+              const sourceCarrier = sourceSheet[0]?.[sourceCol]?.trim();
+              const sourceCompany = sourceSheet[4]?.[sourceCol]?.trim();
+              const sourcePlanCell = sourceSheet[2]?.[sourceCol]?.trim() || '';
+              const sourcePlanName = sourcePlanCell.split('|')[0];
+
+              if (
+                sourceCarrier === carrier &&
+                sourceCompany === company &&
+                selectedPlanNames.includes(sourcePlanName)
+              ) {
+                const columnData = [];
+                // 1~5행의 데이터만 가져오기
+                for (let row = 0; row < 5; row++) {
+                  columnData.push(sourceSheet[row]?.[sourceCol] || '');
+                }
+                filteredColumns.push(columnData);
+              }
+            }
+          }
         }
+      }
+    });
 
-        // 두 번째 월 요금제로 데이터 추가 (있는 경우)
-        if (feeSelection.monthlyFee2 !== null && targetCol < newSheetData[0].length) {
-          newSheetData[0][targetCol] = matchingData[0][0]; // 통신사
-          newSheetData[1][targetCol] = matchingData[1][0]; // 지원구분
-          newSheetData[2][targetCol] = createCellWithMonthlyFee(matchingData[2][0], feeSelection.monthlyFee2); // 요금제 + 월요금2
-          newSheetData[3][targetCol] = matchingData[3][0]; // 가입유형
-          newSheetData[4][targetCol] = matchingData[4][0]; // 업체명
-          targetCol++;
-        }
+    // 3. 필요한 열 개수 계산 및 시트 생성
+    const requiredDataCols = filteredColumns.length;
+    const finalColCount = Math.max(DEFAULT_COLUMN_COUNT, requiredDataCols + 1);
+    const newSheetData = Array(DEFAULT_ROW_COUNT)
+      .fill(null)
+      .map(() => Array(finalColCount).fill(''));
+
+    // 4. 필터링된 데이터를 새 시트의 1~5행에 복사
+    filteredColumns.forEach((columnData, index) => {
+      const destCol = index + 1; // B열부터 시작
+      for (let row = 0; row < 5; row++) {
+        newSheetData[row][destCol] = columnData[row];
       }
     });
 
     setCurrentSheetData(newSheetData);
     toast({
-      title: "데이터 적용 완료",
-      description: "선택된 데이터가 통합시트에 적용되었습니다.",
+      title: "데이터 필터링 완료",
+      description: `총 ${requiredDataCols}개의 열이 시트에 적용되었습니다.`,
     });
   };
 

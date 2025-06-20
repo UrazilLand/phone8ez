@@ -43,11 +43,7 @@ const getInitialCarrierState = (): CarrierSpecificState => ({
 interface DataSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (selectedData: {
-    carrier: string;
-    company: string | null;
-    plans: PlanSelections;
-  }) => void;
+  onApply: (allSelections: Record<string, CarrierSpecificState>) => void;
   dataSets: DataSet[];
   publicData: SupportAmountData | null;
 }
@@ -157,11 +153,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   };
 
   const handleApply = () => {
-    const { selectedCompany, selectionsByCompany } = selectionByCarrier[activeTab];
-    if (!selectedCompany) return;
-
-    const plans = selectionsByCompany[selectedCompany] || {};
-    onApply({ carrier: activeTab, company: selectedCompany, plans });
+    onApply(selectionByCarrier);
     onClose();
   };
   
@@ -174,6 +166,12 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   const selectedPlans = activeSelection.selectedCompany ? activeSelection.selectionsByCompany[activeSelection.selectedCompany] || {} : {};
   const currentCarrierData = extractedDataByCarrier[activeTab];
   const currentPlans = activeSelection.selectedCompany ? currentCarrierData.plansByCompany[activeSelection.selectedCompany] || [] : [];
+
+  const isAnySelectionMade = Object.values(selectionByCarrier).some(carrierState => {
+    if (!carrierState.selectedCompany) return false;
+    const companySelections = carrierState.selectionsByCompany[carrierState.selectedCompany];
+    return companySelections && Object.keys(companySelections).length > 0;
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -355,7 +353,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
           <Button 
             onClick={handleApply}
             className={`${BUTTON_THEME.primary} flex items-center gap-2`}
-            disabled={!activeSelection.selectedCompany || Object.keys(selectedPlans).length === 0}
+            disabled={!isAnySelectionMade}
           >
             <Filter className="w-4 h-4" />
             선택 완료
