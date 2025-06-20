@@ -4,13 +4,23 @@ export function useUndo<T>(initialValue: T) {
   const [value, setValue] = useState<T>(initialValue);
   const undoStack = useRef<T[]>([]);
   const redoStack = useRef<T[]>([]);
+  const isInitialized = useRef(false);
 
   // 값이 바뀔 때마다 이전 값을 스택에 저장
   const setWithUndo = useCallback((next: T) => {
-    undoStack.current.push(value);
-    redoStack.current = []; // 새로운 변경사항이 생기면 redo 스택 초기화
+    if (isInitialized.current) {
+      undoStack.current.push(value);
+      redoStack.current = []; // 새로운 변경사항이 생기면 redo 스택 초기화
+    }
     setValue(next);
+    isInitialized.current = true;
   }, [value]);
+
+  // 초기화 함수 (스택에 추가하지 않음)
+  const setWithoutUndo = useCallback((next: T) => {
+    setValue(next);
+    isInitialized.current = true;
+  }, []);
 
   // 실행취소
   const undo = useCallback(() => {
@@ -59,5 +69,5 @@ export function useUndo<T>(initialValue: T) {
     return () => window.removeEventListener("keydown", handler);
   }, [undo, redo, canUndo, canRedo]);
 
-  return [value, setWithUndo, undo, redo, canUndo, canRedo] as const;
+  return [value, setWithUndo, setWithoutUndo, undo, redo, canUndo, canRedo] as const;
 } 

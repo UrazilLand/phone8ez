@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BUTTON_THEME } from '@/styles/common';
+import { BUTTON_THEME, CARRIER_OPTIONS } from '@/styles/common';
 import { Filter, RotateCcw, Building2, CreditCard, DollarSign } from 'lucide-react';
 import { DataSet } from '@/types/dashboard';
 import { SupportAmountData } from '@/app/dashboard/utils/support-amounts';
@@ -24,7 +23,6 @@ interface PlanSelection {
 type PlanSelections = Record<string, PlanSelection>; // { [planName]: PlanSelection }
 
 interface CarrierSpecificState {
-    selectedCompanies: string[];
     selectionsByCompany: Record<string, PlanSelections>; // { [companyName]: PlanSelections }
 }
 
@@ -35,7 +33,6 @@ interface ExtractedDataByCarrier {
 }
 
 const getInitialCarrierState = (): CarrierSpecificState => ({
-    selectedCompanies: [],
     selectionsByCompany: {},
 });
 
@@ -108,21 +105,6 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   const handleCompanySelect = (company: string) => {
     // UI 표시용 현재 업체 업데이트
     setCurrentDisplayCompany(company);
-
-    setSelectionByCarrier(prev => {
-        const currentSelected = prev[activeTab].selectedCompanies;
-        const newSelected = currentSelected.includes(company)
-            ? currentSelected.filter(c => c !== company)
-            : [...currentSelected, company];
-        
-        return {
-            ...prev,
-            [activeTab]: {
-                ...prev[activeTab],
-                selectedCompanies: newSelected,
-            }
-        };
-    });
   };
 
   const handlePlanToggle = (plan: string) => {
@@ -178,7 +160,11 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   };
   
   const handleReset = () => {
-    setSelectionByCarrier(prev => ({ ...prev, [activeTab]: getInitialCarrierState() }));
+    setSelectionByCarrier({
+      SK: getInitialCarrierState(),
+      KT: getInitialCarrierState(),
+      LG: getInitialCarrierState(),
+    });
     setCurrentDisplayCompany(null);
   };
 
@@ -189,11 +175,9 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   const currentPlans = currentDisplayCompany ? currentCarrierData.plansByCompany[currentDisplayCompany] || [] : [];
 
   const isAnySelectionMade = Object.values(selectionByCarrier).some(carrierState => {
-    if (carrierState.selectedCompanies.length === 0) return false;
     // 선택된 회사 중 하나라도 요금제 선택이 있는지 확인
-    return carrierState.selectedCompanies.some(company => {
-        const companySelections = carrierState.selectionsByCompany[company];
-        return companySelections && Object.keys(companySelections).length > 0;
+    return Object.values(carrierState.selectionsByCompany).some(companySelections => {
+        return Object.keys(companySelections).length > 0;
     });
   });
 
@@ -201,7 +185,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl h-[600px] flex flex-col bg-white">
         <DialogHeader className="flex-shrink-0 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-gray-800">
+          <DialogTitle className="flex items-center gap-2 text-blue-700">
             <Filter className="w-5 h-5" />
             데이터 선택
           </DialogTitle>
@@ -210,32 +194,64 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg flex-shrink-0">
-            <TabsTrigger value="SK" className="data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-sm rounded-md">SK</TabsTrigger>
-            <TabsTrigger value="KT" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm rounded-md">KT</TabsTrigger>
-            <TabsTrigger value="LG" className="data-[state=active]:bg-white data-[state=active]:text-pink-700 data-[state=active]:shadow-sm rounded-md">LG</TabsTrigger>
-          </TabsList>
+        <div className="w-full flex-1 flex flex-col min-h-0">
+          <div className="px-4">
+            <div className="flex space-x-2 border-b border-gray-200">
+              {['SK', 'KT', 'LG'].map((carrier) => {
+                const carrierOption = CARRIER_OPTIONS.find(option => option.value === carrier);
+                const isActive = activeTab === carrier;
+                
+                return (
+                  <button
+                    key={carrier}
+                    onClick={() => setActiveTab(carrier)}
+                    className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors whitespace-pre-wrap min-w-[80px] text-center ${
+                      isActive
+                        ? `bg-white border-b-2 border-blue-600 ${carrierOption?.style || 'text-blue-600'}`
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                    aria-label={`${carrier} 탭으로 전환`}
+                  >
+                    {carrier}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-          <TabsContent value={activeTab} className="mt-4 flex-1 overflow-y-auto pr-4">
+          <div className="mt-4 flex-1 overflow-y-auto pr-4">
             <div className="grid grid-cols-4 gap-4">
               
-              {/* 1열: 업체명 */}
+              {/* 1열: 업체명 탭 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
                   <Building2 className="w-4 h-4" />
-                  업체명 선택
+                  업체명
                 </div>
                 <div className="space-y-2">
-                  {currentCarrierData.companies.map((company) => (
-                    <Button
-                      key={company}
-                      onClick={() => handleCompanySelect(company)}
-                      className={`w-full justify-center text-center h-8 ${activeSelection.selectedCompanies.includes(company) ? BUTTON_THEME.primary : BUTTON_THEME.secondary}`}
-                    >
-                      {company}
-                    </Button>
-                  ))}
+                  {currentCarrierData.companies.map((company) => {
+                    const hasSelectedPlans = Object.keys(activeSelection.selectionsByCompany[company] || {}).length > 0;
+                    const isCurrentCompany = currentDisplayCompany === company;
+                    
+                    return (
+                      <Button
+                        key={company}
+                        onClick={() => handleCompanySelect(company)}
+                        className={`w-full justify-center text-center h-8 ${
+                          isCurrentCompany 
+                            ? BUTTON_THEME.primary 
+                            : hasSelectedPlans 
+                              ? 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200' 
+                              : BUTTON_THEME.secondary
+                        }`}
+                      >
+                        {company}
+                        {hasSelectedPlans && (
+                          <span className="ml-1 text-xs">✓</span>
+                        )}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -262,10 +278,10 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
+                    <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
@@ -273,7 +289,6 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
               {/* 3열: 월 요금제 1 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
-                  <DollarSign className="w-4 h-4" />
                   월 요금제 1
                 </div>
                 <div className="space-y-2">
@@ -310,10 +325,10 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
+                    <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
@@ -321,7 +336,6 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
               {/* 4열: 월 요금제 2 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
-                  <DollarSign className="w-4 h-4" />
                   월 요금제 2
                 </div>
                 <div className="space-y-2">
@@ -358,16 +372,16 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
+                    <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
 
         <div className="flex justify-between gap-2 pt-2 border-t mt-2 flex-shrink-0">
           <Button onClick={handleReset} className={`${BUTTON_THEME.danger_fill} flex items-center gap-2`}>

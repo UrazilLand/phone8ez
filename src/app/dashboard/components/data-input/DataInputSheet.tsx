@@ -39,6 +39,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
   const [
     currentSheetData,
     setCurrentSheetData,
+    setCurrentSheetDataWithoutUndo,
     undo,
     redo,
     canUndo,
@@ -369,7 +370,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       
       // 저장된 데이터셋의 sheetData를 직접 불러오기
       if (data && data.sheetData && Array.isArray(data.sheetData)) {
-        setCurrentSheetData(data.sheetData);
+        setCurrentSheetDataWithoutUndo(data.sheetData);
         
         // 마지막으로 적용된 데이터 초기화 (새로운 데이터를 로드했으므로)
         setLastAppliedData(null);
@@ -431,12 +432,12 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
   const handleReset = useCallback(() => {
     const emptySheet = Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
-    setCurrentSheetData(emptySheet);
+    setCurrentSheetDataWithoutUndo(emptySheet);
     toast({
       title: "초기화 완료",
       description: "시트가 초기화되었습니다.",
     });
-  }, [setCurrentSheetData, toast]);
+  }, [setCurrentSheetDataWithoutUndo, toast]);
 
   const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
     const newSheetData = currentSheetData.map(row => [...row]);

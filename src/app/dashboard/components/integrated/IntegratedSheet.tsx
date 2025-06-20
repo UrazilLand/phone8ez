@@ -4,7 +4,7 @@ import { useUndo } from '@/hooks/use-undo';
 import { DataSet, SheetData } from '@/types/dashboard';
 import IntegratedHeader from './IntegratedHeader';
 import DataSelectionModal from './DataSelectionModal';
-import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
+import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT, BUTTON_THEME } from '@/styles/common';
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -48,6 +48,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
   const [
     currentSheetData,
     setCurrentSheetData,
+    setCurrentSheetDataWithoutUndo,
     undo,
     redo,
     canUndo,
@@ -55,8 +56,8 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
   ] = useUndo<string[][]>(sheetData);
 
   useEffect(() => {
-    setCurrentSheetData(sheetData);
-  }, [sheetData, setCurrentSheetData]);
+    setCurrentSheetDataWithoutUndo(sheetData);
+  }, [sheetData, setCurrentSheetDataWithoutUndo]);
 
   useEffect(() => {
     if (reloadKey > 0) {
@@ -83,8 +84,14 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
   const saveIntegratedData = () => {
     const existingIntegratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
     
+    // A열과 1~5행만 추출하여 저장
+    const limitedSheetData = currentSheetData.slice(0, 5).map(row => {
+      // A열(인덱스 0)만 포함
+      return [row[0]];
+    });
+    
     const newSheetData: SheetData = {
-      sheetData: currentSheetData,
+      sheetData: limitedSheetData,
       carrier: currentSheetData[0][1] || '',
       contract: currentSheetData[1][1] || '',
       planOptions: [],
@@ -159,12 +166,17 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     // 1. SK, KT, LG 순서로 모든 통신사 필터링
     carriers.forEach(carrier => {
       const selection = allSelections[carrier];
-      const companies = selection?.selectedCompanies;
       const selectionsByCompany = selection?.selectionsByCompany;
 
-      if (companies && companies.length > 0 && selectionsByCompany) {
-        // 선택된 모든 회사를 순회
-        companies.forEach((company: string) => {
+      if (selectionsByCompany) {
+        // selectionsByCompany에서 요금제가 선택된 업체들만 추출
+        const companiesWithSelections = Object.keys(selectionsByCompany).filter(company => {
+          const plans = selectionsByCompany[company];
+          return plans && Object.keys(plans).length > 0;
+        });
+
+        // 요금제가 선택된 업체들을 순회
+        companiesWithSelections.forEach((company: string) => {
           const plans = selectionsByCompany[company];
           if (plans && Object.keys(plans).length > 0) {
             const selectedPlanNames = Object.keys(plans);
@@ -314,18 +326,18 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
 
       {/* 덮어쓰기 확인 모달 */}
       <Dialog open={isOverwriteModalOpen} onOpenChange={setIsOverwriteModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="s:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>덮어쓰기 확인</DialogTitle>
+            <DialogTitle className="text-blue-600 py-2">덮어쓰기 확인</DialogTitle>
             <DialogDescription>
               이미 '통합' 데이터가 존재합니다. 덮어쓰시겠습니까?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancelOverwrite}>
+            <Button onClick={handleCancelOverwrite} className={BUTTON_THEME.gray}>
               취소
             </Button>
-            <Button type="submit" onClick={saveIntegratedData}>
+            <Button onClick={saveIntegratedData} className={BUTTON_THEME.primary}>
               덮어쓰기
             </Button>
           </DialogFooter>
