@@ -2,21 +2,22 @@ import {
   CARRIER_OPTIONS,
   CONTRACT_OPTIONS,
   JOIN_TYPE_OPTIONS,
-  COMPANY_OPTIONS,
+  COMPANY_TEXT_COLORS,
   PLAN_BG_COLORS,
 } from '@/styles/common';
 
 /**
  * 문자열을 기반으로 일관된 색상 인덱스를 반환합니다.
  * @param text - 색상을 결정할 텍스트
+ * @param colorsArray - 색상 배열
  * @returns 색상 배열의 인덱스
  */
-function getColorIndex(text: string): number {
+export function getColorIndex(text: string, colorsArray: string[]): number {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     hash = text.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return Math.abs(hash) % PLAN_BG_COLORS.length;
+  return Math.abs(hash) % colorsArray.length;
 }
 
 /**
@@ -44,8 +45,8 @@ export function getDynamicCellStyle(rowIndex: number, cellValue: string): string
     // 요금제
     case 2:
       // 요금제 이름을 기반으로 배경색 적용
-      const colorIndex = getColorIndex(value);
-      return `${PLAN_BG_COLORS[colorIndex]} text-gray-800 font-medium`;
+      const planColorIndex = getColorIndex(value, PLAN_BG_COLORS);
+      return `${PLAN_BG_COLORS[planColorIndex]} text-gray-800 font-medium`;
 
     // 가입 유형
     case 3:
@@ -53,7 +54,9 @@ export function getDynamicCellStyle(rowIndex: number, cellValue: string): string
 
     // 업체명
     case 4:
-      return COMPANY_OPTIONS.find(opt => opt.value === value)?.style || 'text-gray-800 font-bold';
+      // 업체명 이름을 기반으로 텍스트 색상 적용
+      const companyColorIndex = getColorIndex(value, COMPANY_TEXT_COLORS);
+      return `${COMPANY_TEXT_COLORS[companyColorIndex]} font-bold`;
       
     default:
       return 'text-gray-600';

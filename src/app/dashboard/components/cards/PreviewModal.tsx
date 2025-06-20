@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DataSet } from '@/types/dashboard';
 import { BUTTON_THEME, cardStyles } from '@/styles/common';
+import { useToast } from '@/hooks/use-toast';
 
 interface PreviewModalProps {
   previewModalOpen: boolean;
@@ -19,6 +20,22 @@ export default function PreviewModal({
   onLoadDataSet,
   onDeleteDataSet,
 }: PreviewModalProps) {
+  const { toast } = useToast();
+
+  const handleDelete = () => {
+    if (!selectedDataSet) return;
+    
+    if (window.confirm(`"${selectedDataSet.name}" 데이터셋을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+      onDeleteDataSet(selectedDataSet);
+      setPreviewModalOpen(false);
+      toast({
+        title: "삭제 완료",
+        description: `"${selectedDataSet.name}" 데이터셋이 삭제되었습니다.`,
+        variant: "default",
+      });
+    }
+  };
+
   return (
     <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
       <DialogContent className="max-w-7xl h-[90vh] p-6 flex flex-col">
@@ -39,7 +56,7 @@ export default function PreviewModal({
                   불러오기
                 </button>
                 <button
-                  onClick={() => onDeleteDataSet(selectedDataSet)}
+                  onClick={handleDelete}
                   className={BUTTON_THEME.danger_fill + " px-4 py-2 text-sm"}
                 >
                   삭제

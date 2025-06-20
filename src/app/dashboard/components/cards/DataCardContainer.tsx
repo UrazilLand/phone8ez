@@ -6,6 +6,7 @@ import { savePublicDataToStorage } from '../../utils/dashboardUtils';
 import DataCardBody from './DataCardBody';
 import DataCardModal from './DataCardModal';
 import PreviewModal from './PreviewModal';
+import { useToast } from "@/hooks/use-toast";
 
 interface DataCardProps {
   dataSets: DataSet[];
@@ -28,6 +29,7 @@ function getDownloadFileName() {
 }
 
 export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated }: DataCardProps) {
+  const { toast } = useToast();
   const [selectedDataSet, setSelectedDataSet] = useState<DataSet | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,9 +108,27 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
   };
 
   const handleDeleteDataSet = (dataSet: DataSet) => {
-    setDataSets((prev: DataSet[]) => prev.filter((d: DataSet) => d.id !== dataSet.id));
-    setPreviewModalOpen(false);
-    setError(null);
+    // 삭제 확인
+    if (window.confirm(`"${dataSet.name}" 데이터셋을 삭제하시겠습니까?`)) {
+      console.log('삭제 전 데이터셋 개수:', dataSets.length);
+      console.log('삭제할 데이터셋:', dataSet);
+      
+      setDataSets((prev: DataSet[]) => {
+        const filtered = prev.filter((d: DataSet) => d.id !== dataSet.id);
+        console.log('삭제 후 데이터셋 개수:', filtered.length);
+        console.log('남은 데이터셋들:', filtered.map(d => ({ id: d.id, name: d.name, type: d.type })));
+        return filtered;
+      });
+      
+      setPreviewModalOpen(false);
+      setError(null);
+      
+      // 삭제 완료 알림
+      toast({
+        title: "삭제 완료",
+        description: `"${dataSet.name}" 데이터셋이 성공적으로 삭제되었습니다.`,
+      });
+    }
   };
 
   // 토글 스위치 핸들러

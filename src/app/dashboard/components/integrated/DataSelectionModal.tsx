@@ -77,14 +77,17 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
         LG: { companies: [], plansByCompany: {}, monthlyFees: [] },
       };
 
+      // '통합' 데이터셋을 제외한 일반 데이터셋만 필터링
+      const filteredDataSets = dataSets.filter(dataSet => dataSet.name !== '통합');
+
       carriers.forEach(carrier => {
         // 업체명 추출
-        const companies = extractCompaniesByCarrier(dataSets, carrier);
+        const companies = extractCompaniesByCarrier(filteredDataSets, carrier);
         
         // 각 업체별 요금제 추출
         const plansByCompany: Record<string, string[]> = {};
         companies.forEach(company => {
-          plansByCompany[company] = extractPlansByCarrierAndCompany(dataSets, carrier, company);
+          plansByCompany[company] = extractPlansByCarrierAndCompany(filteredDataSets, carrier, company);
         });
         
         // 월 요금제 추출
