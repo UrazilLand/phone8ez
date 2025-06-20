@@ -177,7 +177,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl h-[600px] overflow-hidden bg-white">
+      <DialogContent className="max-w-2xl h-[600px] flex flex-col bg-white">
         <DialogHeader className="flex-shrink-0 pb-2">
           <DialogTitle className="flex items-center gap-2 text-gray-800">
             <Filter className="w-5 h-5" />
@@ -188,23 +188,23 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg flex-shrink-0">
             <TabsTrigger value="SK" className="data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-sm rounded-md">SK</TabsTrigger>
             <TabsTrigger value="KT" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm rounded-md">KT</TabsTrigger>
             <TabsTrigger value="LG" className="data-[state=active]:bg-white data-[state=active]:text-pink-700 data-[state=active]:shadow-sm rounded-md">LG</TabsTrigger>
           </TabsList>
 
-          <TabsContent value={activeTab} className="mt-4 flex-1 overflow-hidden">
-            <div className="grid grid-cols-4 gap-4 h-full">
+          <TabsContent value={activeTab} className="mt-4 flex-1 overflow-y-auto pr-4">
+            <div className="grid grid-cols-4 gap-4">
               
               {/* 1열: 업체명 */}
-              <div className="space-y-3 h-full flex flex-col">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
                   <Building2 className="w-4 h-4" />
                   업체명 선택
                 </div>
-                <div className="space-y-2 flex-1 overflow-y-auto pr-2">
+                <div className="space-y-2">
                   {currentCarrierData.companies.map((company) => (
                     <Button
                       key={company}
@@ -218,12 +218,12 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
               </div>
 
               {/* 2열: 요금제 */}
-              <div className="space-y-3 h-full flex flex-col">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
                   <CreditCard className="w-4 h-4" />
                   요금제 선택
                 </div>
-                <div className="space-y-2 flex-1 overflow-y-auto pr-2 text-gray-800">
+                <div className="space-y-2 text-gray-800">
                   {activeSelection.selectedCompany ? (
                     currentPlans.length > 0 ? (
                       currentPlans.map((plan) => {
@@ -240,21 +240,21 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2">해당 업체의 요금제가 없습니다.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">해당 업체의 요금제가 없습니다.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2">왼쪽에서 업체를 선택하세요.</div>
+                    <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
 
               {/* 3열: 월 요금제 1 */}
-              <div className="space-y-3 h-full flex flex-col">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
                   <DollarSign className="w-4 h-4" />
                   월 요금제 1
                 </div>
-                <div className="space-y-2 flex-1 overflow-y-auto pr-2">
+                <div className="space-y-2">
                   {activeSelection.selectedCompany ? (
                     currentPlans.length > 0 ? (
                       currentPlans.map((plan) => {
@@ -288,21 +288,21 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2">해당 업체의 요금제가 없습니다.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">해당 업체의 요금제가 없습니다.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2">왼쪽에서 업체를 선택하세요.</div>
+                    <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
 
               {/* 4열: 월 요금제 2 */}
-              <div className="space-y-3 h-full flex flex-col">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 flex-shrink-0">
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
                   <DollarSign className="w-4 h-4" />
                   월 요금제 2
                 </div>
-                <div className="space-y-2 flex-1 overflow-y-auto pr-2">
+                <div className="space-y-2">
                   {activeSelection.selectedCompany ? (
                     currentPlans.length > 0 ? (
                       currentPlans.map((plan) => {
@@ -336,10 +336,10 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2">해당 업체의 요금제가 없습니다.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">해당 업체의 요금제가 없습니다.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2">왼쪽에서 업체를 선택하세요.</div>
+                    <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
