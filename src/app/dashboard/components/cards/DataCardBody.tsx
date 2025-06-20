@@ -38,6 +38,9 @@ export default function DataCardBody({
   onMouseUp,
   onMouseLeave,
 }: DataCardBodyProps) {
+  const integratedDataSet = dataSets.find((d) => d.type === 'integrated');
+  const otherDataSets = dataSets.filter((d) => d.type !== 'integrated');
+
   return (
     <div className={`${cardStyles} py-4 px-4`}>
       {/* 헤더 */}
@@ -91,20 +94,28 @@ export default function DataCardBody({
                 저장된 데이터가 없습니다.
               </div>
             ) : (
-              dataSets.map((dataSet) => (
-                <button
-                  key={dataSet.id}
-                  onClick={() => onPreviewDataSet(dataSet)}
-                  className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap ${
-                    dataSet.type === 'integrated'
-                      ? 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-700'
-                      : 'bg-gray-100 border-gray-300 text-gray-800 hover:bg-blue-600 hover:text-white hover:border-blue-700'
-                  }`}
-                  style={{ flex: '0 0 auto' }}
-                >
-                  {dataSet.name}
-                </button>
-              ))
+              <>
+                {integratedDataSet && (
+                  <button
+                    key={integratedDataSet.id}
+                    onClick={() => onPreviewDataSet(integratedDataSet)}
+                    className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-700`}
+                    style={{ flex: '0 0 auto' }}
+                  >
+                    {integratedDataSet.name}
+                  </button>
+                )}
+                {otherDataSets.map((dataSet) => (
+                  <button
+                    key={dataSet.id}
+                    onClick={() => onPreviewDataSet(dataSet)}
+                    className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-gray-100 border-gray-300 text-gray-800 hover:bg-blue-600 hover:text-white hover:border-blue-700`}
+                    style={{ flex: '0 0 auto' }}
+                  >
+                    {dataSet.name}
+                  </button>
+                ))}
+              </>
             )}
           </div>
         </div>

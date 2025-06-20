@@ -12,6 +12,15 @@ import {
   createCellWithMonthlyFee 
 } from '@/app/dashboard/utils/integrated/dataExtraction';
 import { getDynamicCellStyle } from '@/app/dashboard/utils/common/colorUtils';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface IntegratedSheetProps {
   dataSets: DataSet[];
@@ -29,6 +38,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
 
   // 필터 모달 상태 관리
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isOverwriteModalOpen, setIsOverwriteModalOpen] = useState(false);
 
   // Undo/Redo 상태 관리
   const [
@@ -41,7 +51,17 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
   ] = useUndo<string[][]>(sheetData);
 
   const handleSave = () => {
-    // 시트 데이터를 DataSet 형식으로 변환하여 저장
+    const existingIntegratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
+    if (existingIntegratedDataSet) {
+      setIsOverwriteModalOpen(true);
+    } else {
+      saveIntegratedData();
+    }
+  };
+
+  const saveIntegratedData = () => {
+    const existingIntegratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
+    
     const newSheetData: SheetData = {
       sheetData: currentSheetData,
       carrier: currentSheetData[0][1] || '',
@@ -60,19 +80,37 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
       contractTypeRepeatCounts: {},
     };
 
-    const newDataSet: DataSet = {
-      id: Date.now().toString(),
-      name: `통합 데이터 세트 ${dataSets.length + 1}`,
-      type: 'integrated',
-      createdAt: new Date().toISOString(),
-      data: newSheetData,
-    };
+    if (existingIntegratedDataSet) {
+      const updatedDataSets = dataSets.map(dataset => 
+        dataset.type === 'integrated' 
+          ? { ...dataset, data: newSheetData, createdAt: new Date().toISOString() }
+          : dataset
+      );
+      setDataSets(updatedDataSets);
+      toast({
+        title: "덮어쓰기 완료",
+        description: "통합 데이터가 성공적으로 덮어쓰기되었습니다.",
+      });
+    } else {
+      const newDataSet: DataSet = {
+        id: 'integrated',
+        name: "통합",
+        type: 'integrated',
+        createdAt: new Date().toISOString(),
+        data: newSheetData,
+      };
+      setDataSets([...dataSets, newDataSet]);
+      toast({
+        title: "저장 완료",
+        description: "통합 데이터가 성공적으로 저장되었습니다.",
+      });
+    }
+    
+    setIsOverwriteModalOpen(false);
+  };
 
-    setDataSets([...dataSets, newDataSet]);
-    toast({
-      title: "저장 완료",
-      description: "데이터가 성공적으로 저장되었습니다.",
-    });
+  const handleCancelOverwrite = () => {
+    setIsOverwriteModalOpen(false);
   };
 
   const handleReset = useCallback(() => {
@@ -225,6 +263,26 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
         dataSets={dataSets}
         publicData={publicData}
       />
+
+      {/* 덮어쓰기 확인 모달 */}
+      <Dialog open={isOverwriteModalOpen} onOpenChange={setIsOverwriteModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>덮어쓰기 확인</DialogTitle>
+            <DialogDescription>
+              이미 '통합' 데이터가 존재합니다. 덮어쓰시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelOverwrite}>
+              취소
+            </Button>
+            <Button type="submit" onClick={saveIntegratedData}>
+              덮어쓰기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
