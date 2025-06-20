@@ -4,6 +4,7 @@ import { useUndo } from '@/hooks/use-undo';
 import { DataSet, SheetData } from '@/types/dashboard';
 import IntegratedHeader from './IntegratedHeader';
 import DataSelectionModal from './DataSelectionModal';
+import ModelInfoModal from './ModelInfoModal';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT, BUTTON_THEME } from '@/styles/common';
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +31,14 @@ interface IntegratedSheetProps {
   reloadKey: number;
 }
 
+interface ModelInfo {
+  modelName: string;
+  manufacturer: string;
+  releaseDate: string;
+  description: string;
+  specifications: string;
+}
+
 const getInitialSheetData = (dataSets: DataSet[]): string[][] => {
   const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
   if (integratedDataSet && integratedDataSet.data.sheetData && integratedDataSet.data.sheetData.length > 0) {
@@ -44,6 +53,9 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
   const [sheetData, setSheetData] = useState<string[][]>(() => getInitialSheetData(dataSets));
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isOverwriteModalOpen, setIsOverwriteModalOpen] = useState(false);
+  const [isModelInfoModalOpen, setIsModelInfoModalOpen] = useState(false);
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number>(-1);
+  const [modelInfoData, setModelInfoData] = useState<Record<number, ModelInfo>>({});
 
   const [
     currentSheetData,
@@ -156,6 +168,33 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
 
   const handleCloseFilterModal = () => {
     setIsFilterModalOpen(false);
+  };
+
+  const handleOpenModelInfoModal = (rowIndex: number) => {
+    setSelectedRowIndex(rowIndex);
+    setIsModelInfoModalOpen(true);
+  };
+
+  const handleCloseModelInfoModal = () => {
+    setIsModelInfoModalOpen(false);
+    setSelectedRowIndex(-1);
+  };
+
+  const handleSaveModelInfo = (modelInfo: ModelInfo) => {
+    setModelInfoData(prev => ({
+      ...prev,
+      [selectedRowIndex]: modelInfo
+    }));
+    
+    // A열에 모델명 표시
+    const newSheetData = [...currentSheetData];
+    newSheetData[selectedRowIndex][0] = modelInfo.modelName;
+    setCurrentSheetData(newSheetData);
+    
+    toast({
+      title: "모델정보 저장 완료",
+      description: `${modelInfo.modelName} 모델 정보가 저장되었습니다.`,
+    });
   };
 
   const applySelectedDataToSheet = (allSelections: Record<string, any>) => {
@@ -301,6 +340,15 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                               ? getDynamicCellStyle(rowIndex, cell)
                               : 'text-gray-600'
                           }`}
+                          onDoubleClick={() => {
+                            // A열 6행부터 더블클릭 시 모델정보 모달 열기
+                            if (colIndex === 0 && rowIndex >= 5) {
+                              handleOpenModelInfoModal(rowIndex);
+                            }
+                          }}
+                          style={{
+                            cursor: colIndex === 0 && rowIndex >= 5 ? 'pointer' : 'default'
+                          }}
                         >
                           {/* 3행(rowIndex===2)의 경우, '|' 앞의 요금제 이름만 표시 */}
                           {rowIndex === 2 && colIndex > 0 ? cell.split('|')[0] : cell}
@@ -322,6 +370,15 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
         onApply={applySelectedDataToSheet}
         dataSets={dataSets}
         publicData={publicData}
+      />
+
+      {/* 모델정보 입력 모달 */}
+      <ModelInfoModal
+        isOpen={isModelInfoModalOpen}
+        onClose={handleCloseModelInfoModal}
+        onSave={handleSaveModelInfo}
+        initialData={selectedRowIndex >= 0 ? modelInfoData[selectedRowIndex] : undefined}
+        rowIndex={selectedRowIndex}
       />
 
       {/* 덮어쓰기 확인 모달 */}
