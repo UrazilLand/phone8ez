@@ -19,6 +19,7 @@ interface DataInputHeaderProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  onApplyData?: (data: any) => void;
 }
 
 export default function DataInputHeader({
@@ -30,6 +31,7 @@ export default function DataInputHeader({
   onRedo,
   canUndo,
   canRedo,
+  onApplyData,
 }: DataInputHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -128,6 +130,7 @@ export default function DataInputHeader({
         onClose={() => setIsModalOpen(false)}
         dataSets={dataSets}
         setDataSets={setDataSets}
+        onApplyData={onApplyData}
       />
 
       <SaveDataModal

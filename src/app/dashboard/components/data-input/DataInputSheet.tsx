@@ -4,24 +4,27 @@ import { useUndo } from '@/hooks/use-undo';
 import { DataSet, SheetData } from '@/types/dashboard';
 import DataInputHeader from './DataInputHeader';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 
 interface DataInputSheetProps {
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
+  onApplyData?: (data: any) => void;
 }
 
-export default function DataInputSheet({ dataSets, setDataSets }: DataInputSheetProps) {
+export interface DataInputSheetRef {
+  fillAllData: (modalData: any) => void;
+}
+
+const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dataSets, setDataSets, onApplyData }, ref) => {
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
   
-  // 시트 데이터 상태 관리
   const [sheetData, setSheetData] = useState<string[][]>(
     Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''))
   );
 
-  // Undo/Redo 상태 관리
   const [
     currentSheetData,
     setCurrentSheetData,
@@ -31,7 +34,161 @@ export default function DataInputSheet({ dataSets, setDataSets }: DataInputSheet
     canRedo
   ] = useUndo<string[][]>(sheetData);
 
-  // 엑셀 데이터 붙여넣기 처리 함수
+  useImperativeHandle(ref, () => ({
+    fillAllData: (modalData: any) => {
+      const { 
+        carrier, supportItems, joinItems, 
+        planSubInputs, planRepeatCount, 
+        companySubInputs, companyRepeatCount 
+      } = modalData;
+      
+      const newSheetData = currentSheetData.map(row => [...row]);
+
+      // 1. 통신사 (0행)
+      if (carrier) {
+        for (let colIndex = 1; colIndex < newSheetData[0].length; colIndex++) {
+          newSheetData[0][colIndex] = carrier;
+        }
+      }
+      
+      // 2. 지원 구분 (1행)
+      if (supportItems && supportItems.length > 0) {
+        const pattern: string[] = [];
+        supportItems.forEach((item: any) => {
+          const repeatCount = parseInt(item.value) || 0;
+          for (let i = 0; i < repeatCount; i++) {
+            pattern.push(item.label);
+          }
+        });
+
+        if (pattern.length > 0) {
+          for (let colIndex = 1; colIndex < newSheetData[1].length; colIndex++) {
+            newSheetData[1][colIndex] = pattern[(colIndex - 1) % pattern.length];
+          }
+        } else {
+          for (let colIndex = 1; colIndex < newSheetData[1].length; colIndex++) {
+            newSheetData[1][colIndex] = '';
+          }
+        }
+      }
+
+      // 3. 요금제 분류 (2행)
+      if (planSubInputs && planSubInputs.some((val: string) => val.trim() !== '')) {
+        const subPattern = planSubInputs.filter((val: string) => val.trim() !== '');
+        const repeatCount = parseInt(planRepeatCount) || 1;
+        
+        const finalPattern: string[] = [];
+        for (let i = 0; i < repeatCount; i++) {
+          finalPattern.push(...subPattern);
+        }
+
+        if (finalPattern.length > 0) {
+          for (let colIndex = 1; colIndex < newSheetData[2].length; colIndex++) {
+            newSheetData[2][colIndex] = finalPattern[(colIndex - 1) % finalPattern.length];
+          }
+        } else {
+          for (let colIndex = 1; colIndex < newSheetData[2].length; colIndex++) {
+            newSheetData[2][colIndex] = '';
+          }
+        }
+      }
+      
+      // 4. 가입 유형 (3행)
+      if (joinItems && joinItems.length > 0) {
+        const pattern: string[] = [];
+        joinItems.forEach((item: any) => {
+          const repeatCount = parseInt(item.value) || 0;
+          for (let i = 0; i < repeatCount; i++) {
+            pattern.push(item.label);
+          }
+        });
+
+        if (pattern.length > 0) {
+          for (let colIndex = 1; colIndex < newSheetData[3].length; colIndex++) {
+            newSheetData[3][colIndex] = pattern[(colIndex - 1) % pattern.length];
+          }
+        } else {
+            for (let colIndex = 1; colIndex < newSheetData[3].length; colIndex++) {
+            newSheetData[3][colIndex] = '';
+          }
+        }
+      }
+
+      // 5. 업체명 분류 (4행)
+      if (companySubInputs && companySubInputs.some((val: string) => val.trim() !== '')) {
+        const subPattern = companySubInputs.filter((val: string) => val.trim() !== '');
+        const repeatCount = parseInt(companyRepeatCount) || 1;
+
+        const finalPattern: string[] = [];
+        for (let i = 0; i < repeatCount; i++) {
+          finalPattern.push(...subPattern);
+        }
+
+        if (finalPattern.length > 0) {
+          for (let colIndex = 1; colIndex < newSheetData[4].length; colIndex++) {
+            newSheetData[4][colIndex] = finalPattern[(colIndex - 1) % finalPattern.length];
+          }
+        } else {
+          for (let colIndex = 1; colIndex < newSheetData[4].length; colIndex++) {
+            newSheetData[4][colIndex] = '';
+          }
+        }
+      }
+      
+      setCurrentSheetData(newSheetData);
+    }
+  }));
+
+  const handleSave = () => {
+    // 시트 데이터를 DataSet 형식으로 변환하여 저장
+    const newSheetData: SheetData = {
+      sheetData: currentSheetData,
+      carrier: currentSheetData[0][1] || '',
+      contract: currentSheetData[1][1] || '',
+      planOptions: [],
+      companyOptions: [],
+      joinTypeOrder: [],
+      contractTypeOrder: [],
+      planInput: '',
+      planFields: [],
+      planRepeatCount: '',
+      companyInput: '',
+      companyFields: [],
+      policyInput: '',
+      joinTypeRepeatCounts: {},
+      contractTypeRepeatCounts: {},
+    };
+
+    const newDataSet: DataSet = {
+      id: Date.now().toString(),
+      name: `데이터 세트 ${dataSets.length + 1}`,
+      type: 'normal',
+      createdAt: new Date().toISOString(),
+      data: newSheetData,
+    };
+
+    setDataSets([...dataSets, newDataSet]);
+    toast({
+      title: "저장 완료",
+      description: "데이터가 성공적으로 저장되었습니다.",
+    });
+  };
+
+  const handleReset = useCallback(() => {
+    const emptySheet = Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
+    setCurrentSheetData(emptySheet);
+    toast({
+      title: "초기화 완료",
+      description: "시트가 초기화되었습니다.",
+    });
+  }, [setCurrentSheetData, toast]);
+
+  const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
+    const newSheetData = currentSheetData.map(row => [...row]);
+    newSheetData[rowIndex][colIndex] = value;
+    setCurrentSheetData(newSheetData);
+  };
+  
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
     
@@ -115,63 +272,12 @@ export default function DataInputSheet({ dataSets, setDataSets }: DataInputSheet
     const maxColsInPastedData = Math.max(...pastedData.map(row => row.length));
   }, [currentSheetData, setCurrentSheetData, toast]);
 
-  // 키보드 이벤트 처리 (Ctrl+V, Ctrl+Shift+V)
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
       // 붙여넣기 이벤트는 handlePaste에서 처리됨
       return;
     }
   }, []);
-
-  const handleSave = () => {
-    // 시트 데이터를 DataSet 형식으로 변환하여 저장
-    const newSheetData: SheetData = {
-      sheetData: currentSheetData,
-      carrier: currentSheetData[0][1] || '',
-      contract: currentSheetData[1][1] || '',
-      planOptions: [],
-      companyOptions: [],
-      joinTypeOrder: [],
-      contractTypeOrder: [],
-      planInput: '',
-      planFields: [],
-      planRepeatCount: '',
-      companyInput: '',
-      companyFields: [],
-      policyInput: '',
-      joinTypeRepeatCounts: {},
-      contractTypeRepeatCounts: {},
-    };
-
-    const newDataSet: DataSet = {
-      id: Date.now().toString(),
-      name: `데이터 세트 ${dataSets.length + 1}`,
-      type: 'normal',
-      createdAt: new Date().toISOString(),
-      data: newSheetData,
-    };
-
-    setDataSets([...dataSets, newDataSet]);
-    toast({
-      title: "저장 완료",
-      description: "데이터가 성공적으로 저장되었습니다.",
-    });
-  };
-
-  const handleReset = useCallback(() => {
-    const emptySheet = Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
-    setCurrentSheetData(emptySheet);
-    toast({
-      title: "초기화 완료",
-      description: "시트가 초기화되었습니다.",
-    });
-  }, [setCurrentSheetData, toast]);
-
-  const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
-    const newSheetData = currentSheetData.map(row => [...row]);
-    newSheetData[rowIndex][colIndex] = value;
-    setCurrentSheetData(newSheetData);
-  };
 
   return (
     <div className="flex flex-col w-full h-full">
@@ -184,9 +290,8 @@ export default function DataInputSheet({ dataSets, setDataSets }: DataInputSheet
         onRedo={redo}
         canUndo={canUndo()}
         canRedo={canRedo()}
+        onApplyData={onApplyData}
       />
-      
-      {/* 테이블 카드 */}
       <div 
         ref={tableRef}
         className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 mb-4 h-[800px]"
@@ -232,4 +337,7 @@ export default function DataInputSheet({ dataSets, setDataSets }: DataInputSheet
       </div>
     </div>
   );
-} 
+});
+
+DataInputSheet.displayName = 'DataInputSheet';
+export default DataInputSheet; 

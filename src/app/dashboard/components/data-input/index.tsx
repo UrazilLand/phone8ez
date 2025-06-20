@@ -1,6 +1,7 @@
 "use client";
-import DataInputSheet from './DataInputSheet';
+import DataInputSheet, { DataInputSheetRef } from './DataInputSheet';
 import { DataSet } from '@/types/dashboard';
+import { useRef } from 'react';
 
 interface DataInputTabProps {
   dataSets: DataSet[];
@@ -8,5 +9,24 @@ interface DataInputTabProps {
 }
 
 export default function DataInputTab({ dataSets, setDataSets }: DataInputTabProps) {
-  return <DataInputSheet dataSets={dataSets} setDataSets={setDataSets} />;
+  const sheetRef = useRef<DataInputSheetRef>(null);
+
+  const handleApplyData = (modalData: any) => {
+    console.log('handleApplyData called with:', modalData);
+    
+    if (sheetRef.current) {
+      sheetRef.current.fillAllData(modalData);
+    } else {
+      console.log('sheetRef not available');
+    }
+  };
+
+  return (
+    <DataInputSheet 
+      ref={sheetRef}
+      dataSets={dataSets} 
+      setDataSets={setDataSets}
+      onApplyData={handleApplyData}
+    />
+  );
 } 

@@ -31,6 +31,7 @@ interface DataInputModalProps {
   onClose: () => void;
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
+  onApplyData?: (data: any) => void;
 }
 
 // 드래그 가능한 항목 컴포넌트
@@ -60,6 +61,7 @@ export default function DataInputModal({
   onClose,
   dataSets,
   setDataSets,
+  onApplyData,
 }: DataInputModalProps) {
   // 지원 구분 항목들 (CONTRACT_OPTIONS 참고)
   const [supportItems, setSupportItems] = useState([
@@ -224,6 +226,31 @@ export default function DataInputModal({
     setCompanySubInputs(['', '', '', '', '', '', '', '']);
   };
 
+  // 적용 버튼 클릭 핸들러
+  const handleApply = () => {
+    const modalData = {
+      carrier: selectedCarrier,
+      supportItems,
+      joinItems,
+      planMainInput,
+      planRepeatCount,
+      planSubInputs,
+      companyMainInput,
+      companyRepeatCount,
+      companySubInputs,
+    };
+
+    console.log('Modal data being sent:', modalData);
+    console.log('Support items:', supportItems);
+    console.log('Join items:', joinItems);
+
+    if (onApplyData) {
+      onApplyData(modalData);
+    }
+    
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -277,13 +304,24 @@ export default function DataInputModal({
                                 <GripVertical className="w-6 h-4 text-gray-400" />
                                 <span className={`text-sm ${item.style}`}>{item.label}</span>
                               </div>
-                              <input 
-                                type="number" 
-                                placeholder="반복 횟수" 
-                                value={item.value}
-                                onChange={(e) => handleSupportValueChange(item.id, e.target.value)}
-                                className="w-24 h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
+                              <div 
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input 
+                                  type="number" 
+                                  placeholder="반복 횟수" 
+                                  value={item.value}
+                                  onChange={(e) => handleSupportValueChange(item.id, e.target.value)}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onTouchStart={(e) => e.stopPropagation()}
+                                  onPointerDown={(e) => e.stopPropagation()}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-24 h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
                             </div>
                           </SortableItem>
                         ))}
@@ -315,13 +353,24 @@ export default function DataInputModal({
                               <GripVertical className="w-6 h-4 text-gray-400" />
                               <span className={`text-sm px-2 py-1 rounded ${item.style}`}>{item.label}</span>
                             </div>
-                            <input 
-                              type="number" 
-                              placeholder="반복 횟수" 
-                              value={item.value}
-                              onChange={(e) => handleJoinValueChange(item.id, e.target.value)}
-                              className="w-24 h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            <div 
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <input 
+                                type="number" 
+                                placeholder="반복 횟수" 
+                                value={item.value}
+                                onChange={(e) => handleJoinValueChange(item.id, e.target.value)}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-24 h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
                           </div>
                         </SortableItem>
                       ))}
@@ -366,7 +415,7 @@ export default function DataInputModal({
                       <input 
                         key={index}
                         type="text" 
-                        placeholder={`요금제 ${index + 1}`}
+                        placeholder={`입력창 ${index + 1}`}
                         value={value}
                         onChange={(e) => handlePlanSubInputChange(index, e.target.value)}
                         className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -380,7 +429,7 @@ export default function DataInputModal({
                       <input 
                         key={index + 4}
                         type="text" 
-                        placeholder={`요금제 ${index + 5}`}
+                        placeholder={`입력창 ${index + 5}`}
                         value={value}
                         onChange={(e) => handlePlanSubInputChange(index + 4, e.target.value)}
                         className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -423,7 +472,7 @@ export default function DataInputModal({
                       <input 
                         key={index}
                         type="text" 
-                        placeholder={`업체명 ${index + 1}`}
+                        placeholder={`입력창 ${index + 1}`}
                         value={value}
                         onChange={(e) => handleCompanySubInputChange(index, e.target.value)}
                         className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -437,7 +486,7 @@ export default function DataInputModal({
                       <input 
                         key={index + 4}
                         type="text" 
-                        placeholder={`업체명 ${index + 5}`}
+                        placeholder={`입력창 ${index + 5}`}
                         value={value}
                         onChange={(e) => handleCompanySubInputChange(index + 4, e.target.value)}
                         className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -460,10 +509,7 @@ export default function DataInputModal({
           </Button>
           <Button 
             className={`${BUTTON_THEME.primary}`}
-            onClick={() => {
-              // 적용 로직 구현 예정
-              console.log('적용 버튼 클릭');
-            }}
+            onClick={handleApply}
           >
             적용
           </Button>
