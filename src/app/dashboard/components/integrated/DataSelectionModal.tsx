@@ -24,7 +24,7 @@ interface PlanSelection {
 type PlanSelections = Record<string, PlanSelection>; // { [planName]: PlanSelection }
 
 interface CarrierSpecificState {
-    selectedCompany: string | null;
+    selectedCompanies: string[];
     selectionsByCompany: Record<string, PlanSelections>; // { [companyName]: PlanSelections }
 }
 
@@ -35,7 +35,7 @@ interface ExtractedDataByCarrier {
 }
 
 const getInitialCarrierState = (): CarrierSpecificState => ({
-    selectedCompany: null,
+    selectedCompanies: [],
     selectionsByCompany: {},
 });
 
@@ -51,6 +51,9 @@ interface DataSelectionModalProps {
 export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets, publicData }: DataSelectionModalProps) {
   const [activeTab, setActiveTab] = useState('SK');
   
+  // 현재 선택된 '업체' (요금제 선택 UI를 위해 필요)
+  const [currentDisplayCompany, setCurrentDisplayCompany] = useState<string | null>(null);
+
   const [selectionByCarrier, setSelectionByCarrier] = useState<Record<string, CarrierSpecificState>>({
     SK: getInitialCarrierState(),
     KT: getInitialCarrierState(),
@@ -100,20 +103,29 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
 
   // --- 이벤트 핸들러 ---
   const handleCompanySelect = (company: string) => {
-    setSelectionByCarrier(prev => ({
-        ...prev,
-        [activeTab]: {
-            ...prev[activeTab],
-            selectedCompany: company,
-        }
-    }));
+    // UI 표시용 현재 업체 업데이트
+    setCurrentDisplayCompany(company);
+
+    setSelectionByCarrier(prev => {
+        const currentSelected = prev[activeTab].selectedCompanies;
+        const newSelected = currentSelected.includes(company)
+            ? currentSelected.filter(c => c !== company)
+            : [...currentSelected, company];
+        
+        return {
+            ...prev,
+            [activeTab]: {
+                ...prev[activeTab],
+                selectedCompanies: newSelected,
+            }
+        };
+    });
   };
 
   const handlePlanToggle = (plan: string) => {
-    const { selectedCompany, selectionsByCompany } = selectionByCarrier[activeTab];
-    if (!selectedCompany) return;
+    if (!currentDisplayCompany) return;
 
-    const currentCompanySelections = selectionsByCompany[selectedCompany] || {};
+    const currentCompanySelections = selectionByCarrier[activeTab].selectionsByCompany[currentDisplayCompany] || {};
     const isSelected = plan in currentCompanySelections;
     const newSelections = { ...currentCompanySelections };
 
@@ -127,17 +139,19 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
         ...prev,
         [activeTab]: {
             ...prev[activeTab],
-            selectionsByCompany: { ...selectionsByCompany, [selectedCompany]: newSelections }
+            selectionsByCompany: { 
+                ...prev[activeTab].selectionsByCompany, 
+                [currentDisplayCompany]: newSelections 
+            }
         }
     }));
   };
 
   const handleMonthlyFeeChange = (plan: string, feeType: 'monthlyFee1' | 'monthlyFee2', fee: string | null) => {
-    const { selectedCompany, selectionsByCompany } = selectionByCarrier[activeTab];
-    if (!selectedCompany) return;
+    if (!currentDisplayCompany) return;
 
     const feeAsNumber = fee ? parseInt(fee, 10) : null;
-    const currentCompanySelections = selectionsByCompany[selectedCompany] || {};
+    const currentCompanySelections = selectionByCarrier[activeTab].selectionsByCompany[currentDisplayCompany] || {};
     const currentPlanSelection = currentCompanySelections[plan] || { monthlyFee1: null, monthlyFee2: null };
     
     const newPlanSelection = { ...currentPlanSelection, [feeType]: feeAsNumber };
@@ -147,7 +161,10 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
         ...prev,
         [activeTab]: {
             ...prev[activeTab],
-            selectionsByCompany: { ...selectionsByCompany, [selectedCompany]: newSelections }
+            selectionsByCompany: { 
+                ...prev[activeTab].selectionsByCompany, 
+                [currentDisplayCompany]: newSelections 
+            }
         }
     }));
   };
@@ -159,18 +176,22 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   
   const handleReset = () => {
     setSelectionByCarrier(prev => ({ ...prev, [activeTab]: getInitialCarrierState() }));
+    setCurrentDisplayCompany(null);
   };
 
   // --- 렌더링을 위한 변수 ---
   const activeSelection = selectionByCarrier[activeTab];
-  const selectedPlans = activeSelection.selectedCompany ? activeSelection.selectionsByCompany[activeSelection.selectedCompany] || {} : {};
+  const selectedPlans = currentDisplayCompany ? activeSelection.selectionsByCompany[currentDisplayCompany] || {} : {};
   const currentCarrierData = extractedDataByCarrier[activeTab];
-  const currentPlans = activeSelection.selectedCompany ? currentCarrierData.plansByCompany[activeSelection.selectedCompany] || [] : [];
+  const currentPlans = currentDisplayCompany ? currentCarrierData.plansByCompany[currentDisplayCompany] || [] : [];
 
   const isAnySelectionMade = Object.values(selectionByCarrier).some(carrierState => {
-    if (!carrierState.selectedCompany) return false;
-    const companySelections = carrierState.selectionsByCompany[carrierState.selectedCompany];
-    return companySelections && Object.keys(companySelections).length > 0;
+    if (carrierState.selectedCompanies.length === 0) return false;
+    // 선택된 회사 중 하나라도 요금제 선택이 있는지 확인
+    return carrierState.selectedCompanies.some(company => {
+        const companySelections = carrierState.selectionsByCompany[company];
+        return companySelections && Object.keys(companySelections).length > 0;
+    });
   });
 
   return (
@@ -207,7 +228,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                     <Button
                       key={company}
                       onClick={() => handleCompanySelect(company)}
-                      className={`w-full justify-center text-center h-8 ${activeSelection.selectedCompany === company ? BUTTON_THEME.primary : BUTTON_THEME.secondary}`}
+                      className={`w-full justify-center text-center h-8 ${activeSelection.selectedCompanies.includes(company) ? BUTTON_THEME.primary : BUTTON_THEME.secondary}`}
                     >
                       {company}
                     </Button>
@@ -222,7 +243,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                   요금제 선택
                 </div>
                 <div className="space-y-2 text-gray-800">
-                  {activeSelection.selectedCompany ? (
+                  {currentDisplayCompany ? (
                     currentPlans.length > 0 ? (
                       currentPlans.map((plan) => {
                         const isSelected = plan in selectedPlans;
@@ -238,7 +259,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">해당 업체의 요금제가 없습니다.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
                     )
                   ) : (
                     <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
@@ -253,7 +274,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                   월 요금제 1
                 </div>
                 <div className="space-y-2">
-                  {activeSelection.selectedCompany ? (
+                  {currentDisplayCompany ? (
                     currentPlans.length > 0 ? (
                       currentPlans.map((plan) => {
                         const isSelected = plan in selectedPlans;
@@ -286,7 +307,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">해당 업체의 요금제가 없습니다.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
                     )
                   ) : (
                     <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
@@ -301,7 +322,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                   월 요금제 2
                 </div>
                 <div className="space-y-2">
-                  {activeSelection.selectedCompany ? (
+                  {currentDisplayCompany ? (
                     currentPlans.length > 0 ? (
                       currentPlans.map((plan) => {
                         const isSelected = plan in selectedPlans;
@@ -334,7 +355,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">해당 업체의 요금제가 없습니다.</div>
+                      <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>
                     )
                   ) : (
                     <div className="text-gray-500 text-sm p-2 text-center">왼쪽에서 업체를 선택하세요.</div>

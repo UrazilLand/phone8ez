@@ -159,47 +159,50 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     // 1. SK, KT, LG 순서로 모든 통신사 필터링
     carriers.forEach(carrier => {
       const selection = allSelections[carrier];
-      const company = selection?.selectedCompany;
+      const companies = selection?.selectedCompanies;
       const selectionsByCompany = selection?.selectionsByCompany;
 
-      if (company && selectionsByCompany) {
-        const plans = selectionsByCompany[company];
-        if (plans && Object.keys(plans).length > 0) {
-          const selectedPlanNames = Object.keys(plans);
+      if (companies && companies.length > 0 && selectionsByCompany) {
+        // 선택된 모든 회사를 순회
+        companies.forEach((company: string) => {
+          const plans = selectionsByCompany[company];
+          if (plans && Object.keys(plans).length > 0) {
+            const selectedPlanNames = Object.keys(plans);
 
-          // 2. 모든 데이터셋에서 필터 조건에 맞는 열 데이터를 임시 배열에 수집
-          for (const dataSet of dataSets) {
-            const sourceSheet = dataSet.data.sheetData;
-            if (!sourceSheet || sourceSheet.length < 5) continue;
+            // 2. 모든 데이터셋에서 필터 조건에 맞는 열 데이터를 임시 배열에 수집
+            for (const dataSet of dataSets) {
+              const sourceSheet = dataSet.data.sheetData;
+              if (!sourceSheet || sourceSheet.length < 5) continue;
 
-            for (let sourceCol = 1; sourceCol < sourceSheet[0].length; sourceCol++) {
-              const sourceCarrier = sourceSheet[0]?.[sourceCol]?.trim();
-              const sourceCompany = sourceSheet[4]?.[sourceCol]?.trim();
-              const sourcePlanCell = sourceSheet[2]?.[sourceCol]?.trim() || '';
-              const sourcePlanName = sourcePlanCell.split('|')[0];
+              for (let sourceCol = 1; sourceCol < sourceSheet[0].length; sourceCol++) {
+                const sourceCarrier = sourceSheet[0]?.[sourceCol]?.trim();
+                const sourceCompany = sourceSheet[4]?.[sourceCol]?.trim();
+                const sourcePlanCell = sourceSheet[2]?.[sourceCol]?.trim() || '';
+                const sourcePlanName = sourcePlanCell.split('|')[0];
 
-              if (
-                sourceCarrier === carrier &&
-                sourceCompany === company &&
-                selectedPlanNames.includes(sourcePlanName)
-              ) {
-                const columnData = [];
-                // 1~5행의 데이터만 가져오기
-                for (let row = 0; row < 5; row++) {
-                  columnData.push(sourceSheet[row]?.[sourceCol] || '');
+                if (
+                  sourceCarrier === carrier &&
+                  sourceCompany === company &&
+                  selectedPlanNames.includes(sourcePlanName)
+                ) {
+                  const columnData = [];
+                  // 1~5행의 데이터만 가져오기
+                  for (let row = 0; row < 5; row++) {
+                    columnData.push(sourceSheet[row]?.[sourceCol] || '');
+                  }
+                  filteredColumns.push(columnData);
+                  
+                  // 해당 열에 대한 월 요금 정보 저장
+                  const planSelection = plans[sourcePlanName];
+                  monthlyFeesForColumns.push({
+                    fee1: planSelection?.monthlyFee1 || null,
+                    fee2: planSelection?.monthlyFee2 || null,
+                  });
                 }
-                filteredColumns.push(columnData);
-                
-                // 해당 열에 대한 월 요금 정보 저장
-                const planSelection = plans[sourcePlanName];
-                monthlyFeesForColumns.push({
-                  fee1: planSelection?.monthlyFee1 || null,
-                  fee2: planSelection?.monthlyFee2 || null,
-                });
               }
             }
           }
-        }
+        });
       }
     });
 
