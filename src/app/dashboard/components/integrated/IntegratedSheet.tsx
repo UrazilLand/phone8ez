@@ -3,6 +3,7 @@
 import { useUndo } from '@/hooks/use-undo';
 import { DataSet, SheetData } from '@/types/dashboard';
 import IntegratedHeader from './IntegratedHeader';
+import DataSelectionModal, { FilterSettings } from './DataSelectionModal';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 import { useState, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,20 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
   const [sheetData, setSheetData] = useState<string[][]>(
     Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''))
   );
+
+  // 필터 모달 상태 관리
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [currentFilters, setCurrentFilters] = useState<FilterSettings>({
+    searchKeyword: '',
+    carriers: [],
+    contracts: [],
+    joinTypes: [],
+    companies: [],
+    dateRange: {
+      start: '',
+      end: ''
+    }
+  });
 
   // Undo/Redo 상태 관리
   const [
@@ -75,6 +90,25 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
     });
   }, [setCurrentSheetData, toast]);
 
+  const handleOpenFilterModal = () => {
+    setIsFilterModalOpen(true);
+  };
+
+  const handleCloseFilterModal = () => {
+    setIsFilterModalOpen(false);
+  };
+
+  const handleApplyFilters = (filters: FilterSettings) => {
+    setCurrentFilters(filters);
+    toast({
+      title: "데이터 선택",
+      description: "데이터가 성공적으로 선택되었습니다.",
+    });
+    
+    // 여기에 실제 필터링 로직을 추가할 수 있습니다
+    console.log('적용된 필터:', filters);
+  };
+
   return (
     <div className="flex flex-col w-full h-full">
       <IntegratedHeader
@@ -87,6 +121,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
         onRedo={redo}
         canUndo={canUndo()}
         canRedo={canRedo()}
+        onOpenFilterModal={handleOpenFilterModal}
       />
       
       {/* 테이블 카드 */}
@@ -124,6 +159,15 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData }: I
           </table>
         </div>
       </div>
+
+      {/* 필터 모달 */}
+      <DataSelectionModal
+        isOpen={isFilterModalOpen}
+        onClose={handleCloseFilterModal}
+        onApplyFilters={handleApplyFilters}
+        dataSets={dataSets}
+        publicData={publicData}
+      />
     </div>
   );
 } 

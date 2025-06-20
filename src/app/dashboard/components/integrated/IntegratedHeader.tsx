@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { DataSet } from '@/types/dashboard';
-import { Save, RotateCcw, Undo, Database } from 'lucide-react';
+import { Save, RotateCcw, Undo, Filter } from 'lucide-react';
 import { BUTTON_THEME, SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Undo2Icon, Redo2Icon } from "lucide-react";
@@ -17,6 +17,7 @@ interface IntegratedHeaderProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  onOpenFilterModal: () => void;
 }
 
 export default function IntegratedHeader({
@@ -29,6 +30,7 @@ export default function IntegratedHeader({
   onRedo,
   canUndo,
   canRedo,
+  onOpenFilterModal,
 }: IntegratedHeaderProps) {
   return (
     <div className="flex items-center justify-between p-4">
@@ -96,9 +98,10 @@ export default function IntegratedHeader({
         <Button 
           className={`${BUTTON_THEME.secondary} flex items-center gap-2`}
           size="sm"
+          onClick={onOpenFilterModal}
         >
-          <Database className="w-4 h-4" />
-          <span className="max-md:hidden">데이터 입력</span>
+          <Filter className="w-4 h-4" />
+          <span className="max-md:hidden">데이터 선택</span>
         </Button>
       </div>
     </div>
