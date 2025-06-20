@@ -11,7 +11,8 @@ import {
   COMPANY_TEXT_COLORS,
   CARRIER_OPTIONS,
   CONTRACT_OPTIONS,
-  JOIN_TYPE_OPTIONS
+  JOIN_TYPE_OPTIONS,
+  COMPANY_OPTIONS
 } from '@/styles/common';
 import { useState, useCallback, useRef, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -99,14 +100,20 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       }
     }
 
-    // 5행(업체명) 색상 매핑 - COMPANY_TEXT_COLORS 사용 (텍스트 색상)
+    // 5행(업체명) 색상 매핑 - COMPANY_OPTIONS 사용
     const companyValues = new Set<string>();
     for (let col = 1; col < currentSheetData[4]?.length; col++) {
       const value = currentSheetData[4][col]?.trim();
       if (value && !companyValues.has(value)) {
         companyValues.add(value);
-        mapping[`company_${value}`] = COMPANY_TEXT_COLORS[companyColorIndex % COMPANY_TEXT_COLORS.length];
-        companyColorIndex++;
+        const companyOption = COMPANY_OPTIONS.find(option => option.value === value);
+        if (companyOption) {
+          mapping[`company_${value}`] = companyOption.style;
+        } else {
+          // COMPANY_OPTIONS에 없는 경우 COMPANY_TEXT_COLORS 사용
+          mapping[`company_${value}`] = COMPANY_TEXT_COLORS[companyColorIndex % COMPANY_TEXT_COLORS.length];
+          companyColorIndex++;
+        }
       }
     }
 
@@ -184,21 +191,54 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         style.color = '#ffffff';
       }
       
-    } else if (rowIndex === 4) { // 5행 (업체명) - 텍스트 색상 적용
+    } else if (rowIndex === 4) { // 5행 (업체명) - COMPANY_OPTIONS 스타일 적용
       const colorClass = colorMapping[`company_${trimmedValue}`];
       console.log(`5행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
       
-      // COMPANY_TEXT_COLORS의 텍스트 색상을 인라인 스타일로 변환
-      if (colorClass === 'text-blue-800') style.color = '#1e40af';
-      else if (colorClass === 'text-pink-800') style.color = '#9d174d';
-      else if (colorClass === 'text-indigo-800') style.color = '#3730a3';
-      else if (colorClass === 'text-red-800') style.color = '#991b1b';
-      else if (colorClass === 'text-purple-800') style.color = '#6b21a8';
-      else if (colorClass === 'text-teal-800') style.color = '#115e59';
-      else if (colorClass === 'text-orange-800') style.color = '#9a3412';
-      else if (colorClass === 'text-green-800') style.color = '#166534';
-      else if (colorClass === 'text-amber-800') style.color = '#92400e';
-      else if (colorClass === 'text-cyan-800') style.color = '#155e75';
+      // COMPANY_OPTIONS의 스타일을 인라인 스타일로 변환
+      if (colorClass === 'text-blue-800 font-bold') {
+        style.color = '#1e40af';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-pink-800 font-bold') {
+        style.color = '#9d174d';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-indigo-800 font-bold') {
+        style.color = '#3730a3';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-red-800 font-bold') {
+        style.color = '#991b1b';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-purple-800 font-bold') {
+        style.color = '#6b21a8';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-teal-800 font-bold') {
+        style.color = '#115e59';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-orange-800 font-bold') {
+        style.color = '#9a3412';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-green-800 font-bold') {
+        style.color = '#166534';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-amber-800 font-bold') {
+        style.color = '#92400e';
+        style.fontWeight = 'bold';
+      } else if (colorClass === 'text-cyan-800 font-bold') {
+        style.color = '#155e75';
+        style.fontWeight = 'bold';
+      } else {
+        // COMPANY_TEXT_COLORS의 텍스트 색상을 인라인 스타일로 변환 (fallback)
+        if (colorClass === 'text-blue-800') style.color = '#1e40af';
+        else if (colorClass === 'text-pink-800') style.color = '#9d174d';
+        else if (colorClass === 'text-indigo-800') style.color = '#3730a3';
+        else if (colorClass === 'text-red-800') style.color = '#991b1b';
+        else if (colorClass === 'text-purple-800') style.color = '#6b21a8';
+        else if (colorClass === 'text-teal-800') style.color = '#115e59';
+        else if (colorClass === 'text-orange-800') style.color = '#9a3412';
+        else if (colorClass === 'text-green-800') style.color = '#166534';
+        else if (colorClass === 'text-amber-800') style.color = '#92400e';
+        else if (colorClass === 'text-cyan-800') style.color = '#155e75';
+      }
     }
 
     return style;

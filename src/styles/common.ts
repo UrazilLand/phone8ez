@@ -40,6 +40,20 @@ export const PLAN_BG_COLORS = [
   "bg-teal-300"
 ];
 
+// 업체명 관련 상수
+export const COMPANY_OPTIONS = [
+  { value: '삼성', label: '삼성', style: 'text-blue-800 font-bold' },
+  { value: 'LG', label: 'LG', style: 'text-pink-800 font-bold' },
+  { value: '애플', label: '애플', style: 'text-indigo-800 font-bold' },
+  { value: '화웨이', label: '화웨이', style: 'text-red-800 font-bold' },
+  { value: '샤오미', label: '샤오미', style: 'text-purple-800 font-bold' },
+  { value: 'OPPO', label: 'OPPO', style: 'text-teal-800 font-bold' },
+  { value: 'vivo', label: 'vivo', style: 'text-orange-800 font-bold' },
+  { value: '원플러스', label: '원플러스', style: 'text-green-800 font-bold' },
+  { value: '노키아', label: '노키아', style: 'text-amber-800 font-bold' },
+  { value: '소니', label: '소니', style: 'text-cyan-800 font-bold' },
+];
+
 // 업체명 색상 관련 상수
 export const COMPANY_TEXT_COLORS = [
   "text-blue-800",
