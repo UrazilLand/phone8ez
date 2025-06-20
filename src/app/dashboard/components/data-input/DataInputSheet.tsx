@@ -25,6 +25,7 @@ interface DataInputSheetProps {
 
 export interface DataInputSheetRef {
   fillAllData: (modalData: any) => void;
+  loadData: (data: any) => void;
 }
 
 const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dataSets, setDataSets, onApplyData }, ref) => {
@@ -121,11 +122,20 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         }
       }
     }
-
-    console.log('Color mapping updated:', mapping);
-    console.log('PLAN_BG_COLORS:', PLAN_BG_COLORS);
-    console.log('COMPANY_TEXT_COLORS:', COMPANY_TEXT_COLORS);
     return mapping;
+  }, [currentSheetData]);
+
+  // 테이블의 전체 너비를 동적으로 계산
+  const tableWidth = useMemo(() => {
+    const numCols = currentSheetData[0]?.length || 0;
+    if (numCols === 0) {
+      return 0; // 데이터가 없을 경우 너비 0
+    }
+    if (numCols === 1) {
+      return 160; // A열만 있을 경우
+    }
+    // A열(160px) + 나머지 열(각 80px)
+    return 160 + (numCols - 1) * 80;
   }, [currentSheetData]);
 
   // 셀의 색상 스타일을 반환하는 함수 (B열부터 적용)
@@ -139,8 +149,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
     if (rowIndex === 0) { // 1행 (통신사) - CARRIER_OPTIONS 스타일 적용
       const colorClass = colorMapping[`carrier_${trimmedValue}`];
-      console.log(`1행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
-      
       // CARRIER_OPTIONS의 스타일을 인라인 스타일로 변환
       if (colorClass === 'text-red-600 font-bold') {
         style.color = '#dc2626';
@@ -154,9 +162,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       }
       
     } else if (rowIndex === 1) { // 2행 (지원 구분) - CONTRACT_OPTIONS 스타일 적용
-      const colorClass = colorMapping[`contract_${trimmedValue}`];
-      console.log(`2행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
-      
+      const colorClass = colorMapping[`contract_${trimmedValue}`];      
       // CONTRACT_OPTIONS의 스타일을 인라인 스타일로 변환
       if (colorClass === 'text-green-700 font-bold') {
         style.color = '#15803d';
@@ -168,7 +174,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       
     } else if (rowIndex === 2) { // 3행 (요금제) - 배경색 적용
       const colorClass = colorMapping[`plan_${trimmedValue}`];
-      console.log(`3행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
       
       // PLAN_BG_COLORS의 배경색을 인라인 스타일로 변환
       if (colorClass === 'bg-blue-300') style.backgroundColor = '#93c5fd';
@@ -182,8 +187,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       
     } else if (rowIndex === 3) { // 4행 (가입 유형) - JOIN_TYPE_OPTIONS 스타일 적용
       const colorClass = colorMapping[`joinType_${trimmedValue}`];
-      console.log(`4행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
-      
       // JOIN_TYPE_OPTIONS의 스타일을 인라인 스타일로 변환
       if (colorClass === 'bg-blue-500 text-white') {
         style.backgroundColor = '#3b82f6';
@@ -198,7 +201,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       
     } else if (rowIndex === 4) { // 5행 (업체명) - COMPANY_OPTIONS 스타일 적용
       const colorClass = colorMapping[`company_${trimmedValue}`];
-      console.log(`5행 ${colIndex}열 "${trimmedValue}": ${colorClass}`);
       
       // COMPANY_OPTIONS의 스타일을 인라인 스타일로 변환
       if (colorClass === 'text-blue-800 font-bold') {
@@ -251,7 +253,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
   useImperativeHandle(ref, () => ({
     fillAllData: (modalData: any) => {
-      console.log('fillAllData called with:', modalData);
       
       // 마지막으로 적용된 데이터 저장
       setLastAppliedData(modalData);
@@ -262,8 +263,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         companySubInputs, companyRepeatCount 
       } = modalData;
       
-      console.log('planRepeatCount:', planRepeatCount, 'type:', typeof planRepeatCount);
-      console.log('companyRepeatCount:', companyRepeatCount, 'type:', typeof companyRepeatCount);
       
       const newSheetData = currentSheetData.map(row => [...row]);
 
@@ -307,9 +306,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
           }
         }
         
-        console.log('요금제 subPattern:', subPattern);
-        console.log('요금제 repeatCount:', repeatCount);
-        
         const finalPattern: string[] = [];
         // 각 항목을 반복횟수만큼 반복
         subPattern.forEach((item: string) => {
@@ -318,8 +314,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
           }
         });
         
-        console.log('요금제 finalPattern:', finalPattern);
-
         if (finalPattern.length > 0) {
           for (let colIndex = 1; colIndex < newSheetData[2].length; colIndex++) {
             newSheetData[2][colIndex] = finalPattern[(colIndex - 1) % finalPattern.length];
@@ -363,9 +357,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
             repeatCount = parsed;
           }
         }
-        
-        console.log('업체명 subPattern:', subPattern);
-        console.log('업체명 repeatCount:', repeatCount);
 
         const finalPattern: string[] = [];
         // 각 항목을 반복횟수만큼 반복
@@ -374,8 +365,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
             finalPattern.push(item);
           }
         });
-        
-        console.log('업체명 finalPattern:', finalPattern);
 
         if (finalPattern.length > 0) {
           for (let colIndex = 1; colIndex < newSheetData[4].length; colIndex++) {
@@ -389,6 +378,18 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       }
       
       setCurrentSheetData(newSheetData);
+    },
+    loadData: (data: any) => {
+      
+      // 저장된 데이터셋의 sheetData를 직접 불러오기
+      if (data && data.sheetData && Array.isArray(data.sheetData)) {
+        setCurrentSheetData(data.sheetData);
+        
+        // 마지막으로 적용된 데이터 초기화 (새로운 데이터를 로드했으므로)
+        setLastAppliedData(null);
+      } else {
+        console.error('Invalid data format for loadData:', data);
+      }
     }
   }));
 
@@ -420,11 +421,26 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       data: newSheetData,
     };
 
-    setDataSets([...dataSets, newDataSet]);
-    toast({
-      title: "저장 완료",
-      description: "데이터가 성공적으로 저장되었습니다.",
-    });
+    // 동일한 이름의 데이터셋이 있는지 확인
+    const existingIndex = dataSets.findIndex(ds => ds.name === newDataSet.name);
+    
+    if (existingIndex !== -1) {
+      // 기존 데이터를 덮어쓰기
+      const updatedDataSets = [...dataSets];
+      updatedDataSets[existingIndex] = newDataSet;
+      setDataSets(updatedDataSets);
+      toast({
+        title: "덮어쓰기 완료",
+        description: "기존 데이터를 덮어쓰고 저장되었습니다.",
+      });
+    } else {
+      // 새로운 데이터 추가
+      setDataSets([...dataSets, newDataSet]);
+      toast({
+        title: "저장 완료",
+        description: "데이터가 성공적으로 저장되었습니다.",
+      });
+    }
   };
 
   const handleReset = useCallback(() => {
@@ -451,7 +467,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     // 열 자동 추가
     if (shouldExtendColumns) {
       const maxCols = Math.max(...newSheetData.map(row => row.length), colIndex + 1);
-      console.log(`6행 ${colIndex}열에 데이터 입력으로 열 자동 추가: ${maxCols}열까지 확장`);
       
       newSheetData.forEach((row, idx) => {
         while (row.length < maxCols) {
@@ -461,7 +476,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       
       // 1~5행 자동채움 함수 재호출
       if (lastAppliedData && ref && 'current' in ref && ref.current) {
-        console.log('열 자동 추가 후 1~5행 자동채움 재호출');
         setTimeout(() => {
           if (ref.current) {
             ref.current.fillAllData(lastAppliedData);
@@ -474,7 +488,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     
     // 1~5행이 변경된 경우 색상 매핑 업데이트를 위해 강제 리렌더링
     if (rowIndex >= 0 && rowIndex <= 4) {
-      console.log(`셀 변경: ${rowIndex}행 ${colIndex}열 = "${value}"`);
     }
   };
 
@@ -565,7 +578,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     
     // 6행부터 붙여넣기로 열이 추가된 경우 1~5행 자동채움 함수 재호출
     if (startRowIndex >= 5 && maxColsInPastedData > 0 && lastAppliedData && ref && 'current' in ref && ref.current) {
-      console.log('붙여넣기로 열 추가 후 1~5행 자동채움 재호출');
       setTimeout(() => {
         if (ref.current) {
           ref.current.fillAllData(lastAppliedData);
@@ -602,7 +614,13 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         tabIndex={-1}
       >
         <div className="overflow-auto h-full">
-          <table className="border-collapse min-w-[1120px] table-fixed">
+          <table className="border-collapse table-fixed" style={{ tableLayout: 'fixed', minWidth: `${tableWidth}px` }}>
+            <colgroup>
+              <col style={{ width: '160px', minWidth: '160px', maxWidth: '160px' }} />
+              {currentSheetData[0]?.slice(1).map((_, index) => (
+                <col key={index + 1} style={{ width: '80px', minWidth: '80px' }} />
+              ))}
+            </colgroup>
             <tbody>
               {currentSheetData.map((row, rowIndex) => (
                 <tr key={rowIndex} className="hover:bg-gray-50">
@@ -611,12 +629,12 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                       key={colIndex}
                       className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
                         colIndex === 0 ? 
-                          (rowIndex < 5 ? 'text-center font-bold w-40 bg-gray-50 min-w-[160px]' : 'text-left w-40 min-w-[160px]') : 
+                          (rowIndex < 5 ? 'text-center font-bold w-[160px] max-w-[160px] min-w-[160px] bg-gray-50' : 'text-left w-[160px] max-w-[160px] min-w-[160px]') : 
                           'text-center w-20 min-w-[80px]'
                       }`}
                     >
                       {colIndex === 0 && rowIndex < 5 ? (
-                        <span className="text-black font-bold">
+                        <span className="text-black font-bold overflow-hidden truncate block">
                           {SHEET_HEADER_LABELS[rowIndex]}
                         </span>
                       ) : (

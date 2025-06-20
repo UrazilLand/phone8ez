@@ -26,6 +26,7 @@ export default function TabContent({
     <div className="flex-1 px-4">
       {activeTab === 'local' && (
         <DataInputTab 
+          ref={dataInputTabRef}
           dataSets={dataSets}
           setDataSets={setDataSets}
         />

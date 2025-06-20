@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { DataSet } from '@/types/dashboard';
+import { DataSet, TabType } from '@/types/dashboard';
 import { getAvailableDates, getSupportAmountsByDate, type SupportAmountData } from '../../utils/support-amounts';
 import { savePublicDataToStorage } from '../../utils/dashboardUtils';
 import DataCardBody from './DataCardBody';
@@ -11,7 +11,7 @@ interface DataCardProps {
   dataSets: DataSet[];
   setDataSets: React.Dispatch<React.SetStateAction<DataSet[]>>;
   onLoadData: (data: DataSet['data'] | DataSet['data'][]) => void;
-  onTabChange?: (tab: 'data' | 'integrated') => void;
+  onTabChange?: (tab: TabType) => void;
   onReloadIntegrated?: () => void;
 }
 
@@ -86,6 +86,10 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         if (onReloadIntegrated) onReloadIntegrated();
       } else {
         console.log('일반 데이터 로드');
+        if (onTabChange) {
+          console.log('데이터 입력 탭으로 전환');
+          onTabChange('local');
+        }
         onLoadData(dataSet.data);
       }
       setError(null);
