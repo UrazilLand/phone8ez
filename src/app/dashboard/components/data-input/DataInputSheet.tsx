@@ -36,11 +36,15 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
   useImperativeHandle(ref, () => ({
     fillAllData: (modalData: any) => {
+      console.log('fillAllData called with:', modalData);
       const { 
         carrier, supportItems, joinItems, 
         planSubInputs, planRepeatCount, 
         companySubInputs, companyRepeatCount 
       } = modalData;
+      
+      console.log('planRepeatCount:', planRepeatCount, 'type:', typeof planRepeatCount);
+      console.log('companyRepeatCount:', companyRepeatCount, 'type:', typeof companyRepeatCount);
       
       const newSheetData = currentSheetData.map(row => [...row]);
 
@@ -75,12 +79,27 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       // 3. 요금제 분류 (2행)
       if (planSubInputs && planSubInputs.some((val: string) => val.trim() !== '')) {
         const subPattern = planSubInputs.filter((val: string) => val.trim() !== '');
-        const repeatCount = parseInt(planRepeatCount) || 1;
+        // 더 안전한 파싱 로직
+        let repeatCount = 1;
+        if (planRepeatCount !== undefined && planRepeatCount !== null && planRepeatCount !== '') {
+          const parsed = parseInt(planRepeatCount.toString());
+          if (!isNaN(parsed) && parsed > 0) {
+            repeatCount = parsed;
+          }
+        }
+        
+        console.log('요금제 subPattern:', subPattern);
+        console.log('요금제 repeatCount:', repeatCount);
         
         const finalPattern: string[] = [];
-        for (let i = 0; i < repeatCount; i++) {
-          finalPattern.push(...subPattern);
-        }
+        // 각 항목을 반복횟수만큼 반복
+        subPattern.forEach((item: string) => {
+          for (let i = 0; i < repeatCount; i++) {
+            finalPattern.push(item);
+          }
+        });
+        
+        console.log('요금제 finalPattern:', finalPattern);
 
         if (finalPattern.length > 0) {
           for (let colIndex = 1; colIndex < newSheetData[2].length; colIndex++) {
@@ -117,12 +136,27 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       // 5. 업체명 분류 (4행)
       if (companySubInputs && companySubInputs.some((val: string) => val.trim() !== '')) {
         const subPattern = companySubInputs.filter((val: string) => val.trim() !== '');
-        const repeatCount = parseInt(companyRepeatCount) || 1;
+        // 더 안전한 파싱 로직
+        let repeatCount = 1;
+        if (companyRepeatCount !== undefined && companyRepeatCount !== null && companyRepeatCount !== '') {
+          const parsed = parseInt(companyRepeatCount.toString());
+          if (!isNaN(parsed) && parsed > 0) {
+            repeatCount = parsed;
+          }
+        }
+        
+        console.log('업체명 subPattern:', subPattern);
+        console.log('업체명 repeatCount:', repeatCount);
 
         const finalPattern: string[] = [];
-        for (let i = 0; i < repeatCount; i++) {
-          finalPattern.push(...subPattern);
-        }
+        // 각 항목을 반복횟수만큼 반복
+        subPattern.forEach((item: string) => {
+          for (let i = 0; i < repeatCount; i++) {
+            finalPattern.push(item);
+          }
+        });
+        
+        console.log('업체명 finalPattern:', finalPattern);
 
         if (finalPattern.length > 0) {
           for (let colIndex = 1; colIndex < newSheetData[4].length; colIndex++) {
