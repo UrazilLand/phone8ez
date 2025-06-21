@@ -35,6 +35,7 @@ interface ModelInfo {
   selectedModelCodes: string[];      // 선택된 모델번호들
   standardModelCode: string;         // 표준 모델번호
   modelName: string;                 // 모델명
+  price: string;                     // 출고가
 }
 
 const getInitialSheetData = (dataSets: DataSet[]): string[][] => {
@@ -192,11 +193,12 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
         selectedModelCodes: [],
         standardModelCode: parts[0] || '', // 표준 모델번호가 첫 번째
         modelName: parts[1] || '',         // 모델명이 두 번째
+        price: parts[2] || '',            // 출고가가 세 번째 (숫자만)
       };
       
-      // 선택된 모델번호 파싱 (세 번째)
-      if (parts[2]) {
-        parsedModelInfo.selectedModelCodes = parts[2].split(',').filter(code => code.trim());
+      // 선택된 모델번호 파싱 (네 번째)
+      if (parts[3]) {
+        parsedModelInfo.selectedModelCodes = parts[3].split(',').filter(code => code.trim());
       }
       
       // 파싱된 데이터를 상태에 저장
@@ -232,6 +234,12 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     // 모델명 추가
     if (modelInfo.modelName) {
       cellContent += cellContent ? `|${modelInfo.modelName}` : modelInfo.modelName;
+    }
+    
+    // 출고가 추가 (숫자만 저장)
+    if (modelInfo.price) {
+      const numericPrice = modelInfo.price.replace(/[^\d]/g, '');
+      cellContent += cellContent ? `|${numericPrice}` : numericPrice;
     }
     
     // 선택된 모델번호 추가
@@ -404,7 +412,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                               cursor: rowIndex >= 5 ? 'pointer' : 'default'
                             }}
                           >
-                            {/* 모델정보 파싱: 표준모델번호|모델명|선택된모델번호 형식에서 모델명만 표시 */}
+                            {/* 모델정보 파싱: 표준모델번호|모델명|출고가|선택된모델번호 형식에서 모델명만 표시 */}
                             {rowIndex >= 5 ? (cell.includes('|') ? cell.split('|')[1] || cell : cell) : cell}
                           </div>
                         ) : (
