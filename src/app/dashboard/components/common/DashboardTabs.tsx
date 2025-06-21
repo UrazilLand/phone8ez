@@ -8,7 +8,7 @@ interface DashboardTabsProps {
 
 export default function DashboardTabs({ activeTab, onTabChange }: DashboardTabsProps) {
   return (
-    <div className="px-4">
+    <div className="max-w-[61rem] mx-auto px-4">
       <div className="flex space-x-2 border-b border-gray-200">
         {DASHBOARD_TABS.map((tab) => (
           <button

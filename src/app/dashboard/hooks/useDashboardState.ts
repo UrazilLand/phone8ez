@@ -10,8 +10,8 @@ export function useDashboardState() {
   const [reloadKey, setReloadKey] = useState(0);
   const [publicData, setPublicData] = useState<SupportAmountData | null>(null);
 
-  const handleTabChange = useCallback((tab: 'data' | 'integrated') => {
-    setActiveTab(tab === 'data' ? 'local' : tab);
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
   }, []);
 
   const handleReloadIntegrated = useCallback(() => {

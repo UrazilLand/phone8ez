@@ -28,7 +28,7 @@ export default function TabContent({
   });
 
   return (
-    <div className="flex-1 px-4 mt-4">
+    <div className="flex-1 mt-4">
       <div style={tabStyle('local')}>
         <DataInputTab 
           ref={dataInputTabRef}

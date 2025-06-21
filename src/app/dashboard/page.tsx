@@ -48,26 +48,28 @@ export default function Dashboard() {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col min-h-screen max-w-7xl mx-auto py-10 px-4">
-        <DashboardHeader />
+      <div className="flex flex-col min-h-screen py-10">
+        <div className="max-w-[61rem] mx-auto px-4 w-full">
+          <DashboardHeader />
 
-        {/* 상단 카드 2개 */}
-        <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 md:gap-4 mb-4 w-full">
-          <div className="flex flex-col w-full md:w-[36rem] max-w-full md:max-w-[90vw]">
-            <DataCardContainer 
-              dataSets={memoizedDataSets}
-              setDataSets={setDataSets}
-              onLoadData={handleLoadData}
-              onTabChange={handleTabChange}
-              onReloadIntegrated={handleReloadIntegrated}
-            />
+          {/* 상단 카드 2개 */}
+          <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 md:gap-4 mb-4 w-full">
+            <div className="flex flex-col w-full md:w-[36rem]">
+              <DataCardContainer 
+                dataSets={memoizedDataSets}
+                setDataSets={setDataSets}
+                onLoadData={handleLoadData}
+                onTabChange={handleTabChange}
+                onReloadIntegrated={handleReloadIntegrated}
+              />
+            </div>
+            <div className="flex flex-col w-full md:w-[24rem]">
+              <SubscriptionCard />
+            </div>
           </div>
-          <div className="flex flex-col w-full md:w-[24rem] max-w-full md:max-w-[70vw]">
-            <SubscriptionCard />
-          </div>
+
+          <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
-
-        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
         <TabContent 
           activeTab={activeTab}

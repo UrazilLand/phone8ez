@@ -136,6 +136,18 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     return 160 + (numCols - 1) * 80;
   }, [currentSheetData]);
 
+  // 반응형 열 너비 계산
+  const getColumnWidth = useMemo(() => {
+    const numCols = currentSheetData[0]?.length || 0;
+    if (numCols <= 1) return { aCol: '160px', otherCols: '80px' };
+    
+    // A열은 고정, 나머지 열들은 남은 공간을 균등 분할
+    const aColWidth = '160px';
+    const remainingWidth = `calc((100% - 160px) / ${numCols - 1})`;
+    
+    return { aCol: aColWidth, otherCols: remainingWidth };
+  }, [currentSheetData]);
+
   // 셀의 색상 스타일을 반환하는 함수 (B열부터 적용)
   const getCellStyle = (rowIndex: number, colIndex: number, value: string) => {
     if (colIndex === 0) return {}; // A열은 색상 적용 안함
@@ -582,30 +594,32 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
   return (
     <div className="flex flex-col w-full h-full">
-      <DataInputHeader
-        dataSets={dataSets}
-        setDataSets={setDataSets}
-        onSave={handleSave}
-        onReset={handleReset}
-        onUndo={undo}
-        onRedo={redo}
-        canUndo={canUndo()}
-        canRedo={canRedo()}
-        onApplyData={onApplyData}
-      />
+      <div className="max-w-[61rem] mx-auto w-full px-4">
+        <DataInputHeader
+          dataSets={dataSets}
+          setDataSets={setDataSets}
+          onSave={handleSave}
+          onReset={handleReset}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onApplyData={onApplyData}
+        />
+      </div>
       <div 
         ref={tableRef}
-        className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 mb-4 h-[800px]"
+        className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[800px]"
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
         tabIndex={-1}
       >
-        <div className="overflow-auto h-full">
-          <table className="border-collapse table-fixed" style={{ tableLayout: 'fixed', minWidth: `${tableWidth}px` }}>
+        <div className="overflow-auto h-full w-full">
+          <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '160px', minWidth: '160px', maxWidth: '160px' }} />
+              <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
               {currentSheetData[0]?.slice(1).map((_, index) => (
-                <col key={index + 1} style={{ width: '80px', minWidth: '80px' }} />
+                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '80px' }} />
               ))}
             </colgroup>
             <tbody>
@@ -616,8 +630,8 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                       key={colIndex}
                       className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
                         colIndex === 0 ? 
-                          (rowIndex < 5 ? 'text-center font-bold w-[160px] max-w-[160px] min-w-[160px] bg-gray-50' : 'text-left w-[160px] max-w-[160px] min-w-[160px]') : 
-                          'text-center w-20 min-w-[80px]'
+                          (rowIndex < 5 ? 'text-center font-bold bg-gray-50' : 'text-left') : 
+                          'text-center'
                       }`}
                     >
                       {colIndex === 0 && rowIndex < 5 ? (

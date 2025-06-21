@@ -6,7 +6,7 @@ import IntegratedHeader from './IntegratedHeader';
 import DataSelectionModal from './DataSelectionModal';
 import ModelInfoModal from './ModelInfoModal';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT, BUTTON_THEME } from '@/styles/common';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { 
   extractCompaniesByCarrier, 
@@ -66,6 +66,18 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     canUndo,
     canRedo
   ] = useUndo<string[][]>(sheetData);
+
+  // 반응형 열 너비 계산
+  const getColumnWidth = useMemo(() => {
+    const numCols = currentSheetData[0]?.length || 0;
+    if (numCols <= 1) return { aCol: '160px', otherCols: '80px' };
+    
+    // A열은 고정, 나머지 열들은 남은 공간을 균등 분할
+    const aColWidth = '160px';
+    const remainingWidth = `calc((100% - 160px) / ${numCols - 1})`;
+    
+    return { aCol: aColWidth, otherCols: remainingWidth };
+  }, [currentSheetData]);
 
   useEffect(() => {
     setCurrentSheetDataWithoutUndo(sheetData);
@@ -296,23 +308,31 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
 
   return (
     <div className="flex flex-col w-full h-full">
-      <IntegratedHeader
-        dataSets={dataSets}
-        setDataSets={setDataSets}
-        publicData={publicData}
-        onSave={handleSave}
-        onReset={handleReset}
-        onUndo={undo}
-        onRedo={redo}
-        canUndo={canUndo()}
-        canRedo={canRedo()}
-        onOpenFilterModal={handleOpenFilterModal}
-      />
+      <div className="max-w-[61rem] mx-auto w-full px-4">
+        <IntegratedHeader
+          dataSets={dataSets}
+          setDataSets={setDataSets}
+          publicData={publicData}
+          onSave={handleSave}
+          onReset={handleReset}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onOpenFilterModal={handleOpenFilterModal}
+        />
+      </div>
       
       {/* 테이블 카드 */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 mb-4 h-[800px]">
-        <div className="overflow-auto h-full">
-          <table className="border-collapse min-w-[1120px] table-fixed">
+      <div className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[800px]">
+        <div className="overflow-auto h-full w-full">
+          <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
+              {currentSheetData[0]?.slice(1).map((_, index) => (
+                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '80px' }} />
+              ))}
+            </colgroup>
             <tbody>
               {currentSheetData.map((row, rowIndex) => (
                 <tr key={rowIndex} className="hover:bg-gray-50">
@@ -322,9 +342,9 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                       className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
                         colIndex === 0
                           ? rowIndex < 5
-                            ? 'text-center font-bold w-40 bg-gray-50 min-w-[160px]'
-                            : 'text-left w-40 min-w-[160px]'
-                          : 'text-center w-20 min-w-[80px]'
+                            ? 'text-center font-bold bg-gray-50'
+                            : 'text-left'
+                          : 'text-center'
                       }`}
                     >
                       {colIndex === 0 && rowIndex < 5 ? (
