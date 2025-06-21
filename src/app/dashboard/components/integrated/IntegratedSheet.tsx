@@ -32,11 +32,9 @@ interface IntegratedSheetProps {
 }
 
 interface ModelInfo {
-  modelName: string;
-  manufacturer: string;
-  releaseDate: string;
-  description: string;
-  specifications: string;
+  selectedModelCodes: string[];      // 선택된 모델번호들
+  standardModelCode: string;         // 표준 모델번호
+  modelName: string;                 // 모델명
 }
 
 const getInitialSheetData = (dataSets: DataSet[]): string[][] => {
@@ -184,6 +182,30 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
 
   const handleOpenModelInfoModal = (rowIndex: number) => {
     setSelectedRowIndex(rowIndex);
+    
+    // 기존 셀 데이터 파싱
+    const cellData = currentSheetData[rowIndex][0];
+    
+    if (cellData && cellData.includes('|')) {
+      const parts = cellData.split('|');
+      const parsedModelInfo: ModelInfo = {
+        selectedModelCodes: [],
+        standardModelCode: parts[0] || '', // 표준 모델번호가 첫 번째
+        modelName: parts[1] || '',         // 모델명이 두 번째
+      };
+      
+      // 선택된 모델번호 파싱 (세 번째)
+      if (parts[2]) {
+        parsedModelInfo.selectedModelCodes = parts[2].split(',').filter(code => code.trim());
+      }
+      
+      // 파싱된 데이터를 상태에 저장
+      setModelInfoData(prev => ({
+        ...prev,
+        [rowIndex]: parsedModelInfo
+      }));
+    }
+    
     setIsModelInfoModalOpen(true);
   };
 
@@ -198,9 +220,26 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
       [selectedRowIndex]: modelInfo
     }));
     
-    // A열에 모델명 표시
+    // A열에 표준 모델번호를 제일 앞으로 고정하여 저장
     const newSheetData = [...currentSheetData];
-    newSheetData[selectedRowIndex][0] = modelInfo.modelName;
+    let cellContent = '';
+    
+    // 표준 모델번호를 제일 앞에 저장
+    if (modelInfo.standardModelCode) {
+      cellContent = modelInfo.standardModelCode;
+    }
+    
+    // 모델명 추가
+    if (modelInfo.modelName) {
+      cellContent += cellContent ? `|${modelInfo.modelName}` : modelInfo.modelName;
+    }
+    
+    // 선택된 모델번호 추가
+    if (modelInfo.selectedModelCodes.length > 0) {
+      cellContent += cellContent ? `|${modelInfo.selectedModelCodes.join(',')}` : modelInfo.selectedModelCodes.join(',');
+    }
+    
+    newSheetData[selectedRowIndex][0] = cellContent;
     setCurrentSheetData(newSheetData);
     
     toast({
@@ -365,7 +404,8 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                               cursor: rowIndex >= 5 ? 'pointer' : 'default'
                             }}
                           >
-                            {cell}
+                            {/* 모델정보 파싱: 표준모델번호|모델명|선택된모델번호 형식에서 모델명만 표시 */}
+                            {rowIndex >= 5 ? (cell.includes('|') ? cell.split('|')[1] || cell : cell) : cell}
                           </div>
                         ) : (
                           <div
@@ -403,6 +443,8 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
         onSave={handleSaveModelInfo}
         initialData={selectedRowIndex >= 0 ? modelInfoData[selectedRowIndex] : undefined}
         rowIndex={selectedRowIndex}
+        dataSets={dataSets}
+        publicData={publicData}
       />
 
       {/* 덮어쓰기 확인 모달 */}
