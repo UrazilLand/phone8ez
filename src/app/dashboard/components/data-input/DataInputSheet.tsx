@@ -615,49 +615,51 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         tabIndex={-1}
       >
         <div className="overflow-auto h-full w-full">
-          <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
-              {currentSheetData[0]?.slice(1).map((_, index) => (
-                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
-              ))}
-            </colgroup>
-            <tbody>
-              {currentSheetData.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-gray-50">
-                  {row.map((cell, colIndex) => (
-                    <td 
-                      key={colIndex}
-                      className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
-                        colIndex === 0 ? 
-                          (rowIndex < 5 ? 'text-center font-bold bg-gray-50' : 'text-left') : 
-                          'text-center'
-                      }`}
-                    >
-                      {colIndex === 0 && rowIndex < 5 ? (
-                        <span className="text-black font-bold overflow-hidden truncate block">
-                          {SHEET_HEADER_LABELS[rowIndex]}
-                        </span>
-                      ) : (
-                        <input
-                          type="text"
-                          value={cell}
-                          onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                          className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
-                            colIndex > 0 ? 'text-center' : ''
-                          }`}
-                          style={{
-                            ...getCellStyle(rowIndex, colIndex, cell),
-                            fontWeight: rowIndex < 5 ? '600' : 'normal'
-                          }}
-                        />
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="relative">
+            <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
+                {currentSheetData[0]?.slice(1).map((_, index) => (
+                  <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
+                ))}
+              </colgroup>
+              <tbody>
+                {currentSheetData.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-gray-50">
+                    {row.map((cell, colIndex) => (
+                      <td 
+                        key={colIndex}
+                        className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
+                          colIndex === 0 ? 
+                            (rowIndex < 5 ? 'text-center font-bold bg-gray-50 sticky left-0 z-20' : 'text-left sticky left-0 z-20 bg-white') : 
+                            'text-center'
+                        }`}
+                      >
+                        {colIndex === 0 && rowIndex < 5 ? (
+                          <span className="text-black font-bold overflow-hidden truncate block">
+                            {SHEET_HEADER_LABELS[rowIndex]}
+                          </span>
+                        ) : (
+                          <input
+                            type="text"
+                            value={cell}
+                            onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
+                            className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                              colIndex > 0 ? 'text-center' : ''
+                            }`}
+                            style={{
+                              ...getCellStyle(rowIndex, colIndex, cell),
+                              fontWeight: rowIndex < 5 ? '600' : 'normal'
+                            }}
+                          />
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

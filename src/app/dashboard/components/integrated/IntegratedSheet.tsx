@@ -326,60 +326,64 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
       {/* 테이블 카드 */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[800px]">
         <div className="overflow-auto h-full w-full">
-          <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
-              {currentSheetData[0]?.slice(1).map((_, index) => (
-                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
-              ))}
-            </colgroup>
-            <tbody>
-              {currentSheetData.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-gray-50">
-                  {row.map((cell, colIndex) => (
-                    <td
-                      key={colIndex}
-                      className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
-                        colIndex === 0
-                          ? rowIndex < 5
-                            ? 'text-center font-bold bg-gray-50'
-                            : 'text-left'
-                          : 'text-center'
-                      }`}
-                    >
-                      {colIndex === 0 && rowIndex < 5 ? (
-                        <span className="text-black font-bold">
-                          {SHEET_HEADER_LABELS[rowIndex]}
-                        </span>
-                      ) : (
-                        <div
-                          className={`w-full h-full flex items-center ${
-                            colIndex > 0 ? 'justify-center' : 'justify-start'
-                          } ${
-                            colIndex > 0 && rowIndex < 5
-                              ? getDynamicCellStyle(rowIndex, cell)
-                              : 'text-gray-600'
-                          }`}
-                          onDoubleClick={() => {
-                            // A열 6행부터 더블클릭 시 모델정보 모달 열기
-                            if (colIndex === 0 && rowIndex >= 5) {
-                              handleOpenModelInfoModal(rowIndex);
-                            }
-                          }}
-                          style={{
-                            cursor: colIndex === 0 && rowIndex >= 5 ? 'pointer' : 'default'
-                          }}
-                        >
-                          {/* 3행(rowIndex===2)의 경우, '|' 앞의 요금제 이름만 표시 */}
-                          {rowIndex === 2 && colIndex > 0 ? cell.split('|')[0] : cell}
-                        </div>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="relative">
+            <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
+                {currentSheetData[0]?.slice(1).map((_, index) => (
+                  <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
+                ))}
+              </colgroup>
+              <tbody>
+                {currentSheetData.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-gray-50">
+                    {row.map((cell, colIndex) => (
+                      <td
+                        key={colIndex}
+                        className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
+                          colIndex === 0
+                            ? rowIndex < 5
+                              ? 'text-center font-bold bg-gray-50 sticky left-0 z-20'
+                              : 'text-left sticky left-0 z-20 bg-white'
+                            : 'text-center'
+                        }`}
+                      >
+                        {colIndex === 0 && rowIndex < 5 ? (
+                          <span className="text-black font-bold">
+                            {SHEET_HEADER_LABELS[rowIndex]}
+                          </span>
+                        ) : colIndex === 0 ? (
+                          <div
+                            className="w-full h-full flex items-center justify-start text-gray-600"
+                            onDoubleClick={() => {
+                              // A열 6행부터 더블클릭 시 모델정보 모달 열기
+                              if (rowIndex >= 5) {
+                                handleOpenModelInfoModal(rowIndex);
+                              }
+                            }}
+                            style={{
+                              cursor: rowIndex >= 5 ? 'pointer' : 'default'
+                            }}
+                          >
+                            {cell}
+                          </div>
+                        ) : (
+                          <div
+                            className={`w-full h-full flex items-center justify-center ${
+                              rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
+                            }`}
+                          >
+                            {/* 3행(rowIndex===2)의 경우, '|' 앞의 요금제 이름만 표시 */}
+                            {rowIndex === 2 ? cell.split('|')[0] : cell}
+                          </div>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
