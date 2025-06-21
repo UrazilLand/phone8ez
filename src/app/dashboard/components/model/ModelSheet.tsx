@@ -40,7 +40,7 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
             <colgroup>
               <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
               {sheetData[0]?.slice(1).map((_, index) => (
-                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '80px' }} />
+                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
               ))}
             </colgroup>
             <tbody>
@@ -63,7 +63,7 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
                         </span>
                       ) : (
                         <div
-                          className={`w-full h-full px-2 flex items-center ${
+                          className={`w-full h-full flex items-center ${
                             colIndex > 0 ? 'justify-center' : 'justify-start'
                           }`}
                         >

@@ -619,7 +619,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
             <colgroup>
               <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
               {currentSheetData[0]?.slice(1).map((_, index) => (
-                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '80px' }} />
+                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
               ))}
             </colgroup>
             <tbody>
@@ -643,7 +643,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                           type="text"
                           value={cell}
                           onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                          className={`w-full h-full px-2 border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                          className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
                             colIndex > 0 ? 'text-center' : ''
                           }`}
                           style={{

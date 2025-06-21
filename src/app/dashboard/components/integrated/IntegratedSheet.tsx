@@ -330,7 +330,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
             <colgroup>
               <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
               {currentSheetData[0]?.slice(1).map((_, index) => (
-                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '80px' }} />
+                <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
               ))}
             </colgroup>
             <tbody>
@@ -353,7 +353,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                         </span>
                       ) : (
                         <div
-                          className={`w-full h-full px-2 flex items-center ${
+                          className={`w-full h-full flex items-center ${
                             colIndex > 0 ? 'justify-center' : 'justify-start'
                           } ${
                             colIndex > 0 && rowIndex < 5
