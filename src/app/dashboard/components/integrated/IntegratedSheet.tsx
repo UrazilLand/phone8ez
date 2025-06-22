@@ -662,25 +662,30 @@ export default function IntegratedSheet({
 
   // 부가서비스 계산 함수
   const getAdditionalServiceAmount = (rowIndex: number, colIndex: number): number => {
-    const carrier = currentSheetData[0]?.[colIndex] || '';
-    const company = currentSheetData[4]?.[colIndex] || '';
+    const carrier = currentSheetData[0]?.[colIndex]?.trim() || '';
+    const company = currentSheetData[4]?.[colIndex]?.trim() || '';
+    const serviceKey = `${company}-${carrier}`;
     
-    if (!carrier || !company) return 0;
+    if (!carrier || !company) {
+      return 0;
+    }
 
-    // 부가 데이터셋에서 찾기
     const additionalDataSet = dataSets.find(ds => ds.type === 'additional');
-    if (!additionalDataSet?.data.additionalServices) return 0;
+    if (!additionalDataSet?.data.additionalServices) {
+        return 0;
+    }
 
     const additionalServices = additionalDataSet.data.additionalServices;
-    const carrierServices = additionalServices[carrier];
-    if (!carrierServices) return 0;
+    const companyServices = additionalServices[serviceKey];
+
+    if (!companyServices) {
+        return 0;
+    }
 
     let totalAmount = 0;
-    carrierServices.forEach(service => {
-      if (service.service === company) {
-        const discount = Number(service.discount) || 0;
-        totalAmount += discount;
-      }
+    companyServices.forEach(service => {
+      const discount = Number(service.discount) || 0;
+      totalAmount += discount;
     });
 
     return totalAmount;
