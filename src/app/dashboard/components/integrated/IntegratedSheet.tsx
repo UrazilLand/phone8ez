@@ -697,92 +697,145 @@ export default function IntegratedSheet({
                               </Tooltip>
                             </TooltipProvider>
                           ) : (
-                            <div
-                              className={`relative w-full h-full flex items-center justify-center ${
-                                rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
-                              }`}
-                              style={{
-                                whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
-                                overflow: rowIndex < 5 ? 'hidden' : 'visible',
-                                textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
-                              }}
-                            >
-                              {/* 1행 마우스오버 시 X 버튼으로 변환 */}
-                              {rowIndex === 0 && colIndex > 0 && hoveredColumnIndex === colIndex ? (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteColumn(colIndex);
-                                  }}
-                                  className="w-full h-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-lg font-bold transition-all duration-200"
-                                  title="열 삭제"
-                                >
-                                  <X className="w-5 h-5" />
-                                </button>
-                              ) : (
-                                <>
-                                  {
-                                    rowIndex < 5 ? (
-                                      // 1~5행 렌더링
-                                      rowIndex === 2 ? cell.split('|')[0] : 
-                                      rowIndex === 3 ? (() => {
-                                        // 4행(가입유형) 축약형 표시
-                                        const fullText = cell.split('|WARN_MULTI')[0].split(';')[0];
-                                        switch (fullText) {
-                                          case '번호이동': return '번이';
-                                          case '기기변경': return '기변';
-                                          case '신규가입': return '신규';
-                                          default: return fullText;
-                                        }
-                                      })() : cell.split('|WARN_MULTI')[0].split(';')[0]
+                            <TooltipProvider delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={`relative w-full h-full flex items-center justify-center ${
+                                      rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
+                                    }`}
+                                    style={{
+                                      whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
+                                      overflow: rowIndex < 5 ? 'hidden' : 'visible',
+                                      textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
+                                    }}
+                                  >
+                                    {/* 1행 마우스오버 시 X 버튼으로 변환 */}
+                                    {rowIndex === 0 && colIndex > 0 && hoveredColumnIndex === colIndex ? (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteColumn(colIndex);
+                                        }}
+                                        className="w-full h-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-lg font-bold transition-all duration-200"
+                                        title="열 삭제"
+                                      >
+                                        <X className="w-5 h-5" />
+                                      </button>
                                     ) : (
-                                      // 6행 이상 데이터 셀 렌더링
-                                      (() => {
-                                        const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
-                                        const cellContent = cell.split('|WARN_MULTI')[0].split(';')[0];
-                                        const joinType = sheetHeaders[3]?.[colIndex]?.trim();
-                                        const isNegative = !isNaN(Number(cellContent)) && Number(cellContent) < 0;
+                                      <>
+                                        {
+                                          rowIndex < 5 ? (
+                                            // 1~5행 렌더링
+                                            rowIndex === 2 ? cell.split('|')[0] : 
+                                            rowIndex === 3 ? (() => {
+                                              // 4행(가입유형) 축약형 표시
+                                              const fullText = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                              switch (fullText) {
+                                                case '번호이동': return '번이';
+                                                case '기기변경': return '기변';
+                                                case '신규가입': return '신규';
+                                                default: return fullText;
+                                              }
+                                            })() : cell.split('|WARN_MULTI')[0].split(';')[0]
+                                          ) : (
+                                            // 6행 이상 데이터 셀 렌더링
+                                            (() => {
+                                              const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
+                                              const cellContent = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                              const joinType = sheetHeaders[3]?.[colIndex]?.trim();
+                                              const isNegative = !isNaN(Number(cellContent)) && Number(cellContent) < 0;
 
-                                        if (isHighlighted) {
-                                          let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
-                                          
-                                          switch (joinType) {
-                                            case '번호이동': styleClass += 'bg-blue-400 '; break;
-                                            case '기기변경': styleClass += 'bg-green-400 '; break;
-                                            case '신규가입': styleClass += 'bg-red-400 '; break;
-                                          }
+                                              if (isHighlighted) {
+                                                let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
+                                                
+                                                switch (joinType) {
+                                                  case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                                  case '기기변경': styleClass += 'bg-green-400 '; break;
+                                                  case '신규가입': styleClass += 'bg-red-400 '; break;
+                                                }
 
-                                          if (isNegative) {
-                                            // 음수이면서 빨간 배경일 경우 글자를 흰색으로 하여 가독성 확보
-                                            if (joinType === '신규가입') {
-                                              styleClass += 'text-white';
-                                            } else {
-                                              // 다른 배경에서는 진한 빨간색 글씨 사용
-                                              styleClass += 'text-red-700';
-                                            }
-                                          } else {
-                                            styleClass += 'text-black';
-                                          }
-                                          
-                                          return <span className={styleClass}>{cellContent}</span>;
+                                                if (isNegative) {
+                                                  // 음수이면서 빨간 배경일 경우 글자를 흰색으로 하여 가독성 확보
+                                                  if (joinType === '신규가입') {
+                                                    styleClass += 'text-white';
+                                                  } else {
+                                                    // 다른 배경에서는 진한 빨간색 글씨 사용
+                                                    styleClass += 'text-red-700';
+                                                  }
+                                                } else {
+                                                  styleClass += 'text-black';
+                                                }
+                                                
+                                                return <span className={styleClass}>{cellContent}</span>;
 
-                                        } else {
-                                          if (isNegative) {
-                                            return <span className="text-red-500">{cellContent}</span>;
-                                          }
-                                          return cellContent;
+                                              } else {
+                                                if (isNegative) {
+                                                  return <span className="text-red-500">{cellContent}</span>;
+                                                }
+                                                return cellContent;
+                                              }
+                                            })()
+                                          )
                                         }
+                                        {cell.includes('|WARN_MULTI') && (
+                                          <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
+                                            <AlertTriangle className="w-full h-full" />
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="text-left">
+                                    {rowIndex === 2 && colIndex > 0 ? (
+                                      // 3행(요금제) 툴팁
+                                      (() => {
+                                        const parts = cell.split('|');
+                                        const planName = parts[0] || '';
+                                        const monthlyFee1 = parts[1] || '';
+                                        const monthlyFee2 = parts[2] || '';
+                                        
+                                        return (
+                                          <div>
+                                            <p><strong>요금제명:</strong> {planName}</p>
+                                            {monthlyFee1 && <p><strong>표준요금:</strong> {Number(monthlyFee1).toLocaleString()}원</p>}
+                                            {monthlyFee2 && <p><strong>표준요금:</strong> {Number(monthlyFee2).toLocaleString()}원</p>}
+                                          </div>
+                                        );
                                       })()
-                                    )
-                                  }
-                                  {cell.includes('|WARN_MULTI') && (
-                                    <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
-                                      <AlertTriangle className="w-full h-full" />
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
+                                    ) : rowIndex >= 5 && colIndex > 0 ? (
+                                      // B6셀부터 데이터 툴팁
+                                      (() => {
+                                        const cellContent = cell.split('|WARN_MULTI')[0];
+                                        const hasWarning = cell.includes('|WARN_MULTI');
+                                        const values = cellContent.split(';').filter(v => v.trim());
+                                        
+                                        return (
+                                          <div>
+                                            <p><strong>값:</strong> {values.join(', ')}</p>
+                                            {hasWarning && (
+                                              <p className="text-yellow-600">
+                                                <strong>⚠️ 경고:</strong> 여러 값이 발견됨
+                                              </p>
+                                            )}
+                                            {values.length > 1 && !hasWarning && (
+                                              <p className="text-blue-600">
+                                                <strong>ℹ️ 정보:</strong> 여러 값이 있음
+                                              </p>
+                                            )}
+                                          </div>
+                                        );
+                                      })()
+                                    ) : (
+                                      // 기타 셀 툴팁
+                                      <p>{cell}</p>
+                                    )}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </td>
                       );
