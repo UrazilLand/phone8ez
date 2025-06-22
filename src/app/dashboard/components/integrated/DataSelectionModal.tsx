@@ -6,8 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BUTTON_THEME, CARRIER_OPTIONS } from '@/styles/common';
 import { Filter, RotateCcw, Building2, CreditCard, DollarSign } from 'lucide-react';
-import { DataSet } from '@/types/dashboard';
-import { SupportAmountData } from '@/app/dashboard/utils/support-amounts';
+import { DataSet, PublicSupportData } from '@/types/dashboard';
 import { 
   extractCompaniesByCarrier, 
   extractPlansByCarrierAndCompany, 
@@ -42,7 +41,7 @@ interface DataSelectionModalProps {
   onClose: () => void;
   onApply: (allSelections: Record<string, CarrierSpecificState>) => void;
   dataSets: DataSet[];
-  publicData: SupportAmountData | null;
+  publicData: PublicSupportData | null;
 }
 
 export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets, publicData }: DataSelectionModalProps) {
@@ -67,7 +66,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   // 모달 열릴 때 모든 데이터를 한 번에 추출
   useEffect(() => {
     if (isOpen) {
-      const carriers = ['SK', 'KT', 'LG'];
+      const carriers: ('SK' | 'KT' | 'LG')[] = ['SK', 'KT', 'LG'];
       const newExtractedData: Record<string, ExtractedDataByCarrier> = {
         SK: { companies: [], plansByCompany: {}, monthlyFees: [] },
         KT: { companies: [], plansByCompany: {}, monthlyFees: [] },
