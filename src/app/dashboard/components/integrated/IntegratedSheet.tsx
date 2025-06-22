@@ -15,7 +15,7 @@ import {
   extractMonthlyFeesByCarrier
 } from '@/app/dashboard/utils/integrated/dataExtraction';
 import { getDynamicCellStyle, getDataCellStyle } from '@/app/dashboard/utils/common/colorUtils';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -72,6 +72,7 @@ export default function IntegratedSheet({
   const [isModelInfoModalOpen, setIsModelInfoModalOpen] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(-1);
   const [modelInfoData, setModelInfoData] = useState<Record<number, ModelInfo>>({});
+  const [hoveredColumnIndex, setHoveredColumnIndex] = useState<number>(-1);
 
   const [
     currentSheetData,
@@ -571,6 +572,24 @@ export default function IntegratedSheet({
     }
   };
 
+  const handleDeleteColumn = (columnIndex: number) => {
+    if (columnIndex === 0) return; // A열은 삭제 불가
+    
+    const newSheetData = currentSheetData.map(row => {
+      const newRow = [...row];
+      newRow.splice(columnIndex, 1);
+      return newRow;
+    });
+    
+    setCurrentSheetData(newSheetData);
+    setHoveredColumnIndex(-1);
+    
+    toast({
+      title: "열 삭제 완료",
+      description: "선택한 열이 삭제되었습니다.",
+    });
+  };
+
   return (
     <div className="flex flex-col w-full h-full">
       <div className="max-w-[61rem] mx-auto w-full px-4">
@@ -602,7 +621,11 @@ export default function IntegratedSheet({
               </colgroup>
               <tbody>
                 {currentSheetData.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="hover:bg-gray-50">
+                  <tr 
+                    key={rowIndex} 
+                    className="hover:bg-gray-50"
+                    onMouseEnter={() => rowIndex === 0 ? setHoveredColumnIndex(-1) : undefined}
+                  >
                     {row.map((cell, colIndex) => {
                       const baseStyle = 'h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-black';
                       const positionStyle = colIndex === 0
@@ -615,7 +638,12 @@ export default function IntegratedSheet({
                       const finalCellStyle = `${baseStyle} ${positionStyle} ${dynamicCellStyle}`;
 
                       return (
-                        <td key={colIndex} className={finalCellStyle}>
+                        <td 
+                          key={colIndex} 
+                          className={finalCellStyle}
+                          onMouseEnter={() => rowIndex === 0 && colIndex > 0 ? setHoveredColumnIndex(colIndex) : undefined}
+                          onMouseLeave={() => rowIndex === 0 && colIndex > 0 ? setHoveredColumnIndex(-1) : undefined}
+                        >
                           {colIndex === 0 && rowIndex < 5 ? (
                             <span className="text-black font-bold">
                               {SHEET_HEADER_LABELS[rowIndex]}
@@ -632,7 +660,10 @@ export default function IntegratedSheet({
                                       }
                                     }}
                                     style={{
-                                      cursor: rowIndex >= 5 ? 'pointer' : 'default'
+                                      cursor: rowIndex >= 5 ? 'pointer' : 'default',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
                                     }}
                                   >
                                     {rowIndex >= 5 ? (() => {
@@ -666,91 +697,92 @@ export default function IntegratedSheet({
                               </Tooltip>
                             </TooltipProvider>
                           ) : (
-                            <TooltipProvider delayDuration={100}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div
-                                    className={`relative w-full h-full flex items-center justify-center ${
-                                      rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
-                                    }`}
-                                    style={{
-                                      whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
-                                      overflow: rowIndex < 5 ? 'hidden' : 'visible',
-                                      textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
-                                    }}
-                                  >
-                                    {
-                                      rowIndex < 5 ? (
-                                        // 1~5행 렌더링
-                                        rowIndex === 2 ? cell.split('|')[0] : 
-                                        rowIndex === 3 ? (() => {
-                                          // 4행(가입유형) 축약형 표시
-                                          const fullText = cell.split('|WARN_MULTI')[0].split(';')[0];
-                                          switch (fullText) {
-                                            case '번호이동': return '번이';
-                                            case '기기변경': return '기변';
-                                            case '신규가입': return '신규';
-                                            default: return fullText;
+                            <div
+                              className={`relative w-full h-full flex items-center justify-center ${
+                                rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
+                              }`}
+                              style={{
+                                whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
+                                overflow: rowIndex < 5 ? 'hidden' : 'visible',
+                                textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
+                              }}
+                            >
+                              {/* 1행 마우스오버 시 X 버튼으로 변환 */}
+                              {rowIndex === 0 && colIndex > 0 && hoveredColumnIndex === colIndex ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteColumn(colIndex);
+                                  }}
+                                  className="w-full h-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-lg font-bold transition-all duration-200"
+                                  title="열 삭제"
+                                >
+                                  <X className="w-5 h-5" />
+                                </button>
+                              ) : (
+                                <>
+                                  {
+                                    rowIndex < 5 ? (
+                                      // 1~5행 렌더링
+                                      rowIndex === 2 ? cell.split('|')[0] : 
+                                      rowIndex === 3 ? (() => {
+                                        // 4행(가입유형) 축약형 표시
+                                        const fullText = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                        switch (fullText) {
+                                          case '번호이동': return '번이';
+                                          case '기기변경': return '기변';
+                                          case '신규가입': return '신규';
+                                          default: return fullText;
+                                        }
+                                      })() : cell.split('|WARN_MULTI')[0].split(';')[0]
+                                    ) : (
+                                      // 6행 이상 데이터 셀 렌더링
+                                      (() => {
+                                        const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
+                                        const cellContent = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                        const joinType = sheetHeaders[3]?.[colIndex]?.trim();
+                                        const isNegative = !isNaN(Number(cellContent)) && Number(cellContent) < 0;
+
+                                        if (isHighlighted) {
+                                          let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
+                                          
+                                          switch (joinType) {
+                                            case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                            case '기기변경': styleClass += 'bg-green-400 '; break;
+                                            case '신규가입': styleClass += 'bg-red-400 '; break;
                                           }
-                                        })() : cell.split('|WARN_MULTI')[0].split(';')[0]
-                                      ) : (
-                                        // 6행 이상 데이터 셀 렌더링
-                                        (() => {
-                                          const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
-                                          const cellContent = cell.split('|WARN_MULTI')[0].split(';')[0];
-                                          const joinType = sheetHeaders[3]?.[colIndex]?.trim();
-                                          const isNegative = !isNaN(Number(cellContent)) && Number(cellContent) < 0;
 
-                                          if (isHighlighted) {
-                                            let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
-                                            
-                                            switch (joinType) {
-                                              case '번호이동': styleClass += 'bg-blue-400 '; break;
-                                              case '기기변경': styleClass += 'bg-green-400 '; break;
-                                              case '신규가입': styleClass += 'bg-red-400 '; break;
-                                            }
-
-                                            if (isNegative) {
-                                              // 음수이면서 빨간 배경일 경우 글자를 흰색으로 하여 가독성 확보
-                                              if (joinType === '신규가입') {
-                                                styleClass += 'text-white';
-                                              } else {
-                                                // 다른 배경에서는 진한 빨간색 글씨 사용
-                                                styleClass += 'text-red-700';
-                                              }
+                                          if (isNegative) {
+                                            // 음수이면서 빨간 배경일 경우 글자를 흰색으로 하여 가독성 확보
+                                            if (joinType === '신규가입') {
+                                              styleClass += 'text-white';
                                             } else {
-                                              styleClass += 'text-black';
+                                              // 다른 배경에서는 진한 빨간색 글씨 사용
+                                              styleClass += 'text-red-700';
                                             }
-                                            
-                                            return <span className={styleClass}>{cellContent}</span>;
-
                                           } else {
-                                            if (isNegative) {
-                                              return <span className="text-red-500">{cellContent}</span>;
-                                            }
-                                            return cellContent;
+                                            styleClass += 'text-black';
                                           }
-                                        })()
-                                      )
-                                    }
-                                    {cell.includes('|WARN_MULTI') && (
-                                      <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
-                                        <AlertTriangle className="w-full h-full" />
-                                      </div>
-                                    )}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>
-                                    {
-                                      cell.includes('|WARN_MULTI')
-                                        ? `여러 값이 발견됨: ${cell.split('|WARN_MULTI')[0].split(';').join(', ')}`
-                                        : cell
-                                    }
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                                          
+                                          return <span className={styleClass}>{cellContent}</span>;
+
+                                        } else {
+                                          if (isNegative) {
+                                            return <span className="text-red-500">{cellContent}</span>;
+                                          }
+                                          return cellContent;
+                                        }
+                                      })()
+                                    )
+                                  }
+                                  {cell.includes('|WARN_MULTI') && (
+                                    <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
+                                      <AlertTriangle className="w-full h-full" />
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           )}
                         </td>
                       );
