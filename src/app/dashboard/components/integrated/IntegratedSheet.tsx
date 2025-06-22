@@ -14,6 +14,7 @@ import {
   extractMonthlyFeesByCarrier
 } from '@/app/dashboard/utils/integrated/dataExtraction';
 import { getDynamicCellStyle } from '@/app/dashboard/utils/common/colorUtils';
+import { AlertTriangle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface IntegratedSheetProps {
   dataSets: DataSet[];
@@ -65,6 +72,75 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     canUndo,
     canRedo
   ] = useUndo<string[][]>(sheetData);
+
+  const sheetHeaders = useMemo(() => currentSheetData.slice(0, 5), [currentSheetData]);
+  const aColumnData = useMemo(() => currentSheetData.map(row => row[0]), [currentSheetData]);
+
+  useEffect(() => {
+    const findMatchingValue = (rowIndex: number, colIndex: number): string => {
+      const carrier = sheetHeaders[0]?.[colIndex]?.trim();
+      const supportType = sheetHeaders[1]?.[colIndex]?.trim();
+      const planName = (sheetHeaders[2]?.[colIndex]?.trim() || '').split('|')[0];
+      const joinType = sheetHeaders[3]?.[colIndex]?.trim();
+      const company = sheetHeaders[4]?.[colIndex]?.trim();
+
+      if (!carrier || !supportType || !planName || !joinType || !company) return '';
+
+      const modelCellData = aColumnData[rowIndex] || '';
+      if (!modelCellData.includes('codes:')) return '';
+      
+      const codesPart = modelCellData.split('|').find(p => p.startsWith('codes:'));
+      if (!codesPart) return '';
+      const targetModelCodes = codesPart.replace('codes:', '').split(',');
+
+      const foundValues: string[] = [];
+      const searchDataSets = dataSets.filter(ds => ds.type !== 'integrated');
+
+      for (const ds of searchDataSets) {
+        const sourceSheet = ds.data.sheetData;
+        if (!sourceSheet || sourceSheet.length < 5) continue;
+
+        for (let sourceCol = 1; sourceCol < sourceSheet[0].length; sourceCol++) {
+          if (
+            carrier === sourceSheet[0]?.[sourceCol]?.trim() &&
+            supportType === sourceSheet[1]?.[sourceCol]?.trim() &&
+            planName === (sourceSheet[2]?.[sourceCol]?.trim() || '').split('|')[0] &&
+            joinType === sourceSheet[3]?.[sourceCol]?.trim() &&
+            company === sourceSheet[4]?.[sourceCol]?.trim()
+          ) {
+            for (let sourceRow = 5; sourceRow < sourceSheet.length; sourceRow++) {
+              const sourceModelCode = sourceSheet[sourceRow]?.[0]?.trim();
+              if (sourceModelCode && targetModelCodes.includes(sourceModelCode)) {
+                foundValues.push(sourceSheet[sourceRow]?.[sourceCol] || '');
+              }
+            }
+          }
+        }
+      }
+
+      const uniqueFoundValues = [...new Set(foundValues.filter(v => v))];
+      if (uniqueFoundValues.length === 0) return '';
+      if (uniqueFoundValues.length > 1) return `${uniqueFoundValues.join(';')}|WARN_MULTI`;
+      return uniqueFoundValues[0];
+    };
+
+    const newSheet = currentSheetData.map(row => [...row]);
+    let hasChanged = false;
+
+    for (let r = 5; r < newSheet.length; r++) {
+      for (let c = 1; c < newSheet[r].length; c++) {
+        const newValue = findMatchingValue(r, c);
+        if (newSheet[r][c] !== newValue) {
+          newSheet[r][c] = newValue;
+          hasChanged = true;
+        }
+      }
+    }
+
+    if (hasChanged) {
+      setCurrentSheetDataWithoutUndo(newSheet);
+    }
+  }, [sheetHeaders, aColumnData, dataSets, setCurrentSheetDataWithoutUndo, currentSheetData]);
 
   // 반응형 열 너비 계산
   const getColumnWidth = useMemo(() => {
@@ -415,38 +491,79 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                             {SHEET_HEADER_LABELS[rowIndex]}
                           </span>
                         ) : colIndex === 0 ? (
-                          <div
-                            className="w-full h-full flex items-center justify-start text-gray-600"
-                            onDoubleClick={() => {
-                              // A열 6행부터 더블클릭 시 모델정보 모달 열기
-                              if (rowIndex >= 5) {
-                                handleOpenModelInfoModal(rowIndex);
-                              }
-                            }}
-                            style={{
-                              cursor: rowIndex >= 5 ? 'pointer' : 'default'
-                            }}
-                          >
-                            {/* 모델정보 파싱: key:value 형식에서 display 값(모델명)만 표시하고, [5G]/[LTE] 제거 */}
-                            {rowIndex >= 5 ? (() => {
-                              let displayName = cell;
-                              if (cell.includes('|')) {
-                                const parts = cell.split('|');
-                                const displayPart = parts.find(part => part.startsWith('display:'));
-                                displayName = displayPart ? displayPart.replace('display:', '') : cell;
-                              }
-                              return displayName.replace(/\[(5G|LTE)\]/g, '').trim();
-                            })() : cell}
-                          </div>
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="w-full h-full flex items-center justify-start text-gray-600 px-2"
+                                  onDoubleClick={() => {
+                                    if (rowIndex >= 5) {
+                                      handleOpenModelInfoModal(rowIndex);
+                                    }
+                                  }}
+                                  style={{
+                                    cursor: rowIndex >= 5 ? 'pointer' : 'default'
+                                  }}
+                                >
+                                  {rowIndex >= 5 ? (() => {
+                                    let displayName = cell;
+                                    if (cell.includes('|')) {
+                                      const parts = cell.split('|');
+                                      const displayPart = parts.find(part => part.startsWith('display:'));
+                                      displayName = displayPart ? displayPart.replace('display:', '') : cell;
+                                    }
+                                    return displayName.replace(/\[(5G|LTE)\]/g, '').trim();
+                                  })() : cell}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="text-left">
+                                  {cell.split('|').map((part, index) => {
+                                    const [key, value] = part.split(':');
+                                    let label = key;
+                                    let finalValue = value;
+                                    switch (key) {
+                                      case 'display': label = '모델명'; break;
+                                      case 'standard': label = '표준 모델'; break;
+                                      case 'price': label = '출고가'; finalValue = `${Number(value).toLocaleString()}원`; break;
+                                      case 'codes': label = '연결된 코드'; break;
+                                      default: return <p key={index}>{part}</p>;
+                                    }
+                                    return <p key={index}><strong>{label}:</strong> {finalValue}</p>;
+                                  })}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         ) : (
-                          <div
-                            className={`w-full h-full flex items-center justify-center ${
-                              rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
-                            }`}
-                          >
-                            {/* 3행(rowIndex===2)의 경우, '|' 앞의 요금제 이름만 표시 */}
-                            {rowIndex === 2 ? cell.split('|')[0] : cell}
-                          </div>
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className={`relative w-full h-full flex items-center justify-center ${
+                                    rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
+                                  }`}
+                                >
+                                  {/* 3행(rowIndex===2)의 경우, '|' 앞의 요금제 이름만 표시, 데이터 셀은 ';' 앞의 값만 표시 */}
+                                  {rowIndex === 2 ? cell.split('|')[0] : cell.split('|WARN_MULTI')[0].split(';')[0]}
+                                  {cell.includes('|WARN_MULTI') && (
+                                    <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
+                                      <AlertTriangle className="w-full h-full" />
+                                    </div>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>
+                                  {
+                                    cell.includes('|WARN_MULTI')
+                                      ? `여러 값이 발견됨: ${cell.split('|WARN_MULTI')[0].split(';').join(', ')}`
+                                      : cell
+                                  }
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </td>
                     ))}
