@@ -590,6 +590,113 @@ export default function IntegratedSheet({
     });
   };
 
+  // 출고가 추출 함수
+  const getPriceFromAColumn = (rowIndex: number): number => {
+    const cellData = currentSheetData[rowIndex]?.[0] || '';
+    if (cellData.includes('price:')) {
+      const pricePart = cellData.split('|').find(p => p.startsWith('price:'));
+      if (pricePart) {
+        const price = pricePart.replace('price:', '');
+        return Number(price) || 0;
+      }
+    }
+    return 0;
+  };
+
+  // 공시지원금 계산 함수
+  const getPublicSupportAmount = (rowIndex: number, colIndex: number): number => {
+    const planName = currentSheetData[2]?.[colIndex]?.split('|')[0] || '';
+    const standardModel = currentSheetData[rowIndex]?.[0]?.split('|').find(p => p.startsWith('standard:'))?.replace('standard:', '') || '';
+    
+    if (!planName || !standardModel) return 0;
+
+    // 공시 데이터셋에서 찾기
+    const publicDataSet = dataSets.find(ds => ds.type === 'public');
+    if (!publicDataSet?.data.sheetData) return 0;
+
+    const publicSheet = publicDataSet.data.sheetData;
+    
+    for (let col = 1; col < publicSheet[0].length; col++) {
+      const publicPlanName = publicSheet[2]?.[col]?.split('|')[0] || '';
+      const publicModelCode = publicSheet[4]?.[col] || '';
+      
+      if (publicPlanName === planName && publicModelCode === standardModel) {
+        // 6행부터 데이터 찾기
+        for (let row = 5; row < publicSheet.length; row++) {
+          const modelCode = publicSheet[row]?.[0] || '';
+          if (modelCode === standardModel) {
+            const supportAmount = publicSheet[row]?.[col] || '';
+            return Number(supportAmount) || 0;
+          }
+        }
+      }
+    }
+    
+    return 0;
+  };
+
+  // 부가서비스 계산 함수
+  const getAdditionalServiceAmount = (rowIndex: number, colIndex: number): number => {
+    const carrier = currentSheetData[0]?.[colIndex] || '';
+    const company = currentSheetData[4]?.[colIndex] || '';
+    
+    if (!carrier || !company) return 0;
+
+    // 부가 데이터셋에서 찾기
+    const additionalDataSet = dataSets.find(ds => ds.type === 'additional');
+    if (!additionalDataSet?.data.additionalServices) return 0;
+
+    const additionalServices = additionalDataSet.data.additionalServices;
+    const carrierServices = additionalServices[carrier];
+    if (!carrierServices) return 0;
+
+    let totalAmount = 0;
+    carrierServices.forEach(service => {
+      if (service.service === company) {
+        const discount = Number(service.discount) || 0;
+        totalAmount += discount;
+      }
+    });
+
+    return totalAmount;
+  };
+
+  // 최종 계산 함수
+  const calculateFinalAmount = (rowIndex: number, colIndex: number): { 
+    finalAmount: number; 
+    price: number; 
+    policySupport: number; 
+    publicSupport: number; 
+    additionalService: number; 
+  } => {
+    const price = getPriceFromAColumn(rowIndex);
+    const policySupport = Number(currentSheetData[rowIndex]?.[colIndex]?.split('|')[0].split(';')[0]) || 0;
+    const publicSupport = getPublicSupportAmount(rowIndex, colIndex);
+    const additionalService = getAdditionalServiceAmount(rowIndex, colIndex);
+    
+    // 정책지원금이 0인 경우 빈칸으로 표시
+    if (policySupport === 0) {
+      return {
+        finalAmount: 0,
+        price,
+        policySupport: 0,
+        publicSupport,
+        additionalService
+      };
+    }
+    
+    // 계산: (출고가 - 정책지원금*10000 - 공시지원금 - 부가서비스) / 10000
+    const finalAmount = Math.floor((price - policySupport * 10000 - publicSupport - additionalService) / 10000);
+    
+    return {
+      finalAmount,
+      price,
+      policySupport,
+      publicSupport,
+      additionalService
+    };
+  };
+
   return (
     <div className="flex flex-col w-full h-full">
       <div className="max-w-[61rem] mx-auto w-full px-4">
@@ -742,9 +849,10 @@ export default function IntegratedSheet({
                                             // 6행 이상 데이터 셀 렌더링
                                             (() => {
                                               const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
-                                              const cellContent = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                              const calculation = calculateFinalAmount(rowIndex, colIndex);
+                                              const cellContent = calculation.finalAmount === 0 ? '' : calculation.finalAmount.toString();
                                               const joinType = sheetHeaders[3]?.[colIndex]?.trim();
-                                              const isNegative = !isNaN(Number(cellContent)) && Number(cellContent) < 0;
+                                              const isNegative = calculation.finalAmount < 0;
 
                                               if (isHighlighted) {
                                                 let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
@@ -808,26 +916,53 @@ export default function IntegratedSheet({
                                     ) : rowIndex >= 5 && colIndex > 0 ? (
                                       // B6셀부터 데이터 툴팁
                                       (() => {
+                                        const calculation = calculateFinalAmount(rowIndex, colIndex);
                                         const cellContent = cell.split('|WARN_MULTI')[0];
                                         const hasWarning = cell.includes('|WARN_MULTI');
                                         const values = cellContent.split(';').filter(v => v.trim());
                                         
+                                        // 정책지원금이 0인 경우 툴팁 표시하지 않음
+                                        if (calculation.policySupport === 0) {
+                                          return null;
+                                        }
+                                        
                                         return (
                                           <div>
-                                            <p><strong>값:</strong> {values.join(', ')}</p>
+                                            <p><strong>최종 결과:</strong> {calculation.finalAmount.toLocaleString()}원</p>
+                                            <hr className="my-2" />
+                                            <p><strong>출고가:</strong> {calculation.price.toLocaleString()}원</p>
+                                            {calculation.policySupport > 0 && (
+                                              <p><strong>정책지원금:</strong> {(calculation.policySupport * 10000).toLocaleString()}원</p>
+                                            )}
+                                            <p><strong>공시지원금:</strong> {calculation.publicSupport.toLocaleString()}원</p>
+                                            <p><strong>부가서비스:</strong> {calculation.additionalService.toLocaleString()}원</p>
                                             {hasWarning && (
-                                              <p className="text-yellow-600">
+                                              <p className="text-yellow-600 mt-2">
                                                 <strong>⚠️ 경고:</strong> 여러 값이 발견됨
                                               </p>
                                             )}
                                             {values.length > 1 && !hasWarning && (
-                                              <p className="text-blue-600">
+                                              <p className="text-blue-600 mt-2">
                                                 <strong>ℹ️ 정보:</strong> 여러 값이 있음
                                               </p>
                                             )}
                                           </div>
                                         );
                                       })()
+                                    ) : (rowIndex === 1 || rowIndex === 4) && colIndex > 0 ? (
+                                      // 2행, 5행은 툴팁 없이 일반 div
+                                      <div
+                                        className={`relative w-full h-full flex items-center justify-center ${
+                                          rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
+                                        }`}
+                                        style={{
+                                          whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
+                                          overflow: rowIndex < 5 ? 'hidden' : 'visible',
+                                          textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
+                                        }}
+                                      >
+                                        {cell.split('|WARN_MULTI')[0].split(';')[0]}
+                                      </div>
                                     ) : (
                                       // 기타 셀 툴팁
                                       <p>{cell}</p>

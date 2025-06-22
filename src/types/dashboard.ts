@@ -20,7 +20,7 @@ export interface SheetData {
 export interface DataSet {
   id: string;
   name: string;
-  type?: 'integrated' | 'normal' | 'additional';
+  type?: 'integrated' | 'normal' | 'additional' | 'public';
   createdAt: string;
   data: SheetData & {
     filters?: {
