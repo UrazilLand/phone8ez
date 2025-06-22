@@ -5,7 +5,7 @@ import { PublicSupportData } from '@/types/dashboard';
 import { RefreshCw } from 'lucide-react';
 import { BUTTON_THEME } from '@/styles/common';
 
-interface DataCardModalProps {
+interface SupportDataModalProps {
   // 공시 데이터 모달 props
   supportModalOpen: boolean;
   setSupportModalOpen: (open: boolean) => void;
@@ -17,14 +17,14 @@ interface DataCardModalProps {
   error: string | null;
 }
 
-export default function DataCardModal({
+export default function SupportDataModal({
   supportModalOpen,
   setSupportModalOpen,
   supportData,
   onRefreshSupportData,
   isLoading,
   error
-}: DataCardModalProps) {
+}: SupportDataModalProps) {
   return (
     <>
       {/* 공시 데이터 모달 */}
@@ -68,6 +68,22 @@ export default function DataCardModal({
                   ))}
                 </div>
               </div>
+              <div className="text-sm text-gray-600 mt-4 text-center flex-shrink-0">
+                공시 지원금 정보는{' '}
+                <span className="text-blue-600">
+                  스마트초이스
+                </span>
+                를 통해 매일 00시 업데이트 됩니다. 정확한 정보는{' '}
+                <a 
+                  href="https://m.smartchoice.or.kr/smc/mobile/dantongList.do?type=m" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  여기
+                </a>
+                를 참고하세요.
+              </div>
             </div>
           ) : (
             <div className="flex flex-col flex-1 min-h-0">
@@ -85,6 +101,22 @@ export default function DataCardModal({
                 <div className="text-center text-gray-500">
                   {isLoading ? '데이터를 불러오는 중...' : '저장된 공시 데이터가 없습니다. 최신 데이터를 불러와주세요.'}
                 </div>
+              </div>
+              <div className="text-sm text-gray-600 mt-4 text-center flex-shrink-0">
+                공시 지원금 정보는{' '}
+                <span className="text-blue-600">
+                  스마트초이스
+                </span>
+                를 통해 매일 00시 업데이트 됩니다. 정확한 정보는{' '}
+                <a 
+                  href="https://m.smartchoice.or.kr/smc/mobile/dantongList.do?type=m" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  여기
+                </a>
+                를 참고하세요.
               </div>
             </div>
           )}

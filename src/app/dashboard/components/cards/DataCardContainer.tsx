@@ -4,7 +4,7 @@ import { DataSet, TabType, PublicSupportData } from '@/types/dashboard';
 import { getAvailableDates, getSupportAmountsByDate } from '../../utils/support-amounts';
 import { savePublicDataToStorage } from '../../utils/dashboardUtils';
 import DataCardBody from './DataCardBody';
-import DataCardModal from './DataCardModal';
+import SupportDataModal from './SupportDataModal';
 import PreviewModal from './PreviewModal';
 import { useToast } from "@/hooks/use-toast";
 
@@ -272,7 +272,7 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         style={{ display: 'none' }}
       />
 
-      <DataCardModal
+      <SupportDataModal
         supportModalOpen={supportModalOpen}
         setSupportModalOpen={setSupportModalOpen}
         supportData={supportData}

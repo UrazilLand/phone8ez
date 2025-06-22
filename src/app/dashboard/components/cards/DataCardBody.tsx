@@ -49,7 +49,7 @@ export default function DataCardBody({
         <div className="text-sm text-gray-500 flex items-center gap-2">
           {isCloudMode ? <Cloud className="w-4 h-4 text-gray-400" /> : <Database className="w-4 h-4 text-gray-400" />}
           {isCloudMode ? 'Cloud 데이터' : '로컬 데이터'}
-          <span className="ml-2 text-blue-700 font-semibold">{dataSets.length}개 데이터셋</span>
+          <span className="ml-2 text-blue-700 font-semibold">{otherDataSets.length}개 데이터셋</span>
         </div>
         
         {/* 토글 스위치 */}
