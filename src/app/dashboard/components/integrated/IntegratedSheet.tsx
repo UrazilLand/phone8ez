@@ -167,7 +167,12 @@ export default function IntegratedSheet({
             for (let sourceRow = 5; sourceRow < sourceSheet.length; sourceRow++) {
               const sourceModelCode = sourceSheet[sourceRow]?.[0]?.trim();
               if (sourceModelCode && targetModelCodes.includes(sourceModelCode)) {
-                foundValues.push(sourceSheet[sourceRow]?.[sourceCol] || '');
+                const cellValue = sourceSheet[sourceRow]?.[sourceCol] || '';
+                // 숫자만 추출 (음수 부호 포함)
+                const numericValue = cellValue.replace(/[^\d-]/g, '');
+                if (numericValue) {
+                  foundValues.push(numericValue);
+                }
               }
             }
           }
@@ -592,7 +597,7 @@ export default function IntegratedSheet({
               <colgroup>
                 <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
                 {currentSheetData[0]?.slice(1).map((_, index) => (
-                  <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '60px' }} />
+                  <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '40px' }} />
                 ))}
               </colgroup>
               <tbody>
@@ -668,11 +673,26 @@ export default function IntegratedSheet({
                                     className={`relative w-full h-full flex items-center justify-center ${
                                       rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
                                     }`}
+                                    style={{
+                                      whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
+                                      overflow: rowIndex < 5 ? 'hidden' : 'visible',
+                                      textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
+                                    }}
                                   >
                                     {
                                       rowIndex < 5 ? (
                                         // 1~5행 렌더링
-                                        rowIndex === 2 ? cell.split('|')[0] : cell.split('|WARN_MULTI')[0].split(';')[0]
+                                        rowIndex === 2 ? cell.split('|')[0] : 
+                                        rowIndex === 3 ? (() => {
+                                          // 4행(가입유형) 축약형 표시
+                                          const fullText = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                          switch (fullText) {
+                                            case '번호이동': return '번이';
+                                            case '기기변경': return '기변';
+                                            case '신규가입': return '신규';
+                                            default: return fullText;
+                                          }
+                                        })() : cell.split('|WARN_MULTI')[0].split(';')[0]
                                       ) : (
                                         // 6행 이상 데이터 셀 렌더링
                                         (() => {
