@@ -5,6 +5,7 @@ import { DataSet, SheetData } from '@/types/dashboard';
 import IntegratedHeader from './IntegratedHeader';
 import DataSelectionModal from './DataSelectionModal';
 import ModelInfoModal from './ModelInfoModal';
+import AdditionalServiceModal from './AdditionalServiceModal';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT, BUTTON_THEME } from '@/styles/common';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +61,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isOverwriteModalOpen, setIsOverwriteModalOpen] = useState(false);
   const [isModelInfoModalOpen, setIsModelInfoModalOpen] = useState(false);
+  const [isAdditionalServiceModalOpen, setIsAdditionalServiceModalOpen] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(-1);
   const [modelInfoData, setModelInfoData] = useState<Record<number, ModelInfo>>({});
 
@@ -498,6 +500,22 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     });
   };
 
+  const handleOpenAdditionalServiceModal = () => {
+    setIsAdditionalServiceModalOpen(true);
+  };
+
+  const handleCloseAdditionalServiceModal = () => {
+    setIsAdditionalServiceModalOpen(false);
+  };
+
+  const handleApplyAdditionalServices = (selectedServices: string[]) => {
+    // 임시로 토스트 메시지만 표시
+    toast({
+      title: "부가서비스 적용",
+      description: `선택된 부가서비스: ${selectedServices.join(', ')}`,
+    });
+  };
+
   return (
     <div className="flex flex-col w-full h-full">
       <div className="max-w-[61rem] mx-auto w-full px-4">
@@ -512,6 +530,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
           canUndo={canUndo()}
           canRedo={canRedo()}
           onOpenFilterModal={handleOpenFilterModal}
+          onOpenAdditionalServiceModal={handleOpenAdditionalServiceModal}
         />
       </div>
       
@@ -673,6 +692,13 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
           </div>
         </div>
       </div>
+
+      {/* 부가서비스 모달 */}
+      <AdditionalServiceModal
+        isOpen={isAdditionalServiceModalOpen}
+        onClose={handleCloseAdditionalServiceModal}
+        onApply={handleApplyAdditionalServices}
+      />
 
       {/* 필터 모달 */}
       <DataSelectionModal

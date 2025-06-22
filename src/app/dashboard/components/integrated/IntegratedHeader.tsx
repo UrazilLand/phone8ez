@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { DataSet } from '@/types/dashboard';
-import { Save, RotateCcw, Undo, Filter } from 'lucide-react';
+import { Save, RotateCcw, Undo, Filter, Plus } from 'lucide-react';
 import { BUTTON_THEME, SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Undo2Icon, Redo2Icon } from "lucide-react";
@@ -18,6 +18,7 @@ interface IntegratedHeaderProps {
   canUndo: boolean;
   canRedo: boolean;
   onOpenFilterModal: () => void;
+  onOpenAdditionalServiceModal: () => void;
 }
 
 export default function IntegratedHeader({
@@ -31,6 +32,7 @@ export default function IntegratedHeader({
   canUndo,
   canRedo,
   onOpenFilterModal,
+  onOpenAdditionalServiceModal,
 }: IntegratedHeaderProps) {
   return (
     <div className="flex items-center justify-between px-4 py-2">
@@ -94,7 +96,15 @@ export default function IntegratedHeader({
           </Tooltip>
         </div>
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
+        <Button 
+          className={`${BUTTON_THEME.secondary} flex items-center gap-2`}
+          size="sm"
+          onClick={onOpenAdditionalServiceModal}
+        >
+          <Plus className="w-4 h-4" />
+          <span className="max-md:hidden">부가서비스</span>
+        </Button>
         <Button 
           className={`${BUTTON_THEME.secondary} flex items-center gap-2`}
           size="sm"
