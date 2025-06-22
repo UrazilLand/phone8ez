@@ -39,7 +39,8 @@ export default function DataCardBody({
   onMouseLeave,
 }: DataCardBodyProps) {
   const integratedDataSet = dataSets.find((d) => d.type === 'integrated');
-  const otherDataSets = dataSets.filter((d) => d.type !== 'integrated');
+  const additionalDataSet = dataSets.find((d) => d.type === 'additional');
+  const otherDataSets = dataSets.filter((d) => d.type !== 'integrated' && d.type !== 'additional');
 
   return (
     <div className={`${cardStyles} py-4 px-4`}>
@@ -95,6 +96,18 @@ export default function DataCardBody({
               </div>
             ) : (
               <>
+                {/* 부가서비스 데이터셋 (통합 왼쪽 2번째) */}
+                {additionalDataSet && (
+                  <button
+                    key={additionalDataSet.id}
+                    onClick={() => onPreviewDataSet(additionalDataSet)}
+                    className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-green-100 border-green-300 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-700`}
+                    style={{ flex: '0 0 auto' }}
+                  >
+                    {additionalDataSet.name}
+                  </button>
+                )}
+                {/* 통합 데이터셋 */}
                 {integratedDataSet && (
                   <button
                     key={integratedDataSet.id}
@@ -105,6 +118,7 @@ export default function DataCardBody({
                     {integratedDataSet.name}
                   </button>
                 )}
+                {/* 기타 데이터셋들 */}
                 {otherDataSets.map((dataSet) => (
                   <button
                     key={dataSet.id}

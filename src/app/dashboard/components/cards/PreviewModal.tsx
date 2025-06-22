@@ -36,6 +36,80 @@ export default function PreviewModal({
     }
   };
 
+  // 부가서비스 데이터 렌더링
+  const renderAdditionalServices = () => {
+    if (!selectedDataSet?.data.additionalServices) return null;
+
+    const services = selectedDataSet.data.additionalServices;
+    const companies = Object.keys(services);
+
+    return (
+      <div className="space-y-4">
+        {companies.map((companyKey) => {
+          const [company, carrier] = companyKey.split('-');
+          const companyServices = services[companyKey];
+          
+          return (
+            <div key={companyKey} className="border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <h4 className="font-semibold text-gray-900">{company}</h4>
+                <span className="text-sm text-gray-500">({carrier})</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-900">부가서비스명</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-900">할인금액</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {companyServices.map((service, index) => (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="px-3 py-2 text-gray-700">{service.service || '-'}</td>
+                        <td className="px-3 py-2 text-gray-700">{service.discount || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // 일반 데이터셋 렌더링
+  const renderNormalData = () => {
+    if (!selectedDataSet?.data.sheetData) return null;
+
+    return (
+      <table className="w-full text-xs">
+        <thead className="bg-gray-50 sticky top-0 z-10">
+          <tr>
+            {selectedDataSet.data.sheetData[0]?.map((header, index) => (
+              <th key={index} className={`px-2 h-6 font-semibold text-gray-900 border-b whitespace-nowrap ${index === 0 ? 'text-left' : 'text-center'}`}>
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {selectedDataSet.data.sheetData.slice(1).map((row, rowIndex) => (
+            <tr key={rowIndex} className="border-b hover:bg-gray-50">
+              {row.map((cell, cellIndex) => (
+                <td key={cellIndex} className={`px-2 h-6 text-gray-700 truncate whitespace-nowrap ${cellIndex === 0 ? 'text-left' : 'text-center'}`}>
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
   return (
     <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
       <DialogContent className="max-w-7xl h-[90vh] p-6 flex flex-col">
@@ -69,28 +143,10 @@ export default function PreviewModal({
               <div className="h-full flex flex-col">
                 <div className="flex-1 min-h-0 overflow-hidden">
                   <div className="h-full overflow-y-auto overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead className="bg-gray-50 sticky top-0 z-10">
-                        <tr>
-                          {selectedDataSet.data.sheetData[0]?.map((header, index) => (
-                            <th key={index} className={`px-2 h-6 font-semibold text-gray-900 border-b whitespace-nowrap ${index === 0 ? 'text-left' : 'text-center'}`}>
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedDataSet.data.sheetData.slice(1).map((row, rowIndex) => (
-                          <tr key={rowIndex} className="border-b hover:bg-gray-50">
-                            {row.map((cell, cellIndex) => (
-                              <td key={cellIndex} className={`px-2 h-6 text-gray-700 truncate whitespace-nowrap ${cellIndex === 0 ? 'text-left' : 'text-center'}`}>
-                                {cell}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    {selectedDataSet.type === 'additional' 
+                      ? renderAdditionalServices()
+                      : renderNormalData()
+                    }
                   </div>
                 </div>
               </div>

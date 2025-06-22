@@ -508,13 +508,104 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     setIsAdditionalServiceModalOpen(false);
   };
 
-  const handleApplyAdditionalServices = (selectedServices: string[]) => {
-    // 임시로 토스트 메시지만 표시
-    toast({
-      title: "부가서비스 적용",
-      description: `선택된 부가서비스: ${selectedServices.join(', ')}`,
-    });
+  const handleApplyAdditionalServices = (additionalServicesData: Record<string, Array<{service: string, discount: string}>>) => {
+    // '부가' 데이터셋으로 저장
+    const existingAdditionalDataSet = dataSets.find(dataset => dataset.type === 'additional');
+    
+    const newAdditionalData: SheetData = {
+      sheetData: [], // 부가서비스 데이터는 별도 구조로 저장
+      carrier: '',
+      contract: '',
+      planOptions: [],
+      companyOptions: [],
+      joinTypeOrder: [],
+      contractTypeOrder: [],
+      planInput: '',
+      planFields: [],
+      planRepeatCount: '',
+      companyInput: '',
+      companyFields: [],
+      policyInput: '',
+      joinTypeRepeatCounts: {},
+      contractTypeRepeatCounts: {},
+      additionalServices: additionalServicesData, // 부가서비스 데이터 추가
+    };
+
+    if (existingAdditionalDataSet) {
+      const updatedDataSets = dataSets.map(dataset => 
+        dataset.type === 'additional' 
+          ? { ...dataset, data: newAdditionalData, createdAt: new Date().toISOString() }
+          : dataset
+      );
+      setDataSets(updatedDataSets);
+      toast({
+        title: "부가서비스 업데이트 완료",
+        description: "부가서비스 정보가 성공적으로 업데이트되었습니다.",
+      });
+    } else {
+      const newDataSet: DataSet = {
+        id: 'additional',
+        name: "부가",
+        type: 'additional',
+        createdAt: new Date().toISOString(),
+        data: newAdditionalData,
+      };
+      setDataSets([...dataSets, newDataSet]);
+      toast({
+        title: "부가서비스 저장 완료",
+        description: "부가서비스 정보가 성공적으로 저장되었습니다.",
+      });
+    }
   };
+
+  // 부가서비스 데이터를 통합 시트에 반영하는 함수
+  const applyAdditionalServicesToSheet = useCallback(() => {
+    const additionalDataSet = dataSets.find(dataset => dataset.type === 'additional');
+    if (!additionalDataSet?.data.additionalServices) return;
+
+    const additionalServices = additionalDataSet.data.additionalServices;
+    const newSheetData = [...currentSheetData];
+
+    // 6행부터 각 행을 순회하면서 부가서비스 할인 적용
+    for (let rowIndex = 5; rowIndex < newSheetData.length; rowIndex++) {
+      for (let colIndex = 1; colIndex < newSheetData[rowIndex].length; colIndex++) {
+        const carrier = sheetHeaders[0]?.[colIndex]?.trim();
+        const company = sheetHeaders[4]?.[colIndex]?.trim();
+        
+        if (!carrier || !company) continue;
+
+        const companyKey = `${company}-${carrier}`;
+        const companyServices = additionalServices[companyKey];
+        
+        if (companyServices) {
+          // 해당 업체의 부가서비스 할인 총액 계산
+          const totalDiscount = companyServices.reduce((sum, service) => {
+            const discount = parseInt(service.discount) || 0;
+            return sum + discount;
+          }, 0);
+
+          // 기존 셀 값에서 할인 적용
+          const currentValue = newSheetData[rowIndex][colIndex];
+          if (currentValue && !isNaN(Number(currentValue.split('|')[0].split(';')[0]))) {
+            const numericValue = Number(currentValue.split('|')[0].split(';')[0]);
+            const discountedValue = Math.max(0, numericValue - totalDiscount);
+            
+            // 할인이 적용된 경우 표시
+            if (totalDiscount > 0) {
+              newSheetData[rowIndex][colIndex] = `${discountedValue}|부가서비스할인:${totalDiscount}`;
+            }
+          }
+        }
+      }
+    }
+
+    setCurrentSheetData(newSheetData);
+  }, [currentSheetData, sheetHeaders, dataSets, setCurrentSheetData]);
+
+  // 부가서비스 데이터가 변경될 때마다 통합 시트에 반영
+  useEffect(() => {
+    applyAdditionalServicesToSheet();
+  }, [applyAdditionalServicesToSheet]);
 
   return (
     <div className="flex flex-col w-full h-full">
@@ -630,6 +721,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                                           const cellContent = cell.split('|WARN_MULTI')[0].split(';')[0];
                                           const joinType = sheetHeaders[3]?.[colIndex]?.trim();
                                           const isNegative = !isNaN(Number(cellContent)) && Number(cellContent) < 0;
+                                          const hasAdditionalServiceDiscount = cell.includes('|부가서비스할인:');
 
                                           if (isHighlighted) {
                                             let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
@@ -652,13 +744,40 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                                               styleClass += 'text-black';
                                             }
                                             
-                                            return <span className={styleClass}>{cellContent}</span>;
+                                            return (
+                                              <div className="relative">
+                                                <span className={styleClass}>{cellContent}</span>
+                                                {hasAdditionalServiceDiscount && (
+                                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                                                    <span className="text-white text-xs">-</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
 
                                           } else {
                                             if (isNegative) {
-                                              return <span className="text-red-500">{cellContent}</span>;
+                                              return (
+                                                <div className="relative">
+                                                  <span className="text-red-500">{cellContent}</span>
+                                                  {hasAdditionalServiceDiscount && (
+                                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                                                      <span className="text-white text-xs">-</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              );
                                             }
-                                            return cellContent;
+                                            return (
+                                              <div className="relative">
+                                                <span>{cellContent}</span>
+                                                {hasAdditionalServiceDiscount && (
+                                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                                                    <span className="text-white text-xs">-</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
                                           }
                                         })()
                                       )
@@ -675,6 +794,19 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                                     {
                                       cell.includes('|WARN_MULTI')
                                         ? `여러 값이 발견됨: ${cell.split('|WARN_MULTI')[0].split(';').join(', ')}`
+                                        : cell.includes('|부가서비스할인:')
+                                        ? (() => {
+                                            const parts = cell.split('|');
+                                            const mainValue = parts[0];
+                                            const discountPart = parts.find(p => p.startsWith('부가서비스할인:'));
+                                            const discount = discountPart ? discountPart.replace('부가서비스할인:', '') : '';
+                                            return (
+                                              <div>
+                                                <p>할인 적용: {mainValue}</p>
+                                                <p className="text-purple-600">부가서비스 할인: {Number(discount).toLocaleString()}원</p>
+                                              </div>
+                                            );
+                                          })()
                                         : cell
                                     }
                                   </p>
@@ -698,6 +830,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
         isOpen={isAdditionalServiceModalOpen}
         onClose={handleCloseAdditionalServiceModal}
         onApply={handleApplyAdditionalServices}
+        dataSets={dataSets}
       />
 
       {/* 필터 모달 */}

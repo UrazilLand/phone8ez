@@ -14,12 +14,13 @@ export interface SheetData {
   policyInput: string;
   joinTypeRepeatCounts: { [key: string]: string };
   contractTypeRepeatCounts: { [key: string]: string };
+  additionalServices?: Record<string, Array<{service: string, discount: string}>>;
 }
 
 export interface DataSet {
   id: string;
   name: string;
-  type?: 'integrated' | 'normal';
+  type?: 'integrated' | 'normal' | 'additional';
   createdAt: string;
   data: SheetData & {
     filters?: {
