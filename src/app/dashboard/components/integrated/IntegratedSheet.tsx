@@ -605,28 +605,53 @@ export default function IntegratedSheet({
 
   // 공시지원금 계산 함수
   const getPublicSupportAmount = (rowIndex: number, colIndex: number): number => {
-    const planName = currentSheetData[2]?.[colIndex]?.split('|')[0] || '';
     const standardModel = currentSheetData[rowIndex]?.[0]?.split('|').find(p => p.startsWith('standard:'))?.replace('standard:', '') || '';
+    const joinType = currentSheetData[3]?.[colIndex]?.split('|')[0].split(';')[0] || ''; // 4행 가입유형
+    const carrierInSheet = currentSheetData[0]?.[colIndex]?.trim() || ''; // 1행 통신사
     
-    if (!planName || !standardModel) return 0;
-
-    // 공시 데이터셋에서 찾기
-    const publicDataSet = dataSets.find(ds => ds.type === 'public');
-    if (!publicDataSet?.data.sheetData) return 0;
-
-    const publicSheet = publicDataSet.data.sheetData;
+    // 3행에서 월 요금 추출 (두 가지 값이 있을 수 있음)
+    const planCell = currentSheetData[2]?.[colIndex] || '';
+    const planParts = planCell.split('|');
+    const monthlyFee1 = planParts[1] ? Number(planParts[1]) : null;
+    const monthlyFee2 = planParts[2] ? Number(planParts[2]) : null;
     
-    for (let col = 1; col < publicSheet[0].length; col++) {
-      const publicPlanName = publicSheet[2]?.[col]?.split('|')[0] || '';
-      const publicModelCode = publicSheet[4]?.[col] || '';
-      
-      if (publicPlanName === planName && publicModelCode === standardModel) {
-        // 6행부터 데이터 찾기
-        for (let row = 5; row < publicSheet.length; row++) {
-          const modelCode = publicSheet[row]?.[0] || '';
-          if (modelCode === standardModel) {
-            const supportAmount = publicSheet[row]?.[col] || '';
-            return Number(supportAmount) || 0;
+    if (!standardModel || (monthlyFee1 === null && monthlyFee2 === null) || !carrierInSheet) {
+      // 표준모델, 월요금, 통신사 중 하나라도 없으면 계산 불가
+      return 0;
+    }
+
+    if (!publicData) {
+      return 0;
+    }
+    
+    for (const [manufacturerName, manufacturer] of Object.entries(publicData.manufacturers)) {
+      const typedManufacturer = manufacturer as any;
+      if (typedManufacturer.models) {
+        for (const model of typedManufacturer.models) {
+          if (model.model_number === standardModel) {
+            for (const section of model.support_info.sections) {
+              for (const [carrierName, carrierInfo] of Object.entries(section.carriers)) {
+                // 통신사가 일치하는지 확인
+                if (carrierInfo && typeof carrierInfo === 'object' && carrierName === carrierInSheet) {
+                  const carrierMonthlyFee = (carrierInfo as any).monthly_fee;
+                  const isMonthlyFeeMatch = (monthlyFee1 !== null && carrierMonthlyFee === monthlyFee1) || 
+                                          (monthlyFee2 !== null && carrierMonthlyFee === monthlyFee2);
+                  
+                  if (isMonthlyFeeMatch) {
+                    let supportAmount = 0;
+                    if (joinType === '번호이동') {
+                      supportAmount = (carrierInfo as any).number_port_support || 0;
+                    } else {
+                      supportAmount = (carrierInfo as any).device_support || 0;
+                    }
+                    
+                    if (supportAmount > 0) {
+                      return Number(supportAmount);
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
