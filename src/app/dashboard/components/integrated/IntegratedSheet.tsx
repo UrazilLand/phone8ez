@@ -183,14 +183,19 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
   const saveIntegratedData = () => {
     const existingIntegratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
     
-    // A열과 1~5행만 추출하여 저장
-    const limitedSheetData = currentSheetData.slice(0, 5).map(row => {
-      // A열(인덱스 0)만 포함
-      return [row[0]];
+    const sheetDataForSaving = currentSheetData.map((row, rowIndex) => {
+      // 1~5행은 모든 열의 데이터를 저장합니다.
+      if (rowIndex < 5) {
+        return row;
+      }
+      // 6행부터는 A열의 데이터만 저장하고 나머지 열은 비웁니다.
+      const newRow = Array(row.length).fill('');
+      newRow[0] = row[0] || '';
+      return newRow;
     });
     
     const newSheetData: SheetData = {
-      sheetData: limitedSheetData,
+      sheetData: sheetDataForSaving,
       carrier: currentSheetData[0][1] || '',
       contract: currentSheetData[1][1] || '',
       planOptions: [],
@@ -410,9 +415,12 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
     // 3. 필요한 열 개수 계산 및 시트 생성
     const requiredDataCols = filteredColumns.length;
     const finalColCount = Math.max(DEFAULT_COLUMN_COUNT, requiredDataCols + 1);
-    const newSheetData = Array(DEFAULT_ROW_COUNT)
-      .fill(null)
-      .map(() => Array(finalColCount).fill(''));
+    const newSheetData = currentSheetData.map((row, rowIndex) => {
+      const newRow = Array(finalColCount).fill('');
+      // A열 데이터 보존
+      newRow[0] = currentSheetData[rowIndex]?.[0] || '';
+      return newRow;
+    });
 
     // 4. 필터링된 데이터를 새 시트에 복사하고, 월 요금 정보를 3행에 함께 저장
     filteredColumns.forEach((columnData, index) => {
@@ -495,7 +503,7 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div
-                                  className="w-full h-full flex items-center justify-start text-gray-600 px-2"
+                                  className="w-full h-full flex items-center justify-start text-gray-600"
                                   onDoubleClick={() => {
                                     if (rowIndex >= 5) {
                                       handleOpenModelInfoModal(rowIndex);
