@@ -243,9 +243,19 @@ export default function ModelInfoModal({
     
     const allModelCodes = [...new Set(publicData.model_info.map(m => m.model_number))];
 
-    return allModelCodes.filter((code: string) =>
-      !searchQuery || code.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    if (!searchQuery.trim()) {
+      return allModelCodes;
+    }
+
+    const searchTerms = searchQuery
+      .split(/[,\s]+/)
+      .map(term => term.trim().toLowerCase())
+      .filter(term => term.length > 0);
+
+    return allModelCodes.filter((code: string) => {
+      const codeLower = code.toLowerCase();
+      return searchTerms.every(term => codeLower.includes(term));
+    });
   }, [publicData?.model_info, searchQuery]);
 
   return (
