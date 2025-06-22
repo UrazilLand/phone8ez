@@ -184,22 +184,36 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
   const handleOpenModelInfoModal = (rowIndex: number) => {
     setSelectedRowIndex(rowIndex);
     
-    // 기존 셀 데이터 파싱
+    // 기존 셀 데이터 파싱 (key:value 형식)
     const cellData = currentSheetData[rowIndex][0];
     
     if (cellData && cellData.includes('|')) {
       const parts = cellData.split('|');
       const parsedModelInfo: ModelInfo = {
         selectedModelCodes: [],
-        standardModelCode: parts[0] || '', // 표준 모델번호가 첫 번째
-        modelName: parts[1] || '',         // 모델명이 두 번째
-        price: parts[2] || '',            // 출고가가 세 번째 (숫자만)
+        standardModelCode: '',
+        modelName: '',
+        price: '',
       };
       
-      // 선택된 모델번호 파싱 (네 번째)
-      if (parts[3]) {
-        parsedModelInfo.selectedModelCodes = parts[3].split(',').filter(code => code.trim());
-      }
+      // 각 key:value 쌍을 파싱
+      parts.forEach(part => {
+        const [key, value] = part.split(':');
+        switch (key) {
+          case 'standard':
+            parsedModelInfo.standardModelCode = value || '';
+            break;
+          case 'display':
+            parsedModelInfo.modelName = value || '';
+            break;
+          case 'price':
+            parsedModelInfo.price = value || '';
+            break;
+          case 'codes':
+            parsedModelInfo.selectedModelCodes = value ? value.split(',').filter(code => code.trim()) : [];
+            break;
+        }
+      });
       
       // 파싱된 데이터를 상태에 저장
       setModelInfoData(prev => ({
@@ -222,29 +236,30 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
       [selectedRowIndex]: modelInfo
     }));
     
-    // A열에 표준 모델번호를 제일 앞으로 고정하여 저장
+    // A열에 필요한 정보만 저장: 선택된 모델번호(중복 제거), 표준 모델번호, 출고가, 모델명(표시용)
     const newSheetData = [...currentSheetData];
     let cellContent = '';
     
-    // 표준 모델번호를 제일 앞에 저장
+    // 선택된 모델번호들 (중복 제거)
+    if (modelInfo.selectedModelCodes.length > 0) {
+      const uniqueCodes = [...new Set(modelInfo.selectedModelCodes)];
+      cellContent = `codes:${uniqueCodes.join(',')}`;
+    }
+    
+    // 표준 모델번호
     if (modelInfo.standardModelCode) {
-      cellContent = modelInfo.standardModelCode;
+      cellContent += cellContent ? `|standard:${modelInfo.standardModelCode}` : `standard:${modelInfo.standardModelCode}`;
     }
     
-    // 모델명 추가
-    if (modelInfo.modelName) {
-      cellContent += cellContent ? `|${modelInfo.modelName}` : modelInfo.modelName;
-    }
-    
-    // 출고가 추가 (숫자만 저장)
+    // 출고가 (숫자만 저장)
     if (modelInfo.price) {
       const numericPrice = modelInfo.price.replace(/[^\d]/g, '');
-      cellContent += cellContent ? `|${numericPrice}` : numericPrice;
+      cellContent += cellContent ? `|price:${numericPrice}` : `price:${numericPrice}`;
     }
     
-    // 선택된 모델번호 추가
-    if (modelInfo.selectedModelCodes.length > 0) {
-      cellContent += cellContent ? `|${modelInfo.selectedModelCodes.join(',')}` : modelInfo.selectedModelCodes.join(',');
+    // 모델명 (표시용)
+    if (modelInfo.modelName) {
+      cellContent += cellContent ? `|display:${modelInfo.modelName}` : `display:${modelInfo.modelName}`;
     }
     
     newSheetData[selectedRowIndex][0] = cellContent;
@@ -412,8 +427,15 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                               cursor: rowIndex >= 5 ? 'pointer' : 'default'
                             }}
                           >
-                            {/* 모델정보 파싱: 표준모델번호|모델명|출고가|선택된모델번호 형식에서 모델명만 표시 */}
-                            {rowIndex >= 5 ? (cell.includes('|') ? cell.split('|')[1] || cell : cell) : cell}
+                            {/* 모델정보 파싱: key:value 형식에서 display 값(모델명)만 표시 */}
+                            {rowIndex >= 5 ? (() => {
+                              if (cell.includes('|')) {
+                                const parts = cell.split('|');
+                                const displayPart = parts.find(part => part.startsWith('display:'));
+                                return displayPart ? displayPart.replace('display:', '') : cell;
+                              }
+                              return cell;
+                            })() : cell}
                           </div>
                         ) : (
                           <div

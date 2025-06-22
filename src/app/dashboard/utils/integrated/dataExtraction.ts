@@ -1,5 +1,4 @@
-import { DataSet } from '@/types/dashboard';
-import { SupportAmountData } from '../support-amounts';
+import { DataSet, PublicSupportData } from '@/types/dashboard';
 
 /**
  * 데이터셋에서 특정 통신사의 업체명을 추출합니다.
@@ -66,12 +65,12 @@ export function extractPlansByCarrierAndCompany(dataSets: DataSet[], carrier: st
  * @param carrier 통신사
  * @returns 중복 제거된 월 요금제 배열 (숫자 형식)
  */
-export function extractMonthlyFeesByCarrier(publicData: SupportAmountData | null, carrier: string): number[] {
-  if (!publicData?.publicFeeSummary?.[carrier]) {
+export function extractMonthlyFeesByCarrier(publicData: PublicSupportData | null, carrier: 'SK' | 'KT' | 'LG'): number[] {
+  if (!publicData?.carrier_monthly_fees?.[carrier]) {
     return [];
   }
   
-  const monthlyFees = publicData.publicFeeSummary[carrier];
+  const monthlyFees = publicData.carrier_monthly_fees[carrier];
   return Array.isArray(monthlyFees) ? [...new Set(monthlyFees)].sort((a, b) => a - b) : [];
 }
 
@@ -174,28 +173,34 @@ export function extractMonthlyFeeFromCell(cellValue: string): number | null {
  * @param planName 요금제 이름
  * @param monthlyFee1 월 요금 1
  * @param monthlyFee2 월 요금 2
- * @param supportAmountData 공시 지원금 데이터
+ * @param publicData 공시 지원금 데이터
  * @returns 매칭되는 지원금 정보 객체의 배열
  */
 export function findSupportData(
   planName: string, 
   monthlyFee1: number | null, 
   monthlyFee2: number | null, 
-  supportAmountData: any[]
+  publicData: PublicSupportData | null
 ): { row: number; support: number; monthlyFee: number }[] {
   const results: { row: number; support: number; monthlyFee: number }[] = [];
+  if (!publicData) return results;
 
   const processFee = (monthlyFee: number | null) => {
     if (monthlyFee === null) return;
 
-    for (const model of supportAmountData) {
-      if (model.plan === planName && model.monthlyFee === monthlyFee) {
-        results.push({
-          row: model.row,
-          support: model.support,
-          monthlyFee: model.monthlyFee
-        });
-        // 일치하는 첫 번째 모델만 사용하려면 여기서 break 가능
+    for (const manufacturer of Object.values(publicData.manufacturers)) {
+      for (const model of manufacturer.models) {
+        for (const section of model.support_info.sections) {
+          for (const carrier of Object.values(section.carriers)) {
+            if (carrier && carrier.plan_name === planName && carrier.monthly_fee === monthlyFee) {
+              results.push({
+                row: model.index, // Assuming model.index can be used as 'row'
+                support: carrier.device_support, // or number_port_support
+                monthlyFee: carrier.monthly_fee
+              });
+            }
+          }
+        }
       }
     }
   };

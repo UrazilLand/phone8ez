@@ -8,8 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { BUTTON_THEME } from '@/styles/common';
 import { Smartphone, Save, X, Search, Check, ChevronDown } from 'lucide-react';
-import { DataSet } from '@/types/dashboard';
-import { SupportAmountData } from '@/app/dashboard/utils/support-amounts';
+import { DataSet, PublicSupportData, ModelInfo as ModelInfoType } from '@/types/dashboard';
 
 interface ModelInfoModalProps {
   isOpen: boolean;
@@ -18,7 +17,7 @@ interface ModelInfoModalProps {
   initialData?: ModelInfo;
   rowIndex: number;
   dataSets: DataSet[];
-  publicData: SupportAmountData | null;
+  publicData: PublicSupportData | null;
 }
 
 interface ModelInfo {
@@ -160,18 +159,16 @@ export default function ModelInfoModal({
     setShowStandardModelCodes(false);
     
     // 표준 모델번호에 해당하는 모델명과 출고가 찾기
-    if (publicData?.models) {
-      const matchingModel = publicData.models.find(model => 
-        model.modelName.includes(standardCode) || standardCode.includes(model.modelName)
+    if (publicData?.model_info) {
+      const matchingModel = publicData.model_info.find((model: ModelInfoType) => 
+        model.model_number === standardCode
       );
       if (matchingModel) {
         setModelInfo(prev => ({
           ...prev,
-          modelName: matchingModel.modelName,
-          // 출고가 정보가 있으면 자동입력 (conditions에서 출고가 추출)
-          price: matchingModel.conditions
-            .find(condition => condition.includes('출고가:'))
-            ?.replace('출고가:', '') || ''
+          modelName: matchingModel.model_name,
+          // 출고가 정보가 있으면 자동입력
+          price: matchingModel.max_price ? formatNumber(String(matchingModel.max_price)) : ''
         }));
       }
     }
@@ -242,12 +239,14 @@ export default function ModelInfoModal({
 
   // 표준 모델번호 필터링
   const filteredStandardModelCodes = useMemo(() => {
-    if (!publicData?.allModelCodes) return [];
+    if (!publicData?.model_info) return [];
     
-    return publicData.allModelCodes.filter(code =>
+    const allModelCodes = [...new Set(publicData.model_info.map(m => m.model_number))];
+
+    return allModelCodes.filter((code: string) =>
       !searchQuery || code.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [publicData?.allModelCodes, searchQuery]);
+  }, [publicData?.model_info, searchQuery]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -338,7 +337,7 @@ export default function ModelInfoModal({
               {showStandardModelCodes && (
                 <div className="absolute z-10 w-full mt-1 border border-gray-200 rounded-lg bg-white shadow-lg max-h-40 overflow-y-auto">
                   {filteredStandardModelCodes.length > 0 ? (
-                    filteredStandardModelCodes.map((code, index) => (
+                    filteredStandardModelCodes.map((code: string, index: number) => (
                       <div
                         key={index}
                         className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-black"

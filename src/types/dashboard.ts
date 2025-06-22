@@ -88,4 +88,62 @@ export interface TableProps {
   headers: string[];
   children: React.ReactNode;
   className?: string;
+}
+
+// 공시지원금 데이터 관련 타입 (신규)
+export interface ModelInfo {
+  manufacturer: string;
+  model_number: string;
+  model_name: string;
+  max_price: number;
+}
+
+export interface CarrierSupportInfo {
+  carrier_name: string;
+  price: string;
+  plan_name: string;
+  device_support: number;
+  number_port_support: number;
+  announcement_date: string;
+  monthly_fee: number;
+}
+
+export interface Section {
+  section: string;
+  carriers: {
+    SK?: CarrierSupportInfo;
+    KT?: CarrierSupportInfo;
+    LG?: CarrierSupportInfo;
+  };
+}
+
+export interface ManufacturerModel {
+  index: number;
+  model_name: string;
+  model_number: string;
+  release_date: string;
+  support_info: {
+    carriers: Record<string, unknown>;
+    sections: Section[];
+  };
+}
+
+export interface Manufacturer {
+  name: string;
+  models: ManufacturerModel[];
+}
+
+export interface PublicSupportData {
+  collection_date: string;
+  total_models: number;
+  model_info: ModelInfo[];
+  carrier_monthly_fees: {
+    SK: number[];
+    KT: number[];
+    LG: number[];
+  };
+  manufacturers: {
+    [key: string]: Manufacturer;
+  };
+  fileName?: string;
 } 

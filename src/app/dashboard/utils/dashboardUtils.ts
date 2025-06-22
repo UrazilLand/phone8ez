@@ -12,7 +12,7 @@ export const loadPublicDataFromStorage = () => {
     const raw = localStorage.getItem('publicData');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && 'models' in parsed && Array.isArray(parsed.models)) {
+      if (parsed && typeof parsed === 'object' && 'manufacturers' in parsed) {
         return parsed;
       }
     }

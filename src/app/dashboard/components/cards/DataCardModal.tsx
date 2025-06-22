@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { SupportAmountData } from '../../utils/support-amounts';
+import { PublicSupportData } from '@/types/dashboard';
 import { RefreshCw } from 'lucide-react';
 import { BUTTON_THEME } from '@/styles/common';
 
@@ -9,7 +9,7 @@ interface DataCardModalProps {
   // 공시 데이터 모달 props
   supportModalOpen: boolean;
   setSupportModalOpen: (open: boolean) => void;
-  supportData: SupportAmountData | null;
+  supportData: PublicSupportData | null;
   onRefreshSupportData: () => void;
   isLoading: boolean;
 
@@ -39,13 +39,7 @@ export default function DataCardModal({
             <div className="flex flex-col flex-1 min-h-0">
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div className="text-sm text-gray-600">
-                  데이터 업데이트: {(() => {
-                    if (!supportData.fileName) return '-';
-                    const base = supportData.fileName.split('_')[0];
-                    const match = base.match(/^(\d{4})(\d{2})(\d{2})$/);
-                    if (!match) return supportData.fileName;
-                    return `${match[1]}. ${match[2]}. ${match[3]}`;
-                  })()}
+                  데이터 업데이트: {supportData.collection_date ? new Date(supportData.collection_date).toLocaleDateString('ko-KR') : '-'}
                 </div>
                 <button
                   onClick={onRefreshSupportData}
@@ -57,11 +51,18 @@ export default function DataCardModal({
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto border border-gray-200 rounded-lg p-4 min-h-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Array.from(new Set(supportData.models.map((m: { modelName: string }) => m.modelName))).map((modelName: string, index) => (
-                    <div key={index} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-center h-8">
-                      <div className="font-normal text-black text-center w-full text-nowrap truncate">
-                        {modelName}
+                <div className="space-y-4">
+                  {Object.values(supportData.manufacturers).map((manufacturer, mIndex) => (
+                    <div key={mIndex}>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{manufacturer.name}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {manufacturer.models.map((model, modelIndex) => (
+                          <div key={modelIndex} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-center h-8">
+                            <div className="font-normal text-black text-center w-full text-nowrap truncate text-sm">
+                              {model.model_name}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
