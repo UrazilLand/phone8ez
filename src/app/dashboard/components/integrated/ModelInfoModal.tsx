@@ -57,15 +57,38 @@ export default function ModelInfoModal({
   publicData
 }: ModelInfoModalProps) {
   const [modelInfo, setModelInfo] = useState<ModelInfo>({
-    selectedModelCodes: initialData?.selectedModelCodes || [],
-    standardModelCode: initialData?.standardModelCode || '',
-    modelName: initialData?.modelName || '',
-    price: initialData?.price ? formatNumber(initialData.price) : '',
+    selectedModelCodes: [],
+    standardModelCode: '',
+    modelName: '',
+    price: '',
   });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showStandardModelCodes, setShowStandardModelCodes] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setModelInfo({
+          selectedModelCodes: initialData.selectedModelCodes || [],
+          standardModelCode: initialData.standardModelCode || '',
+          modelName: initialData.modelName || '',
+          price: initialData.price ? formatNumber(String(initialData.price)) : '',
+        });
+      } else {
+        // initialData가 없으면(새로운 행) 상태 초기화
+        setModelInfo({
+          selectedModelCodes: [],
+          standardModelCode: '',
+          modelName: '',
+          price: '',
+        });
+      }
+      // 모달이 열릴 때 검색어도 초기화
+      setSearchQuery('');
+    }
+  }, [isOpen, initialData]);
 
   // 데이터셋에서 모델번호 추출
   const extractModelCodesFromDataSets = useMemo(() => {

@@ -427,14 +427,15 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
                               cursor: rowIndex >= 5 ? 'pointer' : 'default'
                             }}
                           >
-                            {/* 모델정보 파싱: key:value 형식에서 display 값(모델명)만 표시 */}
+                            {/* 모델정보 파싱: key:value 형식에서 display 값(모델명)만 표시하고, [5G]/[LTE] 제거 */}
                             {rowIndex >= 5 ? (() => {
+                              let displayName = cell;
                               if (cell.includes('|')) {
                                 const parts = cell.split('|');
                                 const displayPart = parts.find(part => part.startsWith('display:'));
-                                return displayPart ? displayPart.replace('display:', '') : cell;
+                                displayName = displayPart ? displayPart.replace('display:', '') : cell;
                               }
-                              return cell;
+                              return displayName.replace(/\[(5G|LTE)\]/g, '').trim();
                             })() : cell}
                           </div>
                         ) : (
