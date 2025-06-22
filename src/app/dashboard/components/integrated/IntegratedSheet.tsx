@@ -13,7 +13,7 @@ import {
   extractPlansByCarrierAndCompany, 
   extractMonthlyFeesByCarrier
 } from '@/app/dashboard/utils/integrated/dataExtraction';
-import { getDynamicCellStyle } from '@/app/dashboard/utils/common/colorUtils';
+import { getDynamicCellStyle, getDataCellStyle } from '@/app/dashboard/utils/common/colorUtils';
 import { AlertTriangle } from 'lucide-react';
 import {
   Dialog,
@@ -75,6 +75,52 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
 
   const sheetHeaders = useMemo(() => currentSheetData.slice(0, 5), [currentSheetData]);
   const aColumnData = useMemo(() => currentSheetData.map(row => row[0]), [currentSheetData]);
+
+  const highlightedCells = useMemo(() => {
+    const highlightSet = new Set<string>();
+    if (currentSheetData.length < 5) return highlightSet;
+
+    // 6행부터(rowIndex=5) 각 행을 순회
+    for (let r = 5; r < currentSheetData.length; r++) {
+      const row = currentSheetData[r];
+      if (!row) continue;
+
+      const minValues: Record<string, number> = {};
+
+      // Pass 1: Find minimum value for each carrier-joinType combination in the row
+      for (let c = 1; c < row.length; c++) {
+        const carrier = sheetHeaders[0]?.[c]?.trim();
+        const joinType = sheetHeaders[3]?.[c]?.trim();
+        const cellValue = row[c]?.split('|')[0].split(';')[0].trim();
+
+        if (carrier && joinType && cellValue && !isNaN(Number(cellValue))) {
+          const key = `${carrier}-${joinType}`;
+          const numValue = Number(cellValue);
+
+          if (minValues[key] === undefined || numValue < minValues[key]) {
+            minValues[key] = numValue;
+          }
+        }
+      }
+
+      // Pass 2: Highlight all cells that match the minimum value
+      for (let c = 1; c < row.length; c++) {
+        const carrier = sheetHeaders[0]?.[c]?.trim();
+        const joinType = sheetHeaders[3]?.[c]?.trim();
+        const cellValue = row[c]?.split('|')[0].split(';')[0].trim();
+
+        if (carrier && joinType && cellValue && !isNaN(Number(cellValue))) {
+          const key = `${carrier}-${joinType}`;
+          const numValue = Number(cellValue);
+
+          if (minValues[key] === numValue) {
+            highlightSet.add(`${r}-${c}`);
+          }
+        }
+      }
+    }
+    return highlightSet;
+  }, [currentSheetData, sheetHeaders]);
 
   useEffect(() => {
     const findMatchingValue = (rowIndex: number, colIndex: number): string => {
@@ -483,98 +529,143 @@ export default function IntegratedSheet({ dataSets, setDataSets, publicData, rel
               <tbody>
                 {currentSheetData.map((row, rowIndex) => (
                   <tr key={rowIndex} className="hover:bg-gray-50">
-                    {row.map((cell, colIndex) => (
-                      <td
-                        key={colIndex}
-                        className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
-                          colIndex === 0
-                            ? rowIndex < 5
-                              ? 'text-center font-bold bg-gray-50 sticky left-0 z-20'
-                              : 'text-left sticky left-0 z-20 bg-white'
-                            : 'text-center'
-                        }`}
-                      >
-                        {colIndex === 0 && rowIndex < 5 ? (
-                          <span className="text-black font-bold">
-                            {SHEET_HEADER_LABELS[rowIndex]}
-                          </span>
-                        ) : colIndex === 0 ? (
-                          <TooltipProvider delayDuration={100}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className="w-full h-full flex items-center justify-start text-gray-600"
-                                  onDoubleClick={() => {
-                                    if (rowIndex >= 5) {
-                                      handleOpenModelInfoModal(rowIndex);
+                    {row.map((cell, colIndex) => {
+                      const baseStyle = 'h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-black';
+                      const positionStyle = colIndex === 0
+                        ? rowIndex < 5
+                          ? 'text-center font-bold bg-gray-50 sticky left-0 z-20'
+                          : 'text-left sticky left-0 z-20 bg-white'
+                        : 'text-center';
+                      const dynamicCellStyle = getDataCellStyle(rowIndex, colIndex, currentSheetData);
+
+                      const finalCellStyle = `${baseStyle} ${positionStyle} ${dynamicCellStyle}`;
+
+                      return (
+                        <td key={colIndex} className={finalCellStyle}>
+                          {colIndex === 0 && rowIndex < 5 ? (
+                            <span className="text-black font-bold">
+                              {SHEET_HEADER_LABELS[rowIndex]}
+                            </span>
+                          ) : colIndex === 0 ? (
+                            <TooltipProvider delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className="w-full h-full flex items-center justify-start text-gray-600"
+                                    onDoubleClick={() => {
+                                      if (rowIndex >= 5) {
+                                        handleOpenModelInfoModal(rowIndex);
+                                      }
+                                    }}
+                                    style={{
+                                      cursor: rowIndex >= 5 ? 'pointer' : 'default'
+                                    }}
+                                  >
+                                    {rowIndex >= 5 ? (() => {
+                                      let displayName = cell;
+                                      if (cell.includes('|')) {
+                                        const parts = cell.split('|');
+                                        const displayPart = parts.find(part => part.startsWith('display:'));
+                                        displayName = displayPart ? displayPart.replace('display:', '') : cell;
+                                      }
+                                      return displayName.replace(/\[(5G|LTE)\]/g, '').trim();
+                                    })() : cell}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="text-left">
+                                    {cell.split('|').map((part, index) => {
+                                      const [key, value] = part.split(':');
+                                      let label = key;
+                                      let finalValue = value;
+                                      switch (key) {
+                                        case 'display': label = '모델명'; break;
+                                        case 'standard': label = '표준 모델'; break;
+                                        case 'price': label = '출고가'; finalValue = `${Number(value).toLocaleString()}원`; break;
+                                        case 'codes': label = '연결된 코드'; break;
+                                        default: return <p key={index}>{part}</p>;
+                                      }
+                                      return <p key={index}><strong>{label}:</strong> {finalValue}</p>;
+                                    })}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <TooltipProvider delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={`relative w-full h-full flex items-center justify-center ${
+                                      rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
+                                    }`}
+                                  >
+                                    {
+                                      rowIndex < 5 ? (
+                                        // 1~5행 렌더링
+                                        rowIndex === 2 ? cell.split('|')[0] : cell.split('|WARN_MULTI')[0].split(';')[0]
+                                      ) : (
+                                        // 6행 이상 데이터 셀 렌더링
+                                        (() => {
+                                          const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
+                                          const cellContent = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                          const joinType = sheetHeaders[3]?.[colIndex]?.trim();
+                                          const isNegative = !isNaN(Number(cellContent)) && Number(cellContent) < 0;
+
+                                          if (isHighlighted) {
+                                            let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
+                                            
+                                            switch (joinType) {
+                                              case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                              case '기기변경': styleClass += 'bg-green-400 '; break;
+                                              case '신규가입': styleClass += 'bg-red-400 '; break;
+                                            }
+
+                                            if (isNegative) {
+                                              // 음수이면서 빨간 배경일 경우 글자를 흰색으로 하여 가독성 확보
+                                              if (joinType === '신규가입') {
+                                                styleClass += 'text-white';
+                                              } else {
+                                                // 다른 배경에서는 진한 빨간색 글씨 사용
+                                                styleClass += 'text-red-700';
+                                              }
+                                            } else {
+                                              styleClass += 'text-black';
+                                            }
+                                            
+                                            return <span className={styleClass}>{cellContent}</span>;
+
+                                          } else {
+                                            if (isNegative) {
+                                              return <span className="text-red-500">{cellContent}</span>;
+                                            }
+                                            return cellContent;
+                                          }
+                                        })()
+                                      )
                                     }
-                                  }}
-                                  style={{
-                                    cursor: rowIndex >= 5 ? 'pointer' : 'default'
-                                  }}
-                                >
-                                  {rowIndex >= 5 ? (() => {
-                                    let displayName = cell;
-                                    if (cell.includes('|')) {
-                                      const parts = cell.split('|');
-                                      const displayPart = parts.find(part => part.startsWith('display:'));
-                                      displayName = displayPart ? displayPart.replace('display:', '') : cell;
+                                    {cell.includes('|WARN_MULTI') && (
+                                      <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
+                                        <AlertTriangle className="w-full h-full" />
+                                      </div>
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>
+                                    {
+                                      cell.includes('|WARN_MULTI')
+                                        ? `여러 값이 발견됨: ${cell.split('|WARN_MULTI')[0].split(';').join(', ')}`
+                                        : cell
                                     }
-                                    return displayName.replace(/\[(5G|LTE)\]/g, '').trim();
-                                  })() : cell}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div className="text-left">
-                                  {cell.split('|').map((part, index) => {
-                                    const [key, value] = part.split(':');
-                                    let label = key;
-                                    let finalValue = value;
-                                    switch (key) {
-                                      case 'display': label = '모델명'; break;
-                                      case 'standard': label = '표준 모델'; break;
-                                      case 'price': label = '출고가'; finalValue = `${Number(value).toLocaleString()}원`; break;
-                                      case 'codes': label = '연결된 코드'; break;
-                                      default: return <p key={index}>{part}</p>;
-                                    }
-                                    return <p key={index}><strong>{label}:</strong> {finalValue}</p>;
-                                  })}
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : (
-                          <TooltipProvider delayDuration={100}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className={`relative w-full h-full flex items-center justify-center ${
-                                    rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
-                                  }`}
-                                >
-                                  {/* 3행(rowIndex===2)의 경우, '|' 앞의 요금제 이름만 표시, 데이터 셀은 ';' 앞의 값만 표시 */}
-                                  {rowIndex === 2 ? cell.split('|')[0] : cell.split('|WARN_MULTI')[0].split(';')[0]}
-                                  {cell.includes('|WARN_MULTI') && (
-                                    <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
-                                      <AlertTriangle className="w-full h-full" />
-                                    </div>
-                                  )}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>
-                                  {
-                                    cell.includes('|WARN_MULTI')
-                                      ? `여러 값이 발견됨: ${cell.split('|WARN_MULTI')[0].split(';').join(', ')}`
-                                      : cell
-                                  }
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </td>
-                    ))}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>

@@ -49,11 +49,11 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
                   {row.map((cell, colIndex) => (
                     <td
                       key={colIndex}
-                      className={`h-6 text-sm border-b border-gray-100 border-r border-gray-200 text-black ${
+                      className={`h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-black ${
                         colIndex === 0
                           ? rowIndex < 5
-                            ? 'text-center font-bold bg-gray-50'
-                            : 'text-left'
+                            ? 'text-center font-bold bg-gray-50 sticky left-0 z-20'
+                            : 'text-left sticky left-0 z-20 bg-white'
                           : 'text-center'
                       }`}
                     >

@@ -61,4 +61,39 @@ export function getDynamicCellStyle(rowIndex: number, cellValue: string): string
     default:
       return 'text-gray-600';
   }
+}
+
+/**
+ * B열 6행부터의 셀에 대한 배경색을 반환합니다.
+ * @param rowIndex - 셀의 행 인덱스 (0부터 시작)
+ * @param colIndex - 셀의 열 인덱스 (0부터 시작)
+ * @param sheetData - 전체 시트 데이터
+ * @returns Tailwind CSS 클래스 문자열
+ */
+export function getDataCellStyle(rowIndex: number, colIndex: number, sheetData: string[][]): string {
+  // B열(인덱스 1)부터 6행(인덱스 5)부터만 적용
+  if (colIndex === 0 || rowIndex < 5) {
+    return '';
+  }
+
+  const carrier = sheetData[0]?.[colIndex]?.trim();
+  
+  let styleClasses = '';
+
+  // 1행 데이터(통신사)에 따른 배경색
+  if (carrier) {
+    switch (carrier) {
+      case 'SK':
+        styleClasses += 'bg-red-100 ';
+        break;
+      case 'KT':
+        styleClasses += 'bg-gray-100 ';
+        break;
+      case 'LG':
+        styleClasses += 'bg-purple-100 ';
+        break;
+    }
+  }
+
+  return styleClasses;
 } 
