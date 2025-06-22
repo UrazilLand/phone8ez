@@ -24,16 +24,8 @@ export default function PreviewModal({
 
   const handleDelete = () => {
     if (!selectedDataSet) return;
-    
-    if (window.confirm(`"${selectedDataSet.name}" 데이터셋을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
-      onDeleteDataSet(selectedDataSet);
-      setPreviewModalOpen(false);
-      toast({
-        title: "삭제 완료",
-        description: `"${selectedDataSet.name}" 데이터셋이 삭제되었습니다.`,
-        variant: "default",
-      });
-    }
+    onDeleteDataSet(selectedDataSet);
+    setPreviewModalOpen(false);
   };
 
   // 부가서비스 데이터 렌더링

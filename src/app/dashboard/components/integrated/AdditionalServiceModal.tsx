@@ -37,6 +37,7 @@ export default function AdditionalServiceModal({
   const [additionalServicesData, setAdditionalServicesData] = useState<
     Record<string, Array<{service: string, discount: string}>>
   >({});
+  const [isOverwriteModalOpen, setIsOverwriteModalOpen] = useState(false);
 
   // 데이터셋에서 업체명과 통신사 정보 추출
   const companies = useMemo(() => {
@@ -79,20 +80,23 @@ export default function AdditionalServiceModal({
     });
   }, [dataSets]);
 
-  // 기존 부가서비스 데이터 불러오기
+  // 모달이 열릴 때 기존 데이터를 불러오고 상태를 초기화합니다.
   useEffect(() => {
-    const additionalDataSet = dataSets.find(dataset => dataset.type === 'additional');
-    if (additionalDataSet?.data.additionalServices) {
-      setAdditionalServicesData(additionalDataSet.data.additionalServices);
-    }
-  }, [dataSets]);
+    if (isOpen) {
+      const additionalDataSet = dataSets.find(dataset => dataset.type === 'additional');
+      if (additionalDataSet?.data.additionalServices) {
+        setAdditionalServicesData(additionalDataSet.data.additionalServices);
+      } else {
+        setAdditionalServicesData({});
+      }
 
-  // 첫 번째 업체를 기본 선택
-  useEffect(() => {
-    if (companies.length > 0 && !selectedCompanyKey) {
-      handleCompanySelect(companies[0].key);
+      if (companies.length > 0) {
+        setSelectedCompanyKey(companies[0].key);
+      } else {
+        setSelectedCompanyKey('');
+      }
     }
-  }, [companies, selectedCompanyKey]);
+  }, [isOpen, dataSets, companies]);
 
   // 선택된 업체의 부가서비스 데이터 가져오기
   const currentCompanyServices = useMemo(() => {
@@ -133,89 +137,122 @@ export default function AdditionalServiceModal({
   };
 
   const handleClose = () => {
-    setSelectedCompanyKey('');
-    setAdditionalServicesData({});
     onClose();
   };
 
+  const handleSave = () => {
+    const existingAdditionalDataSet = dataSets.find(dataset => dataset.type === 'additional');
+    if (existingAdditionalDataSet) {
+      setIsOverwriteModalOpen(true);
+    } else {
+      handleApply();
+    }
+  };
+
+  const handleCancelOverwrite = () => {
+    setIsOverwriteModalOpen(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[900px] max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="text-blue-600">부가서비스 설정</DialogTitle>
-          <DialogDescription>
-            업체별 부가서비스와 할인금액을 설정해주세요.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="flex gap-4 h-[550px]">
-          {/* 1열: 업체명 탭 */}
-          <div className="w-1/3 border-r border-gray-200">
-            <div className="font-medium text-gray-700 mb-3 px-2">업체명</div>
-            <div className="overflow-y-auto h-full pr-2 space-y-2">
-              {companies.map((company) => (
-                <div
-                  key={company.key}
-                  className={`h-10 px-2 rounded-lg cursor-pointer transition-colors flex items-center ${
-                    selectedCompanyKey === company.key
-                      ? 'bg-blue-100 border-blue-300 border'
-                      : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                  onClick={() => handleCompanySelect(company.key)}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="font-medium text-gray-900">{company.company}</div>
-                    <div className="text-sm text-gray-500">{company.carrier}</div>
+    <>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-[900px] max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="text-blue-600">부가서비스 설정</DialogTitle>
+            <DialogDescription>
+              업체별 부가서비스와 할인금액을 설정해주세요.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex gap-4 h-[550px]">
+            {/* 1열: 업체명 탭 */}
+            <div className="w-1/3 border-r border-gray-200">
+              <div className="font-medium text-gray-700 mb-3 px-2">업체명</div>
+              <div className="overflow-y-auto h-full pr-2 space-y-2">
+                {companies.map((company) => (
+                  <div
+                    key={company.key}
+                    className={`h-10 px-2 rounded-lg cursor-pointer transition-colors flex items-center ${
+                      selectedCompanyKey === company.key
+                        ? 'bg-blue-100 border-blue-300 border'
+                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                    onClick={() => handleCompanySelect(company.key)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="font-medium text-gray-900">{company.company}</div>
+                      <div className="text-sm text-gray-500">{company.carrier}</div>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2열, 3열: 부가서비스 입력 */}
+            <div className="flex-1">
+              {selectedCompanyKey ? (
+                <>
+                  <div className="flex gap-4 mb-3">
+                    <div className="flex-1 font-medium text-gray-700">부가서비스명</div>
+                    <div className="w-1/3 font-medium text-gray-700">할인금액</div>
+                  </div>
+                  <div className="space-y-2 max-h-[480px] overflow-y-auto">
+                    {currentCompanyServices.map((service, index) => (
+                      <div key={index} className="flex gap-4 items-center">
+                        <Input
+                          className="flex-1 bg-white text-black"
+                          placeholder="부가서비스명을 입력하세요"
+                          value={service.service}
+                          onChange={(e) => handleServiceChange(index, 'service', e.target.value)}
+                        />
+                        <Input
+                          className="w-1/3 bg-white text-black"
+                          placeholder="할인금액"
+                          value={service.discount}
+                          onChange={(e) => handleServiceChange(index, 'discount', e.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  업체를 선택해주세요
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
-          {/* 2열, 3열: 부가서비스 입력 */}
-          <div className="flex-1">
-            {selectedCompanyKey ? (
-              <>
-                <div className="flex gap-4 mb-3">
-                  <div className="flex-1 font-medium text-gray-700">부가서비스명</div>
-                  <div className="w-1/3 font-medium text-gray-700">할인금액</div>
-                </div>
-                <div className="space-y-2 max-h-[480px] overflow-y-auto">
-                  {currentCompanyServices.map((service, index) => (
-                    <div key={index} className="flex gap-4 items-center">
-                      <Input
-                        className="flex-1 bg-white text-black"
-                        placeholder="부가서비스명을 입력하세요"
-                        value={service.service}
-                        onChange={(e) => handleServiceChange(index, 'service', e.target.value)}
-                      />
-                      <Input
-                        className="w-1/3 bg-white text-black"
-                        placeholder="할인금액"
-                        value={service.discount}
-                        onChange={(e) => handleServiceChange(index, 'discount', e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                업체를 선택해주세요
-              </div>
-            )}
-          </div>
-        </div>
+          <DialogFooter>
+            <Button onClick={handleClose} className={BUTTON_THEME.gray}>
+              취소
+            </Button>
+            <Button onClick={handleSave} className={BUTTON_THEME.primary}>
+              저장하기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <DialogFooter>
-          <Button onClick={handleClose} className={BUTTON_THEME.gray}>
-            취소
-          </Button>
-          <Button onClick={handleApply} className={BUTTON_THEME.primary}>
-            저장하기
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {/* 덮어쓰기 확인 모달 */}
+      <Dialog open={isOverwriteModalOpen} onOpenChange={setIsOverwriteModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-blue-600">덮어쓰기 확인</DialogTitle>
+            <DialogDescription>
+              이미 '부가' 데이터가 존재합니다. 덮어쓰시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleCancelOverwrite} className={BUTTON_THEME.gray}>
+              취소
+            </Button>
+            <Button onClick={handleApply} className={BUTTON_THEME.primary}>
+              덮어쓰기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 } 

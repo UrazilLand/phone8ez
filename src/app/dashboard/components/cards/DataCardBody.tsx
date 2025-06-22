@@ -96,33 +96,33 @@ export default function DataCardBody({
               </div>
             ) : (
               <>
-                {/* 부가서비스 데이터셋 (통합 왼쪽 2번째) */}
-                {additionalDataSet && (
-                  <button
-                    key={additionalDataSet.id}
-                    onClick={() => onPreviewDataSet(additionalDataSet)}
-                    className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-green-100 border-green-300 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-700`}
-                    style={{ flex: '0 0 auto' }}
-                  >
-                    {additionalDataSet.name}
-                  </button>
-                )}
                 {/* 통합 데이터셋 */}
                 {integratedDataSet && (
                   <button
                     key={integratedDataSet.id}
-                    onClick={() => onPreviewDataSet(integratedDataSet)}
+                    onDoubleClick={() => onPreviewDataSet(integratedDataSet)}
                     className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-700`}
                     style={{ flex: '0 0 auto' }}
                   >
                     {integratedDataSet.name}
                   </button>
                 )}
+                {/* 부가서비스 데이터셋 */}
+                {additionalDataSet && (
+                  <button
+                    key={additionalDataSet.id}
+                    onDoubleClick={() => onPreviewDataSet(additionalDataSet)}
+                    className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-green-100 border-green-300 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-700`}
+                    style={{ flex: '0 0 auto' }}
+                  >
+                    {additionalDataSet.name}
+                  </button>
+                )}
                 {/* 기타 데이터셋들 */}
                 {otherDataSets.map((dataSet) => (
                   <button
                     key={dataSet.id}
-                    onClick={() => onPreviewDataSet(dataSet)}
+                    onDoubleClick={() => onPreviewDataSet(dataSet)}
                     className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-gray-100 border-gray-300 text-gray-800 hover:bg-blue-600 hover:text-white hover:border-blue-700`}
                     style={{ flex: '0 0 auto' }}
                   >

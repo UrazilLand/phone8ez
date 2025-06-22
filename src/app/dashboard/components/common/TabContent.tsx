@@ -1,5 +1,4 @@
-import { TabType, DataSet } from '@/types/dashboard';
-import { SupportAmountData } from '../../utils/support-amounts';
+import { TabType, DataSet, PublicSupportData } from '@/types/dashboard';
 import DataInputTab from '../data-input';
 import IntegratedDataTab from '../integrated';
 import ModelDataTab from '../model';
@@ -11,8 +10,10 @@ interface TabContentProps {
   dataSets: DataSet[];
   setDataSets: React.Dispatch<React.SetStateAction<DataSet[]>>;
   reloadKey: number;
-  publicData: SupportAmountData | null;
+  publicData: PublicSupportData | null;
   dataInputTabRef: any;
+  isAdditionalServiceModalOpen: boolean;
+  setIsAdditionalServiceModalOpen: (isOpen: boolean) => void;
 }
 
 export default function TabContent({ 
@@ -21,7 +22,9 @@ export default function TabContent({
   setDataSets, 
   reloadKey, 
   publicData, 
-  dataInputTabRef 
+  dataInputTabRef,
+  isAdditionalServiceModalOpen,
+  setIsAdditionalServiceModalOpen,
 }: TabContentProps) {
   const tabStyle = (tabName: TabType) => ({
     display: activeTab === tabName ? 'block' : 'none',
@@ -43,6 +46,8 @@ export default function TabContent({
           activeTab={'integrated'}
           reloadKey={reloadKey}
           publicData={publicData}
+          isAdditionalServiceModalOpen={isAdditionalServiceModalOpen}
+          setIsAdditionalServiceModalOpen={setIsAdditionalServiceModalOpen}
         />
       </div>
       <div style={tabStyle('model')}>

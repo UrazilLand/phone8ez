@@ -8,6 +8,7 @@ export function useDashboardState() {
   const [dataSets, setDataSets] = useState<DataSet[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
   const [publicData, setPublicData] = useState<PublicSupportData | null>(null);
+  const [isAdditionalServiceModalOpen, setIsAdditionalServiceModalOpen] = useState(false);
 
   const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
@@ -15,6 +16,11 @@ export function useDashboardState() {
 
   const handleReloadIntegrated = useCallback(() => {
     setReloadKey(k => k + 1);
+  }, []);
+
+  const handleOpenAdditionalServiceModal = useCallback(() => {
+    setIsAdditionalServiceModalOpen(true);
+    setActiveTab('integrated');
   }, []);
 
   return {
@@ -31,5 +37,8 @@ export function useDashboardState() {
     setPublicData,
     handleTabChange,
     handleReloadIntegrated,
+    isAdditionalServiceModalOpen,
+    setIsAdditionalServiceModalOpen,
+    handleOpenAdditionalServiceModal,
   };
 } 

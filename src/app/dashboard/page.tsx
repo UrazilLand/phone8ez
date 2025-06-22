@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDashboardState } from './hooks/useDashboardState';
 import { useDataOperations } from './hooks/useDataOperations';
 import { loadPublicDataFromStorage } from './utils/dashboardUtils';
@@ -21,6 +21,9 @@ export default function Dashboard() {
     setPublicData,
     handleTabChange,
     handleReloadIntegrated,
+    isAdditionalServiceModalOpen,
+    setIsAdditionalServiceModalOpen,
+    handleOpenAdditionalServiceModal,
   } = useDashboardState();
 
   const {
@@ -61,6 +64,7 @@ export default function Dashboard() {
                 onLoadData={handleLoadData}
                 onTabChange={handleTabChange}
                 onReloadIntegrated={handleReloadIntegrated}
+                onOpenAdditionalServiceModal={handleOpenAdditionalServiceModal}
               />
             </div>
             <div className="flex flex-col w-full md:w-[24rem]">
@@ -78,6 +82,8 @@ export default function Dashboard() {
           reloadKey={reloadKey}
           publicData={memoizedPublicData}
           dataInputTabRef={dataInputTabRef}
+          isAdditionalServiceModalOpen={isAdditionalServiceModalOpen}
+          setIsAdditionalServiceModalOpen={setIsAdditionalServiceModalOpen}
         />
       </div>
     </TooltipProvider>

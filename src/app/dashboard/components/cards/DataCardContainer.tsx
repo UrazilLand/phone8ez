@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { DataSet, TabType } from '@/types/dashboard';
-import { getAvailableDates, getSupportAmountsByDate, type SupportAmountData } from '../../utils/support-amounts';
+import { DataSet, TabType, PublicSupportData } from '@/types/dashboard';
+import { getAvailableDates, getSupportAmountsByDate } from '../../utils/support-amounts';
 import { savePublicDataToStorage } from '../../utils/dashboardUtils';
 import DataCardBody from './DataCardBody';
 import DataCardModal from './DataCardModal';
@@ -14,6 +14,7 @@ interface DataCardProps {
   onLoadData: (data: DataSet['data'] | DataSet['data'][]) => void;
   onTabChange?: (tab: TabType) => void;
   onReloadIntegrated?: () => void;
+  onOpenAdditionalServiceModal?: () => void;
 }
 
 // 파일명 생성 함수
@@ -28,14 +29,14 @@ function getDownloadFileName() {
   return `phone8ez_${YY}${MM}${DD}_${HH}${mm}.json`;
 }
 
-export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated }: DataCardProps) {
+export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated, onOpenAdditionalServiceModal }: DataCardProps) {
   const { toast } = useToast();
   const [selectedDataSet, setSelectedDataSet] = useState<DataSet | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCloudMode, setIsCloudMode] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
-  const [supportData, setSupportData] = useState<SupportAmountData | null>(null);
+  const [supportData, setSupportData] = useState<PublicSupportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -83,6 +84,10 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
           onTabChange('integrated');
         }
         if (onReloadIntegrated) onReloadIntegrated();
+      } else if (dataSet.type === 'additional') {
+        if (onOpenAdditionalServiceModal) {
+          onOpenAdditionalServiceModal();
+        }
       } else {
         if (onTabChange) {
           onTabChange('local');

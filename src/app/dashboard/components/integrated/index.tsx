@@ -1,7 +1,7 @@
 "use client";
 import IntegratedSheet from './IntegratedSheet';
 import { DataSet } from '@/types/dashboard';
-import { SupportAmountData } from '@/app/dashboard/utils/support-amounts';
+import { PublicSupportData } from '@/types/dashboard';
 import React from 'react';
 
 interface IntegratedTabProps {
@@ -9,9 +9,27 @@ interface IntegratedTabProps {
   setDataSets: React.Dispatch<React.SetStateAction<DataSet[]>>;
   activeTab: 'integrated';
   reloadKey: number;
-  publicData: SupportAmountData | null;
+  publicData: PublicSupportData | null;
+  isAdditionalServiceModalOpen: boolean;
+  setIsAdditionalServiceModalOpen: (isOpen: boolean) => void;
 }
 
-export default function IntegratedTab({ dataSets, setDataSets, publicData, reloadKey }: IntegratedTabProps) {
-  return <IntegratedSheet dataSets={dataSets} setDataSets={setDataSets} publicData={publicData} reloadKey={reloadKey} />;
+export default function IntegratedTab({ 
+  dataSets, 
+  setDataSets, 
+  publicData, 
+  reloadKey,
+  isAdditionalServiceModalOpen,
+  setIsAdditionalServiceModalOpen
+}: IntegratedTabProps) {
+  return (
+    <IntegratedSheet 
+      dataSets={dataSets} 
+      setDataSets={setDataSets} 
+      publicData={publicData} 
+      reloadKey={reloadKey}
+      isAdditionalServiceModalOpen={isAdditionalServiceModalOpen}
+      setIsAdditionalServiceModalOpen={setIsAdditionalServiceModalOpen}
+    />
+  );
 } 
