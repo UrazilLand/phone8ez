@@ -371,9 +371,50 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
       );
       return joinType ? joinType.style : 'text-black';
     } else if (colIndex === 4) {
-      // 5열: 업체명 색상 (순환)
+      // 5열: 업체명 색상 (순환) + 통신사별 교차 배경색
       const companyIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % COMPANY_TEXT_COLORS.length;
-      return `${COMPANY_TEXT_COLORS[companyIndex]} font-medium`;
+      const textColor = `${COMPANY_TEXT_COLORS[companyIndex]} font-medium`;
+      
+      // 통신사별 교차 배경색 적용 (출고가 열과 동일)
+      const carrier = sheetData[rowIndex]?.[0]?.trim();
+      let bgColor = '';
+      
+      if (carrier) {
+        const isEvenRow = rowIndex % 2 === 0;
+        if (isEvenRow) {
+          // 짝수 행: 더 진한 색상
+          switch (carrier) {
+            case 'SK':
+              bgColor = 'bg-red-200';
+              break;
+            case 'KT':
+              bgColor = 'bg-gray-200';
+              break;
+            case 'LG':
+              bgColor = 'bg-purple-200';
+              break;
+          }
+        } else {
+          // 홀수 행: 더 연한 색상
+          switch (carrier) {
+            case 'SK':
+              bgColor = 'bg-red-50';
+              break;
+            case 'KT':
+              bgColor = 'bg-gray-50';
+              break;
+            case 'LG':
+              bgColor = 'bg-purple-50';
+              break;
+          }
+        }
+      } else {
+        // 통신사 정보가 없는 경우 기본 교차색상
+        const isEvenRow = rowIndex % 2 === 0;
+        bgColor = isEvenRow ? 'bg-gray-200' : 'bg-gray-100';
+      }
+      
+      return `${textColor} ${bgColor}`;
     } else if (colIndex >= 5) {
       // 6열(출고가열)부터: 통신사에 따른 배경색 적용 + 교차 색상
       // 해당 행의 1열(통신사)을 참조하여 배경색 결정
