@@ -124,7 +124,7 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
   };
 
   // 셀 스타일을 결정하는 함수
-  const getCellStyle = (colIndex: number, cellValue: string) => {
+  const getCellStyle = (colIndex: number, cellValue: string, rowIndex: number) => {
     if (colIndex === 0) {
       // 1열: 통신사 색상
       const carrier = CARRIER_OPTIONS.find(option => 
@@ -151,6 +151,20 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
       // 5열: 업체명 색상 (순환)
       const companyIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % COMPANY_TEXT_COLORS.length;
       return `${COMPANY_TEXT_COLORS[companyIndex]} font-medium`;
+    } else if (colIndex >= 5) {
+      // 6열(출고가열)부터: 통신사에 따른 배경색 적용
+      // 해당 행의 1열(통신사)을 참조하여 배경색 결정
+      const carrier = sheetData[rowIndex]?.[0]?.trim();
+      if (carrier) {
+        switch (carrier) {
+          case 'SK':
+            return 'bg-red-100';
+          case 'KT':
+            return 'bg-gray-100';
+          case 'LG':
+            return 'bg-purple-100';
+        }
+      }
     }
     return 'text-black';
   };
@@ -203,7 +217,7 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
                       key={colIndex}
                       className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
                     >
-                      <div className={`w-full h-full flex items-center justify-center ${getCellStyle(colIndex, cell)}`}>
+                      <div className={`w-full h-full flex items-center justify-center ${getCellStyle(colIndex, cell, rowIndex)}`}>
                         {getDisplayText(colIndex, cell)}
                       </div>
                     </td>
