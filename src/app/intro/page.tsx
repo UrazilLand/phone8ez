@@ -56,11 +56,11 @@ export default function IntroPage() {
       
       <section className="bg-card p-8 rounded-lg shadow-md">
           <h2 className="text-3xl font-suit font-semibold text-center text-blue-700 mb-8">Phone8ez가 지키는 핵심 가치</h2>
-          <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="md:w-1/2">
+          <div className="flex flex-row items-center gap-8">
+              <div className="w-1/2 flex justify-end">
                   <Image src="/why_phone8ez.png" alt="Phone8ez 소개 이미지" width={600} height={400} className="rounded-lg shadow-lg ring-2 ring-blue-200" data-ai-hint="team collaboration" />
               </div>
-              <div className="md:w-1/2 space-y-4">
+              <div className="w-1/2 space-y-4">
                   <p className="text-lg text-foreground font-pretendard">우리는 복잡한 정책표 작업을 단순화하는 것을 넘어서,<br/>
                         현장에서 일하는 사람들의 시간을 아껴주는 것을 가장 큰 가치로 삼습니다.<br/><br/>
                         데이터를 빠르게 정리하고, 누구나 이해할 수 있도록 보여주는 것. <br/>
