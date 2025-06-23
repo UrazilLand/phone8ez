@@ -104,12 +104,12 @@ export default function HowToUsePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-headline font-bold text-blue-700 mb-4">
+        <h1 className="text-4xl md:text-5xl font-headline font-bold text-primary mb-4">
           Phone8ez 사용 방법
         </h1>
-        <p className="text-lg md:text-xl text-blue-600/80 max-w-2xl mx-auto">
+        <p className="text-lg md:text-xl text-primary/80 max-w-2xl mx-auto">
           단 5단계로 시작하는 Phone8ez!
         </p>
       </div>
@@ -118,23 +118,23 @@ export default function HowToUsePage() {
         {howToUseSteps.map((step, idx) => (
           <div 
             key={idx} 
-            className={`rounded-2xl shadow-lg border border-blue-100 bg-white overflow-hidden transition-all duration-300 hover:shadow-xl ${
-              openIdx === idx ? 'ring-2 ring-blue-200' : ''
+            className={`rounded-2xl shadow-lg border bg-card overflow-hidden transition-all duration-300 hover:shadow-xl ${
+              openIdx === idx ? 'ring-2 ring-primary/50' : 'border-border'
             }`}
           >
             <button
               className={`w-full text-left px-12 py-8 flex items-center justify-between focus:outline-none transition-all duration-300 ${
-                openIdx === idx ? 'bg-gradient-to-r from-blue-50 to-white' : 'hover:bg-blue-50/50'
+                openIdx === idx ? 'bg-primary/10' : 'hover:bg-muted/50'
               }`}
               onClick={() => handleAccordion(idx)}
             >
               <div className="flex items-center space-x-4">
-                <span className={`text-2xl font-bold ${openIdx === idx ? 'text-blue-700' : 'text-blue-600'}`}>
+                <span className={`text-2xl font-bold text-primary`}>
                   {step.title}
                 </span>
               </div>
               <span className={`text-xl transition-transform duration-300 ${
-                openIdx === idx ? 'rotate-0 text-blue-400' : 'rotate-180 text-blue-600'
+                openIdx === idx ? 'rotate-0 text-muted-foreground' : 'rotate-180 text-primary'
               }`}>
                 ▼
               </span>
@@ -145,9 +145,9 @@ export default function HowToUsePage() {
                 {/* 이미지 슬라이더 */}
                 {step.images && step.images.length > 0 && (
                   <div className="flex flex-col items-center mb-8">
-                    <div className="relative w-full max-w-3xl h-96 bg-gradient-to-br from-blue-50 to-white rounded-xl flex items-center justify-center overflow-hidden shadow-inner">
+                    <div className="relative w-full max-w-5xl h-[500px] bg-background rounded-xl flex items-center justify-center overflow-hidden shadow-inner">
                       <button
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-3 shadow-lg hover:bg-blue-100 transition-colors duration-200 z-10"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-card/80 rounded-full p-3 shadow-lg hover:bg-muted transition-colors duration-200 z-10"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleImgNav(idx, -1);
@@ -165,7 +165,7 @@ export default function HowToUsePage() {
                         sizes="(max-width: 768px) 100vw, 800px"
                       />
                       <button
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-3 shadow-lg hover:bg-blue-100 transition-colors duration-200 z-10"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-card/80 rounded-full p-3 shadow-lg hover:bg-muted transition-colors duration-200 z-10"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleImgNav(idx, 1);
@@ -176,7 +176,7 @@ export default function HowToUsePage() {
                         ▶
                       </button>
                     </div>
-                    <div className="mt-4 text-sm font-medium">
+                    <div className="mt-4 text-sm font-medium text-muted-foreground">
                       {imgIdx[idx] + 1} / {step.images.length}
                     </div>
                   </div>
@@ -186,7 +186,7 @@ export default function HowToUsePage() {
                 {step.videos && step.videos.length > 0 && (
                   <div className="space-y-6 mb-6">
                     {step.videos.map((url, vIdx) => (
-                      <div key={vIdx} className="aspect-video w-full max-w-2xl mx-auto rounded-xl overflow-hidden shadow-lg border border-blue-100">
+                      <div key={vIdx} className="aspect-video w-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-lg border">
                         <iframe
                           src={url}
                           title={`사용법 동영상 ${vIdx + 1}`}
@@ -200,7 +200,7 @@ export default function HowToUsePage() {
                 )}
 
                 {/* 설명 */}
-                <div className="mt-6 text-lg text-center font-pretendard leading-relaxed">
+                <div className="mt-6 text-lg text-center font-pretendard leading-relaxed text-foreground">
                   {step.descriptions[imgIdx[idx]]}
                 </div>
               </div>
