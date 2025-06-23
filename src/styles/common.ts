@@ -32,7 +32,7 @@ export const CARRIER_OPTIONS = [
 
 // 계약 유형 관련 상수
 export const CONTRACT_OPTIONS = [
-  { value: '공시', label: '공시', style: 'text-green-700 font-bold' },
+  { value: '공시', label: '공시', style: 'text-blue-700 font-bold' },
   { value: '선약', label: '선약', style: 'text-cyan-600 font-bold' },
 ];
 
@@ -51,9 +51,10 @@ export const PLAN_BG_COLORS = [
   "bg-pink-300",
   "bg-red-300",
   "bg-orange-300",
-  "bg-green-300",
+  "bg-blue-300",
   "bg-teal-300"
 ];
+
 // 업체명 색상 관련 상수
 export const COMPANY_TEXT_COLORS = [
   "text-blue-700",
@@ -76,4 +77,38 @@ export const BUTTON_THEME = {
   danger_fill: "bg-red-600 border-2 border-red-600 text-white font-extrabold rounded hover:bg-red-700 transition-colors",
   disabled: "bg-gray-100 border-2 border-gray-300 text-gray-400 font-extrabold rounded cursor-not-allowed",
   gray: "bg-gray-100 border-2 border-gray-300 text-gray-600 font-extrabold rounded hover:bg-gray-200 transition-colors"
-}; 
+};
+
+export const SUPPORT_TYPE_STYLES = [
+  { value: '선택약정', label: '선택약정', style: 'text-blue-700 font-bold' },
+  { value: '공시', label: '공시', style: 'text-blue-700 font-bold' },
+  { value: '미해당', label: '미해당', style: 'text-gray-500' },
+];
+
+export const JOIN_TYPE_STYLES = [
+  { value: '신규', label: '신규', style: 'bg-blue-600 text-white' },
+  { value: '번호이동', label: '번호이동', style: 'bg-orange-500 text-white'},
+  { value: '기기변경', label: '기기변경', style: 'bg-blue-600 text-white'},
+];
+
+export const PLAN_STYLES = [
+  "bg-blue-300",
+  "bg-indigo-300",
+  "bg-purple-300",
+  "bg-pink-300",
+  "bg-red-300",
+  "bg-orange-300",
+  "bg-blue-300",
+  "bg-teal-300"
+];
+
+export const SUPPORT_TEXT_COLORS = [
+  "text-red-700",
+  "text-orange-700",
+  "text-yellow-700",
+  "text-blue-700",
+  "text-indigo-700",
+  "text-purple-700",
+  "text-pink-700",
+  "text-gray-700",
+]; 

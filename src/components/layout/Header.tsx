@@ -51,7 +51,7 @@ const Header = () => {
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium flex items-center justify-center h-10 transition-colors duration-150${mobile ? ' block w-full text-center my-1' : ''} ${isActive ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-600`}
+              className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium flex items-center justify-center h-10 transition-colors duration-150${mobile ? ' block w-full text-center my-1' : ''} ${isActive ? 'text-blue-600' : 'text-muted-foreground'} hover:text-blue-600`}
               onClick={() => mobile && setIsMobileMenuOpen(false)}
             >
               {link.label}
@@ -64,7 +64,7 @@ const Header = () => {
 
   if (!isMounted) {
     return (
-      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+      <header className="bg-muted/50 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* 좌측: 파비콘 + 로고 */}
@@ -86,7 +86,7 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <header className="bg-muted/50 backdrop-blur-md shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* 좌측: 파비콘 + 로고 */}
@@ -106,16 +106,16 @@ const Header = () => {
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="text-gray-500 hover:text-blue-600"
+              className="text-muted-foreground hover:text-blue-600"
             >
               {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
-              ) : (
                 <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5" />
               )}
               <span className="sr-only">테마 변경</span>
             </Button>
-            <Button variant="ghost" asChild className="text-gray-700 hover:text-blue-600 px-3">
+            <Button variant="ghost" asChild className="text-foreground hover:text-blue-600 px-3">
               <Link href="/login">
                 로그인
               </Link>
@@ -158,12 +158,12 @@ const Header = () => {
                   >
                     {theme === 'dark' ? (
                       <>
-                        <Sun className="mr-2 h-4 w-4" />
+                        <Moon className="mr-2 h-4 w-4" />
                         라이트 모드
                       </>
                     ) : (
                       <>
-                        <Moon className="mr-2 h-4 w-4" />
+                        <Sun className="mr-2 h-4 w-4" />
                         다크 모드
                       </>
                     )}
