@@ -146,7 +146,7 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
       </div>
 
       {/* 테이블 카드 */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-4 h-[800px] max-w-full mx-4 sm:max-w-6xl sm:mx-auto lg:max-w-7xl">
+      <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-4 h-[1200px] max-w-full mx-4 sm:max-w-6xl sm:mx-auto lg:max-w-7xl">
         <div className="overflow-auto h-full">
           <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
             <colgroup>

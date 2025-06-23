@@ -3,10 +3,10 @@ export const flexColGap2 = "flex flex-col gap-2";
 export const flexRowGap2 = "flex flex-row gap-2";
 
 // 레이아웃 관련 상수
-export const DEFAULT_ROW_COUNT = 32;
-export const DEFAULT_COLUMN_COUNT = 15;
+export const DEFAULT_ROW_COUNT = 49;
+export const DEFAULT_COLUMN_COUNT = 30;
 export const SHEET_HEADER_ROWS = 5;
-export const SHEET_HEADER_LABELS = ['통신사', '지원 구분', '요금제', '가입 유형', '업체명'];
+export const SHEET_HEADER_LABELS = ['통신사', '지원구분', '요금제', '가입유형', '업체명'];
 
 // 통신사 관련 상수
 export const CARRIER_OPTIONS = [

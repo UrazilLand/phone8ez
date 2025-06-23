@@ -609,7 +609,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       </div>
       <div 
         ref={tableRef}
-        className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[800px]"
+        className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]"
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
         tabIndex={-1}
@@ -629,7 +629,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                     {row.map((cell, colIndex) => (
                       <td 
                         key={colIndex}
-                        className={`h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-black ${
+                        className={`h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-black align-middle ${
                           colIndex === 0 ? 
                             (rowIndex < 5 ? 'text-center font-bold bg-gray-50 sticky left-0 z-20' : 'text-left sticky left-0 z-20 bg-white') : 
                             'text-center'
@@ -649,7 +649,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                             }`}
                             style={{
                               ...getCellStyle(rowIndex, colIndex, cell),
-                              fontWeight: rowIndex < 5 ? '600' : 'normal'
+                              fontWeight: rowIndex < 5 ? 'bold' : 'normal'
                             }}
                           />
                         )}

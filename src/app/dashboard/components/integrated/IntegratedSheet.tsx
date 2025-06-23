@@ -545,7 +545,7 @@ export default function IntegratedSheet({
       </div>
       
       {/* 테이블 카드 */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[800px]">
+      <div className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]">
         <div className="overflow-auto h-full w-full">
           <div className="relative">
             <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
