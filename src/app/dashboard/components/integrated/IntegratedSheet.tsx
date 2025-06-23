@@ -15,6 +15,14 @@ import {
   extractMonthlyFeesByCarrier
 } from '@/app/dashboard/utils/integrated/dataExtraction';
 import { getDynamicCellStyle, getDataCellStyle } from '@/app/dashboard/utils/common/colorUtils';
+import { 
+  findMatchingValue, 
+  calculateHighlightedCells,
+  getPriceFromAColumn,
+  getPublicSupportAmount,
+  getAdditionalServiceAmount,
+  calculateFinalAmount
+} from '@/app/dashboard/utils/integrated/calculationUtils';
 import { AlertTriangle, X } from 'lucide-react';
 import {
   Dialog,
@@ -93,110 +101,16 @@ export default function IntegratedSheet({
   const aColumnData = useMemo(() => currentSheetData.map(row => row[0]), [currentSheetData]);
 
   const highlightedCells = useMemo(() => {
-    const highlightSet = new Set<string>();
-    if (currentSheetData.length < 5) return highlightSet;
-
-    // 6행부터(rowIndex=5) 각 행을 순회
-    for (let r = 5; r < currentSheetData.length; r++) {
-      const row = currentSheetData[r];
-      if (!row) continue;
-
-      const minValues: Record<string, number> = {};
-
-      // Pass 1: Find minimum value for each carrier-joinType combination in the row
-      for (let c = 1; c < row.length; c++) {
-        const carrier = sheetHeaders[0]?.[c]?.trim();
-        const joinType = sheetHeaders[3]?.[c]?.trim();
-        const cellValue = row[c]?.split('|')[0].split(';')[0].trim();
-
-        if (carrier && joinType && cellValue && !isNaN(Number(cellValue))) {
-          const key = `${carrier}-${joinType}`;
-          const numValue = Number(cellValue);
-
-          if (minValues[key] === undefined || numValue < minValues[key]) {
-            minValues[key] = numValue;
-          }
-        }
-      }
-
-      // Pass 2: Highlight all cells that match the minimum value
-      for (let c = 1; c < row.length; c++) {
-        const carrier = sheetHeaders[0]?.[c]?.trim();
-        const joinType = sheetHeaders[3]?.[c]?.trim();
-        const cellValue = row[c]?.split('|')[0].split(';')[0].trim();
-
-        if (carrier && joinType && cellValue && !isNaN(Number(cellValue))) {
-          const key = `${carrier}-${joinType}`;
-          const numValue = Number(cellValue);
-
-          if (minValues[key] === numValue) {
-            highlightSet.add(`${r}-${c}`);
-          }
-        }
-      }
-    }
-    return highlightSet;
+    return calculateHighlightedCells(currentSheetData, sheetHeaders);
   }, [currentSheetData, sheetHeaders]);
 
   useEffect(() => {
-    const findMatchingValue = (rowIndex: number, colIndex: number): string => {
-      const carrier = sheetHeaders[0]?.[colIndex]?.trim();
-      const supportType = sheetHeaders[1]?.[colIndex]?.trim();
-      const planName = (sheetHeaders[2]?.[colIndex]?.trim() || '').split('|')[0];
-      const joinType = sheetHeaders[3]?.[colIndex]?.trim();
-      const company = sheetHeaders[4]?.[colIndex]?.trim();
-
-      if (!carrier || !supportType || !planName || !joinType || !company) return '';
-
-      const modelCellData = aColumnData[rowIndex] || '';
-      if (!modelCellData.includes('codes:')) return '';
-      
-      const codesPart = modelCellData.split('|').find(p => p.startsWith('codes:'));
-      if (!codesPart) return '';
-      const targetModelCodes = codesPart.replace('codes:', '').split(',');
-
-      const foundValues: string[] = [];
-      const searchDataSets = dataSets.filter(ds => ds.type !== 'integrated');
-
-      for (const ds of searchDataSets) {
-        const sourceSheet = ds.data.sheetData;
-        if (!sourceSheet || sourceSheet.length < 5) continue;
-
-        for (let sourceCol = 1; sourceCol < sourceSheet[0].length; sourceCol++) {
-          if (
-            carrier === sourceSheet[0]?.[sourceCol]?.trim() &&
-            supportType === sourceSheet[1]?.[sourceCol]?.trim() &&
-            planName === (sourceSheet[2]?.[sourceCol]?.trim() || '').split('|')[0] &&
-            joinType === sourceSheet[3]?.[sourceCol]?.trim() &&
-            company === sourceSheet[4]?.[sourceCol]?.trim()
-          ) {
-            for (let sourceRow = 5; sourceRow < sourceSheet.length; sourceRow++) {
-              const sourceModelCode = sourceSheet[sourceRow]?.[0]?.trim();
-              if (sourceModelCode && targetModelCodes.includes(sourceModelCode)) {
-                const cellValue = sourceSheet[sourceRow]?.[sourceCol] || '';
-                // 숫자만 추출 (음수 부호 포함)
-                const numericValue = cellValue.replace(/[^\d-]/g, '');
-                if (numericValue) {
-                  foundValues.push(numericValue);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      const uniqueFoundValues = [...new Set(foundValues.filter(v => v))];
-      if (uniqueFoundValues.length === 0) return '';
-      if (uniqueFoundValues.length > 1) return `${uniqueFoundValues.join(';')}|WARN_MULTI`;
-      return uniqueFoundValues[0];
-    };
-
     const newSheet = currentSheetData.map(row => [...row]);
     let hasChanged = false;
 
     for (let r = 5; r < newSheet.length; r++) {
       for (let c = 1; c < newSheet[r].length; c++) {
-        const newValue = findMatchingValue(r, c);
+        const newValue = findMatchingValue(r, c, sheetHeaders, aColumnData, dataSets);
         if (newSheet[r][c] !== newValue) {
           newSheet[r][c] = newValue;
           hasChanged = true;
@@ -595,143 +509,6 @@ export default function IntegratedSheet({
     });
   };
 
-  // 출고가 추출 함수
-  const getPriceFromAColumn = (rowIndex: number): number => {
-    const cellData = currentSheetData[rowIndex]?.[0] || '';
-    if (cellData.includes('price:')) {
-      const pricePart = cellData.split('|').find(p => p.startsWith('price:'));
-      if (pricePart) {
-        const price = pricePart.replace('price:', '');
-        return Number(price) || 0;
-      }
-    }
-    return 0;
-  };
-
-  // 공시지원금 계산 함수
-  const getPublicSupportAmount = (rowIndex: number, colIndex: number): number => {
-    const standardModel = currentSheetData[rowIndex]?.[0]?.split('|').find(p => p.startsWith('standard:'))?.replace('standard:', '') || '';
-    const joinType = currentSheetData[3]?.[colIndex]?.split('|')[0].split(';')[0] || ''; // 4행 가입유형
-    const carrierInSheet = currentSheetData[0]?.[colIndex]?.trim() || ''; // 1행 통신사
-    
-    // 3행에서 월 요금 추출 (두 가지 값이 있을 수 있음)
-    const planCell = currentSheetData[2]?.[colIndex] || '';
-    const planParts = planCell.split('|');
-    const monthlyFee1 = planParts[1] ? Number(planParts[1]) : null;
-    const monthlyFee2 = planParts[2] ? Number(planParts[2]) : null;
-    
-    if (!standardModel || (monthlyFee1 === null && monthlyFee2 === null) || !carrierInSheet) {
-      // 표준모델, 월요금, 통신사 중 하나라도 없으면 계산 불가
-      return 0;
-    }
-
-    if (!publicData) {
-      return 0;
-    }
-    
-    for (const [manufacturerName, manufacturer] of Object.entries(publicData.manufacturers)) {
-      const typedManufacturer = manufacturer as any;
-      if (typedManufacturer.models) {
-        for (const model of typedManufacturer.models) {
-          if (model.model_number === standardModel) {
-            for (const section of model.support_info.sections) {
-              for (const [carrierName, carrierInfo] of Object.entries(section.carriers)) {
-                // 통신사가 일치하는지 확인
-                if (carrierInfo && typeof carrierInfo === 'object' && carrierName === carrierInSheet) {
-                  const carrierMonthlyFee = (carrierInfo as any).monthly_fee;
-                  const isMonthlyFeeMatch = (monthlyFee1 !== null && carrierMonthlyFee === monthlyFee1) || 
-                                          (monthlyFee2 !== null && carrierMonthlyFee === monthlyFee2);
-                  
-                  if (isMonthlyFeeMatch) {
-                    let supportAmount = 0;
-                    if (joinType === '번호이동') {
-                      supportAmount = (carrierInfo as any).number_port_support || 0;
-                    } else {
-                      supportAmount = (carrierInfo as any).device_support || 0;
-                    }
-                    
-                    if (supportAmount > 0) {
-                      return Number(supportAmount);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    return 0;
-  };
-
-  // 부가서비스 계산 함수
-  const getAdditionalServiceAmount = (rowIndex: number, colIndex: number): number => {
-    const carrier = currentSheetData[0]?.[colIndex]?.trim() || '';
-    const company = currentSheetData[4]?.[colIndex]?.trim() || '';
-    const serviceKey = `${company}-${carrier}`;
-    
-    if (!carrier || !company) {
-      return 0;
-    }
-
-    const additionalDataSet = dataSets.find(ds => ds.type === 'additional');
-    if (!additionalDataSet?.data.additionalServices) {
-        return 0;
-    }
-
-    const additionalServices = additionalDataSet.data.additionalServices;
-    const companyServices = additionalServices[serviceKey];
-
-    if (!companyServices) {
-        return 0;
-    }
-
-    let totalAmount = 0;
-    companyServices.forEach(service => {
-      const discount = Number(service.discount) || 0;
-      totalAmount += discount;
-    });
-
-    return totalAmount;
-  };
-
-  // 최종 계산 함수
-  const calculateFinalAmount = (rowIndex: number, colIndex: number): { 
-    finalAmount: number; 
-    price: number; 
-    policySupport: number; 
-    publicSupport: number; 
-    additionalService: number; 
-  } => {
-    const price = getPriceFromAColumn(rowIndex);
-    const policySupport = Number(currentSheetData[rowIndex]?.[colIndex]?.split('|')[0].split(';')[0]) || 0;
-    const publicSupport = getPublicSupportAmount(rowIndex, colIndex);
-    const additionalService = getAdditionalServiceAmount(rowIndex, colIndex);
-    
-    // 정책지원금이 0인 경우 빈칸으로 표시
-    if (policySupport === 0) {
-      return {
-        finalAmount: 0,
-        price,
-        policySupport: 0,
-        publicSupport,
-        additionalService
-      };
-    }
-    
-    // 계산: (출고가 - 정책지원금*10000 - 공시지원금 - 부가서비스) / 10000
-    const finalAmount = Math.floor((price - policySupport * 10000 - publicSupport - additionalService) / 10000);
-    
-    return {
-      finalAmount,
-      price,
-      policySupport,
-      publicSupport,
-      additionalService
-    };
-  };
-
   return (
     <div className="flex flex-col w-full h-full">
       <div className="max-w-[61rem] mx-auto w-full px-4">
@@ -825,8 +602,8 @@ export default function IntegratedSheet({
                                   })() : cell}
                                 </div>
                               </PopoverTrigger>
-                              <PopoverContent>
-                                <div className="text-left">
+                              <PopoverContent className="w-auto max-w-xs p-3">
+                                <div className="text-left text-sm">
                                   {cell.split('|').map((part, index) => {
                                     const [key, value] = part.split(':');
                                     let label = key;
@@ -925,7 +702,7 @@ export default function IntegratedSheet({
                                             // 6행 이상 데이터 셀 렌더링
                                             (() => {
                                               const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
-                                              const calculation = calculateFinalAmount(rowIndex, colIndex);
+                                              const calculation = calculateFinalAmount(rowIndex, colIndex, sheetHeaders, aColumnData, dataSets, publicData, currentSheetData);
                                               const cellContent = calculation.finalAmount === 0 ? '' : calculation.finalAmount.toString();
                                               const joinType = sheetHeaders[3]?.[colIndex]?.trim();
                                               const isNegative = calculation.finalAmount < 0;
@@ -971,8 +748,8 @@ export default function IntegratedSheet({
                                     )}
                                   </div>
                                 </PopoverTrigger>
-                                <PopoverContent>
-                                  <div className="text-left">
+                                <PopoverContent className="w-auto max-w-xs p-3">
+                                  <div className="text-left text-sm">
                                     {rowIndex === 2 && colIndex > 0 ? (
                                       // 3행(요금제) 툴팁
                                       (() => {
@@ -982,7 +759,7 @@ export default function IntegratedSheet({
                                         const monthlyFee2 = parts[2] || '';
                                         
                                         return (
-                                          <div>
+                                          <div className="space-y-1">
                                             <p><strong>요금제명:</strong> {planName}</p>
                                             {monthlyFee1 && <p><strong>표준요금:</strong> {Number(monthlyFee1).toLocaleString()}원</p>}
                                             {monthlyFee2 && <p><strong>표준요금:</strong> {Number(monthlyFee2).toLocaleString()}원</p>}
@@ -992,7 +769,7 @@ export default function IntegratedSheet({
                                     ) : rowIndex >= 5 && colIndex > 0 ? (
                                       // B6셀부터 데이터 툴팁
                                       (() => {
-                                        const calculation = calculateFinalAmount(rowIndex, colIndex);
+                                        const calculation = calculateFinalAmount(rowIndex, colIndex, sheetHeaders, aColumnData, dataSets, publicData, currentSheetData);
                                         const cellContent = cell.split('|WARN_MULTI')[0];
                                         const hasWarning = cell.includes('|WARN_MULTI');
                                         const values = cellContent.split(';').filter(v => v.trim());
@@ -1003,7 +780,7 @@ export default function IntegratedSheet({
                                         }
                                         
                                         return (
-                                          <div>
+                                          <div className="space-y-1">
                                             <p><strong>출고가:</strong> {calculation.price.toLocaleString()}원</p>
                                             {calculation.policySupport > 0 && (
                                               <p><strong>정책지원금:</strong> {(calculation.policySupport * 10000).toLocaleString()}원</p>
@@ -1011,12 +788,12 @@ export default function IntegratedSheet({
                                             <p><strong>공시지원금:</strong> {calculation.publicSupport.toLocaleString()}원</p>
                                             <p><strong>부가서비스:</strong> {calculation.additionalService.toLocaleString()}원</p>
                                             {hasWarning && (
-                                              <p className="text-yellow-600 mt-2">
+                                              <p className="text-yellow-600 mt-2 text-xs">
                                                 <strong>⚠️ 경고:</strong> 여러 값이 발견됨
                                               </p>
                                             )}
                                             {values.length > 1 && !hasWarning && (
-                                              <p className="text-blue-600 mt-2">
+                                              <p className="text-blue-600 mt-2 text-xs">
                                                 <strong>ℹ️ 정보:</strong> 여러 값이 있음
                                               </p>
                                             )}

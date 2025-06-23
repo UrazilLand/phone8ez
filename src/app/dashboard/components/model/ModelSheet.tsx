@@ -4,7 +4,11 @@ import { DataSet } from '@/types/dashboard';
 import ModelHeader from './ModelHeader';
 import { DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT, CARRIER_OPTIONS, CONTRACT_OPTIONS, JOIN_TYPE_OPTIONS, PLAN_BG_COLORS, COMPANY_TEXT_COLORS } from '@/styles/common';
 import { useMemo, useState, useEffect } from 'react';
-import { getDynamicCellStyle, getDataCellStyle } from '@/app/dashboard/utils/common/colorUtils';
+import { getDynamicCellStyle, getDataCellStyle, getModelSheetCellStyle } from '@/app/dashboard/utils/common/colorUtils';
+import { 
+  calculateFinalAmount, 
+  calculateHighlightedTotalCells 
+} from '@/app/dashboard/utils/model/calculationUtils';
 
 interface ModelSheetProps {
   dataSets: DataSet[];
@@ -84,227 +88,10 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     setSheetData(generateSheetData);
   }, [generateSheetData]);
 
-  // 먼저 계산 함수들을 모두 선언합니다.
-  const getPriceFromModelContent = (modelContent: string): number => {
-    if (modelContent && modelContent.includes('price:')) {
-      const priceMatch = modelContent.match(/price:(\d+)/);
-      if (priceMatch) {
-        return Number(priceMatch[1]) || 0;
-      }
-    }
-    return 0;
-  };
-
-  const getPolicySupportAmount = (rowIndex: number): number => {
-    const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
-    if (!integratedDataSet?.data.sheetData) return 0;
-
-    const integratedData = integratedDataSet.data.sheetData;
-    const carrier = sheetData[rowIndex]?.[0]?.trim(); // 해당 행의 통신사
-    const supportType = sheetData[rowIndex]?.[1]?.trim(); // 해당 행의 지원구분
-    const planName = sheetData[rowIndex]?.[2]?.split('|')[0]; // 해당 행의 요금제명
-    const joinType = sheetData[rowIndex]?.[3]?.trim(); // 해당 행의 가입유형
-    const company = sheetData[rowIndex]?.[4]?.trim(); // 해당 행의 업체명
-
-    if (!carrier || !supportType || !planName || !joinType || !company) return 0;
-
-    // 통합 데이터에서 해당 조건에 맞는 데이터 찾기
-    for (let col = 1; col < integratedData[0].length; col++) {
-      const integratedCarrier = integratedData[0]?.[col]?.trim();
-      const integratedSupportType = integratedData[1]?.[col]?.trim();
-      const integratedPlanName = integratedData[2]?.[col]?.split('|')[0];
-      const integratedJoinType = integratedData[3]?.[col]?.trim();
-      const integratedCompany = integratedData[4]?.[col]?.trim();
-
-      if (
-        integratedCarrier === carrier &&
-        integratedSupportType === supportType &&
-        integratedPlanName === planName &&
-        integratedJoinType === joinType &&
-        integratedCompany === company
-      ) {
-        // 6행부터 모델 데이터 확인
-        for (let row = 5; row < integratedData.length; row++) {
-          const modelCellData = integratedData[row]?.[0] || '';
-          if (modelCellData.includes('codes:')) {
-            const codesPart = modelCellData.split('|').find(p => p.startsWith('codes:'));
-            if (codesPart) {
-              const targetModelCodes = codesPart.replace('codes:', '').split(',');
-              
-              // 다른 데이터셋에서 해당 모델 코드의 정책지원금 찾기
-              for (const dataSet of dataSets) {
-                if (dataSet.type === 'integrated') continue;
-                
-                const sourceSheet = dataSet.data.sheetData;
-                if (!sourceSheet || sourceSheet.length < 5) continue;
-
-                for (let sourceCol = 1; sourceCol < sourceSheet[0].length; sourceCol++) {
-                  if (
-                    carrier === sourceSheet[0]?.[sourceCol]?.trim() &&
-                    supportType === sourceSheet[1]?.[sourceCol]?.trim() &&
-                    planName === (sourceSheet[2]?.[sourceCol]?.trim() || '').split('|')[0] &&
-                    joinType === sourceSheet[3]?.[sourceCol]?.trim() &&
-                    company === sourceSheet[4]?.[sourceCol]?.trim()
-                  ) {
-                    for (let sourceRow = 5; sourceRow < sourceSheet.length; sourceRow++) {
-                      const sourceModelCode = sourceSheet[sourceRow]?.[0]?.trim();
-                      if (sourceModelCode && targetModelCodes.includes(sourceModelCode)) {
-                        const cellValue = sourceSheet[sourceRow]?.[sourceCol] || '';
-                        const numericValue = cellValue.replace(/[^\d-]/g, '');
-                        if (numericValue) {
-                          return Number(numericValue);
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return 0;
-  };
-
-  const getPublicSupportAmount = (rowIndex: number): number => {
-    // 헤더의 선택된 드롭박스 내용에서 표준 모델번호 추출
-    const standardModel = selectedModelContent?.split('|').find(p => p.startsWith('standard:'))?.replace('standard:', '') || '';
-    const joinType = sheetData[rowIndex]?.[3]?.trim() || '';
-    const carrier = sheetData[rowIndex]?.[0]?.trim() || '';
-    
-    // 3열에서 내부 저장된 월 요금 추출
-    const planCell = sheetData[rowIndex]?.[2] || '';
-    const planParts = planCell.split('|');
-    const monthlyFee1 = planParts[1] ? Number(planParts[1]) : null;
-    const monthlyFee2 = planParts[2] ? Number(planParts[2]) : null;
-    
-    if (!standardModel || (monthlyFee1 === null && monthlyFee2 === null) || !carrier) {
-      return 0;
-    }
-
-    if (!publicData) {
-      return 0;
-    }
-    
-    for (const [manufacturerName, manufacturer] of Object.entries(publicData.manufacturers)) {
-      const typedManufacturer = manufacturer as any;
-      if (typedManufacturer.models) {
-        for (const model of typedManufacturer.models) {
-          if (model.model_number === standardModel) {
-            for (const section of model.support_info.sections) {
-              for (const [carrierName, carrierInfo] of Object.entries(section.carriers)) {
-                if (carrierInfo && typeof carrierInfo === 'object' && carrierName === carrier) {
-                  const carrierMonthlyFee = (carrierInfo as any).monthly_fee;
-                  const isMonthlyFeeMatch = (monthlyFee1 !== null && carrierMonthlyFee === monthlyFee1) || 
-                                          (monthlyFee2 !== null && carrierMonthlyFee === monthlyFee2);
-                  
-                  if (isMonthlyFeeMatch) {
-                    let supportAmount = 0;
-                    if (joinType === '번호이동') {
-                      supportAmount = (carrierInfo as any).number_port_support || 0;
-                    } else {
-                      supportAmount = (carrierInfo as any).device_support || 0;
-                    }
-                    
-                    if (supportAmount > 0) {
-                      return Number(supportAmount);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    return 0;
-  };
-
-  const getAdditionalServiceAmount = (rowIndex: number): number => {
-    const carrier = sheetData[rowIndex]?.[0]?.trim() || '';
-    const company = sheetData[rowIndex]?.[4]?.trim() || '';
-    const serviceKey = `${company}-${carrier}`;
-    
-    if (!carrier || !company) {
-      return 0;
-    }
-
-    const additionalDataSet = dataSets.find(ds => ds.type === 'additional');
-    if (!additionalDataSet?.data.additionalServices) {
-        return 0;
-    }
-
-    const additionalServices = additionalDataSet.data.additionalServices;
-    const companyServices = additionalServices[serviceKey];
-
-    if (!companyServices) {
-        return 0;
-    }
-
-    let totalAmount = 0;
-    companyServices.forEach(service => {
-      const discount = Number(service.discount) || 0;
-      totalAmount += discount;
-    });
-
-    return totalAmount;
-  };
-
-  const calculateFinalAmount = (rowIndex: number): { 
-    finalAmount: number; 
-    price: number; 
-    policySupport: number; 
-    publicSupport: number; 
-    additionalService: number; 
-  } => {
-    const price = getPriceFromModelContent(selectedModelContent);
-    const policySupport = getPolicySupportAmount(rowIndex);
-    const publicSupport = getPublicSupportAmount(rowIndex);
-    const additionalService = getAdditionalServiceAmount(rowIndex);
-    
-    if (policySupport === 0) {
-      return { finalAmount: 0, price, policySupport: 0, publicSupport, additionalService };
-    }
-    
-    const finalAmount = Math.floor((price - policySupport * 10000 - publicSupport - additionalService) / 10000);
-    return { finalAmount, price, policySupport, publicSupport, additionalService };
-  };
-
   // 계산 함수들이 선언된 후에 useMemo를 사용합니다.
   const highlightedTotalCells = useMemo(() => {
-    const minTotals: Record<string, number> = {}; // key: `${carrier}-${joinType}`
-    const finalAmounts: { rowIndex: number; carrier: string; joinType: string; total: number }[] = [];
-
-    sheetData.forEach((row, rowIndex) => {
-      const carrier = row[0]?.trim();
-      const joinType = row[3]?.trim();
-      if (carrier && joinType) {
-        const calculation = calculateFinalAmount(rowIndex);
-        if (calculation.policySupport > 0 || calculation.finalAmount !== 0) {
-          finalAmounts.push({ rowIndex, carrier, joinType, total: calculation.finalAmount });
-        }
-      }
-    });
-
-    finalAmounts.forEach(({ carrier, joinType, total }) => {
-      const key = `${carrier}-${joinType}`;
-      if (minTotals[key] === undefined || total < minTotals[key]) {
-        minTotals[key] = total;
-      }
-    });
-
-    const highlightSet = new Set<number>();
-    finalAmounts.forEach(({ rowIndex, carrier, joinType, total }) => {
-      const key = `${carrier}-${joinType}`;
-      if (minTotals[key] === total) {
-        highlightSet.add(rowIndex);
-      }
-    });
-
-    return highlightSet;
-  }, [sheetData, selectedModelContent]); // calculateFinalAmount는 컴포넌트 스코프에 있으므로 의존성 배열에 추가할 필요가 없습니다.
+    return calculateHighlightedTotalCells(sheetData, selectedModelContent, dataSets, publicData);
+  }, [sheetData, selectedModelContent, dataSets, publicData]);
 
   const handleModelSelect = (modelContent: string) => {
     setSelectedModelContent(modelContent);
@@ -345,109 +132,6 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     
     return columnWidths;
   }, []);
-
-  // 셀 스타일을 결정하는 함수
-  const getCellStyle = (colIndex: number, cellValue: string, rowIndex: number) => {
-    if (colIndex === 0) {
-      // 1열: 통신사 색상
-      const carrier = CARRIER_OPTIONS.find(option => 
-        option.variants.includes(cellValue.trim())
-      );
-      return carrier ? carrier.style : 'text-black';
-    } else if (colIndex === 1) {
-      // 2열: 지원구분 색상
-      const contract = CONTRACT_OPTIONS.find(option => 
-        option.value === cellValue.trim()
-      );
-      return contract ? contract.style : 'text-black';
-    } else if (colIndex === 2) {
-      // 3열: 요금제 배경색 (순환) - 전체 문자열로 색상 결정
-      const planIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % PLAN_BG_COLORS.length;
-      return `${PLAN_BG_COLORS[planIndex]} text-black font-medium rounded`;
-    } else if (colIndex === 3) {
-      // 4열: 가입유형 색상
-      const joinType = JOIN_TYPE_OPTIONS.find(option => 
-        option.value === cellValue.trim()
-      );
-      return joinType ? joinType.style : 'text-black';
-    } else if (colIndex === 4) {
-      // 5열: 업체명 색상 (순환) + 통신사별 교차 배경색
-      const companyIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % COMPANY_TEXT_COLORS.length;
-      const textColor = `${COMPANY_TEXT_COLORS[companyIndex]} font-medium`;
-      
-      // 통신사별 교차 배경색 적용 (출고가 열과 동일)
-      const carrier = sheetData[rowIndex]?.[0]?.trim();
-      let bgColor = '';
-      
-      if (carrier) {
-        const isEvenRow = rowIndex % 2 === 0;
-        if (isEvenRow) {
-          // 짝수 행: 더 진한 색상
-          switch (carrier) {
-            case 'SK':
-              bgColor = 'bg-red-200';
-              break;
-            case 'KT':
-              bgColor = 'bg-gray-200';
-              break;
-            case 'LG':
-              bgColor = 'bg-purple-200';
-              break;
-          }
-        } else {
-          // 홀수 행: 더 연한 색상
-          switch (carrier) {
-            case 'SK':
-              bgColor = 'bg-red-50';
-              break;
-            case 'KT':
-              bgColor = 'bg-gray-50';
-              break;
-            case 'LG':
-              bgColor = 'bg-purple-50';
-              break;
-          }
-        }
-      } else {
-        // 통신사 정보가 없는 경우 기본 교차색상
-        const isEvenRow = rowIndex % 2 === 0;
-        bgColor = isEvenRow ? 'bg-gray-200' : 'bg-gray-100';
-      }
-      
-      return `${textColor} ${bgColor}`;
-    } else if (colIndex >= 5) {
-      // 6열(출고가열)부터: 통신사에 따른 배경색 적용 + 교차 색상
-      // 해당 행의 1열(통신사)을 참조하여 배경색 결정
-      const carrier = sheetData[rowIndex]?.[0]?.trim();
-      
-      if (carrier) {
-        const isEvenRow = rowIndex % 2 === 0;
-        if (isEvenRow) {
-          // 짝수 행: 더 진한 색상
-          switch (carrier) {
-            case 'SK':
-              return 'bg-red-200';
-            case 'KT':
-              return 'bg-gray-200';
-            case 'LG':
-              return 'bg-purple-200';
-          }
-        } else {
-          // 홀수 행: 더 연한 색상
-          switch (carrier) {
-            case 'SK':
-              return 'bg-red-50';
-            case 'KT':
-              return 'bg-gray-50';
-            case 'LG':
-              return 'bg-purple-50';
-          }
-        }
-      }
-      return 'bg-gray-50';
-    }
-    return 'text-black';
-  };
 
   return (
     <div className="flex flex-col w-full h-full">
@@ -508,11 +192,11 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                         key={colIndex}
                         className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
                       >
-                        <div className={`w-full h-full flex items-center justify-center ${getCellStyle(colIndex, cell, rowIndex)}`}>
+                        <div className={`w-full h-full flex items-center justify-center ${getModelSheetCellStyle(colIndex, cell, rowIndex, sheetData)}`}>
                           {(() => {
                             if (colIndex === 9) { // 합계 열
                               const isHighlighted = highlightedTotalCells.has(rowIndex);
-                              const calculation = calculateFinalAmount(rowIndex);
+                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
                               const joinType = sheetData[rowIndex]?.[3]?.trim();
 
                               if (calculation.policySupport === 0 && calculation.finalAmount === 0) {
@@ -544,15 +228,15 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                             }
                             
                             if (colIndex === 6) { // 정책지원금
-                              const calculation = calculateFinalAmount(rowIndex);
+                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
                               return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
                             }
                             if (colIndex === 7) { // 공시지원금
-                              const calculation = calculateFinalAmount(rowIndex);
+                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
                               return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
                             }
                             if (colIndex === 8) { // 부가서비스
-                              const calculation = calculateFinalAmount(rowIndex);
+                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
                               return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
                             }
                             if (colIndex === 2) { // 요금제

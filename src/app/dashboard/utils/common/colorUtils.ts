@@ -135,4 +135,157 @@ export function getDataCellStyle(rowIndex: number, colIndex: number, sheetData: 
   }
 
   return styleClasses;
+}
+
+/**
+ * ModelSheet용 셀 스타일을 결정하는 함수
+ * @param colIndex - 열 인덱스
+ * @param cellValue - 셀 값
+ * @param rowIndex - 행 인덱스
+ * @param sheetData - 전체 시트 데이터
+ * @returns Tailwind CSS 클래스 문자열
+ */
+export function getModelSheetCellStyle(
+  colIndex: number, 
+  cellValue: string, 
+  rowIndex: number, 
+  sheetData: string[][]
+): string {
+  if (colIndex === 0) {
+    // 1열: 통신사 색상
+    const carrier = CARRIER_OPTIONS.find(option => 
+      option.variants.includes(cellValue.trim())
+    );
+    return carrier ? carrier.style : 'text-black';
+  } else if (colIndex === 1) {
+    // 2열: 지원구분 색상
+    const contract = CONTRACT_OPTIONS.find(option => 
+      option.value === cellValue.trim()
+    );
+    return contract ? contract.style : 'text-black';
+  } else if (colIndex === 2) {
+    // 3열: 요금제 배경색 (순환) - 전체 문자열로 색상 결정
+    const planIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % PLAN_BG_COLORS.length;
+    return `${PLAN_BG_COLORS[planIndex]} text-black font-medium rounded`;
+  } else if (colIndex === 3) {
+    // 4열: 가입유형 색상
+    const joinType = JOIN_TYPE_OPTIONS.find(option => 
+      option.value === cellValue.trim()
+    );
+    return joinType ? joinType.style : 'text-black';
+  } else if (colIndex === 4) {
+    // 5열: 업체명 색상 (순환) + 통신사별 교차 배경색
+    const companyIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % COMPANY_TEXT_COLORS.length;
+    const textColor = `${COMPANY_TEXT_COLORS[companyIndex]} font-medium`;
+    
+    // 통신사별 교차 배경색 적용 (출고가 열과 동일)
+    const carrier = sheetData[rowIndex]?.[0]?.trim();
+    let bgColor = '';
+    
+    if (carrier) {
+      const isEvenRow = rowIndex % 2 === 0;
+      if (isEvenRow) {
+        // 짝수 행: 더 진한 색상
+        switch (carrier) {
+          case 'SK':
+            bgColor = 'bg-red-200';
+            break;
+          case 'KT':
+            bgColor = 'bg-gray-200';
+            break;
+          case 'LG':
+            bgColor = 'bg-purple-200';
+            break;
+        }
+      } else {
+        // 홀수 행: 더 연한 색상
+        switch (carrier) {
+          case 'SK':
+            bgColor = 'bg-red-50';
+            break;
+          case 'KT':
+            bgColor = 'bg-gray-50';
+            break;
+          case 'LG':
+            bgColor = 'bg-purple-50';
+            break;
+        }
+      }
+    } else {
+      // 통신사 정보가 없는 경우 기본 교차색상
+      const isEvenRow = rowIndex % 2 === 0;
+      bgColor = isEvenRow ? 'bg-gray-200' : 'bg-gray-100';
+    }
+    
+    return `${textColor} ${bgColor}`;
+  } else if (colIndex >= 5) {
+    // 6열(출고가열)부터: 통신사에 따른 배경색 적용 + 교차 색상
+    // 해당 행의 1열(통신사)을 참조하여 배경색 결정
+    const carrier = sheetData[rowIndex]?.[0]?.trim();
+    
+    if (carrier) {
+      const isEvenRow = rowIndex % 2 === 0;
+      if (isEvenRow) {
+        // 짝수 행: 더 진한 색상
+        switch (carrier) {
+          case 'SK':
+            return 'bg-red-200';
+          case 'KT':
+            return 'bg-gray-200';
+          case 'LG':
+            return 'bg-purple-200';
+        }
+      } else {
+        // 홀수 행: 더 연한 색상
+        switch (carrier) {
+          case 'SK':
+            return 'bg-red-50';
+          case 'KT':
+            return 'bg-gray-50';
+          case 'LG':
+            return 'bg-purple-50';
+        }
+      }
+    }
+    return 'bg-gray-50';
+  }
+  return 'text-black';
+}
+
+/**
+ * 통신사별 배경색을 반환하는 함수
+ * @param carrier - 통신사명
+ * @param isEvenRow - 짝수 행 여부
+ * @returns Tailwind CSS 클래스 문자열
+ */
+export function getCarrierBackgroundColor(carrier: string, isEvenRow: boolean): string {
+  if (!carrier) {
+    return isEvenRow ? 'bg-gray-200' : 'bg-gray-100';
+  }
+
+  if (isEvenRow) {
+    // 짝수 행: 더 진한 색상
+    switch (carrier) {
+      case 'SK':
+        return 'bg-red-200';
+      case 'KT':
+        return 'bg-gray-200';
+      case 'LG':
+        return 'bg-purple-200';
+      default:
+        return 'bg-gray-200';
+    }
+  } else {
+    // 홀수 행: 더 연한 색상
+    switch (carrier) {
+      case 'SK':
+        return 'bg-red-50';
+      case 'KT':
+        return 'bg-gray-50';
+      case 'LG':
+        return 'bg-purple-50';
+      default:
+        return 'bg-gray-50';
+    }
+  }
 } 
