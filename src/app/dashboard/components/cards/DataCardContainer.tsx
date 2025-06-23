@@ -1,8 +1,12 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
-import { DataSet, TabType, PublicSupportData } from '@/types/dashboard';
+import { useEffect, useCallback } from 'react';
+import { DataSet, TabType } from '@/types/dashboard';
 import { getAvailableDates, getSupportAmountsByDate } from '../../utils/support-amounts';
 import { savePublicDataToStorage } from '../../utils/dashboardUtils';
+import { useDragScroll } from '../../hooks/useDragScroll';
+import { useFileOperations } from '../../hooks/useFileOperations';
+import { useModalState } from '../../hooks/useModalState';
+import { useCloudMode } from '../../hooks/useCloudMode';
 import DataCardBody from './DataCardBody';
 import SupportDataModal from './SupportDataModal';
 import PreviewModal from './PreviewModal';
@@ -17,67 +21,23 @@ interface DataCardProps {
   onOpenAdditionalServiceModal?: () => void;
 }
 
-// 파일명 생성 함수
-function getDownloadFileName() {
-  const now = new Date();
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  const YY = pad(now.getFullYear() % 100);
-  const MM = pad(now.getMonth() + 1);
-  const DD = pad(now.getDate());
-  const HH = pad(now.getHours());
-  const mm = pad(now.getMinutes());
-  return `phone8ez_${YY}${MM}${DD}_${HH}${mm}.json`;
-}
-
 export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated, onOpenAdditionalServiceModal }: DataCardProps) {
   const { toast } = useToast();
-  const [selectedDataSet, setSelectedDataSet] = useState<DataSet | null>(null);
-  const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isCloudMode, setIsCloudMode] = useState(false);
-  const [supportModalOpen, setSupportModalOpen] = useState(false);
-  const [supportData, setSupportData] = useState<PublicSupportData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 마우스 드래그 스크롤 구현
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    isDragging.current = true;
-    startX.current = e.pageX - (scrollRef.current?.offsetLeft || 0);
-    scrollLeft.current = scrollRef.current?.scrollLeft || 0;
-    document.body.style.userSelect = 'none';
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging.current || !scrollRef.current) return;
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = x - startX.current;
-    scrollRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-    document.body.style.userSelect = '';
-  };
-
-  const handleMouseLeave = () => {
-    isDragging.current = false;
-    document.body.style.userSelect = '';
-  };
+  // 커스텀 훅 사용
+  const dragScroll = useDragScroll();
+  const cloudMode = useCloudMode();
+  const modalState = useModalState();
+  const fileOperations = useFileOperations(setDataSets, cloudMode.isCloudMode, dataSets);
 
   useEffect(() => {
-    if (supportModalOpen) {
+    if (modalState.supportModalOpen) {
       const raw = localStorage.getItem('publicData');
-      if (raw) setSupportData(JSON.parse(raw));
+      if (raw) modalState.setSupportData(JSON.parse(raw));
     }
-  }, [supportModalOpen]);
+  }, [modalState.supportModalOpen, modalState.setSupportData]);
 
-  const handleLoadDataSet = (dataSet: DataSet) => {
+  const handleLoadDataSet = useCallback((dataSet: DataSet) => {
     try {
       if (dataSet.type === 'integrated') {
         if (onTabChange) {
@@ -94,20 +54,19 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         }
         onLoadData(dataSet.data);
       }
-      setError(null);
-      setPreviewModalOpen(false);
+      modalState.clearError();
+      modalState.closePreviewModal();
     } catch (error) {
       console.error('데이터 로드 실패:', error);
-      setError('데이터를 불러오는데 실패했습니다.');
+      modalState.setError('데이터를 불러오는데 실패했습니다.');
     }
-  };
+  }, [onTabChange, onReloadIntegrated, onOpenAdditionalServiceModal, onLoadData, modalState]);
 
-  const handlePreviewDataSet = (dataSet: DataSet) => {
-    setSelectedDataSet(dataSet);
-    setPreviewModalOpen(true);
-  };
+  const handlePreviewDataSet = useCallback((dataSet: DataSet) => {
+    modalState.openPreviewModal(dataSet);
+  }, [modalState]);
 
-  const handleDeleteDataSet = (dataSet: DataSet) => {
+  const handleDeleteDataSet = useCallback((dataSet: DataSet) => {
     // 삭제 확인
     if (window.confirm(`"${dataSet.name}" 데이터셋을 삭제하시겠습니까?`)) {
       setDataSets((prev: DataSet[]) => {
@@ -115,8 +74,8 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         return filtered;
       });
       
-      setPreviewModalOpen(false);
-      setError(null);
+      modalState.closePreviewModal();
+      modalState.clearError();
       
       // 삭제 완료 알림
       toast({
@@ -124,102 +83,26 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         description: `"${dataSet.name}" 데이터셋이 성공적으로 삭제되었습니다.`,
       });
     }
-  };
+  }, [setDataSets, toast, modalState]);
 
-  // 토글 스위치 핸들러
-  const handleToggle = () => {
-    // TODO: Cloud 모드 전환 시 구독 상태 확인
-    // - 구독자가 아닌 경우 알림 표시
-    // - 구독자인 경우 Cloud 모드로 전환
-    setIsCloudMode((prev) => !prev);
-  };
-
-  // 다운로드 버튼 핸들러 (JSON)
-  const handleDownload = () => {
-    if (isCloudMode) {
-      // TODO: Cloud 저장 기능 구현
-      // - DB 연결 후 구현 예정
-      // - 구독자 전용 기능
-      return;
-    }
-
-    // 로컬 파일 다운로드 기능
-    if (!dataSets.length) return alert('저장된 데이터가 없습니다.');
-    const filename = getDownloadFileName();
-    const blob = new Blob([JSON.stringify(dataSets)], { type: 'application/json;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // 업로드 버튼 핸들러
-  const handleUpload = () => {
-    if (isCloudMode) {
-      // TODO: Cloud 불러오기 기능 구현
-      // - DB 연결 후 구현 예정
-      // - 구독자 전용 기능
-      return;
-    }
-
-    // 로컬 파일 업로드 기능
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    fileInputRef.current?.click();
-  };
-
-  // 파일 선택 시 처리 (JSON)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const text = event.target?.result as string;
-        if (!text) throw new Error('파일 내용이 비어있습니다.');
-        
-        const arr = JSON.parse(text);
-        
-        if (!Array.isArray(arr)) throw new Error('잘못된 파일 형식입니다. 배열 형태의 JSON이어야 합니다.');
-        if (arr.length === 0) throw new Error('데이터가 비어있습니다.');
-        
-        // 각 데이터셋의 형식 검증
-        arr.forEach((ds, idx) => {
-          if (!ds || typeof ds !== 'object') throw new Error(`${idx + 1}번째 데이터셋이 올바르지 않습니다.`);
-          if (!ds.data || typeof ds.data !== 'object') throw new Error(`${idx + 1}번째 데이터셋에 data 필드가 없습니다.`);
-        });
-
-        setDataSets(arr);
-      } catch (err) {
-        console.error('파일 처리 중 오류:', err);
-        alert(err instanceof Error ? err.message : 'JSON 파일이 아니거나 잘못된 형식입니다.');
-      }
-    };
-    reader.onerror = () => {
-      alert('파일을 읽는 중 오류가 발생했습니다.');
-    };
-    reader.readAsText(file);
-  };
-
-  const handleSupportDataLoad = async () => {
+  const handleSupportDataLoad = useCallback(async () => {
     // 바로 모달 열기
-    setSupportModalOpen(true);
+    modalState.openSupportModal();
     
     // 기존 데이터가 있으면 먼저 표시
     const raw = localStorage.getItem('publicData');
     if (raw) {
-      setSupportData(JSON.parse(raw));
+      modalState.setSupportData(JSON.parse(raw));
     }
-  };
+  }, [modalState]);
 
-  const handleRefreshSupportData = async () => {
+  const handleRefreshSupportData = useCallback(async () => {
     // 이미 로딩 중이면 중복 호출 방지
-    if (isLoading) return;
+    if (modalState.isLoading) return;
     
     try {
-      setIsLoading(true);
-      setError(null);
+      modalState.setIsLoading(true);
+      modalState.clearError();
       
       const dates = await getAvailableDates();
       
@@ -230,18 +113,18 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
       const latestDate = dates[0];
       const data = await getSupportAmountsByDate(latestDate);
       
-      setSupportData(data);
+      modalState.setSupportData(data);
       savePublicDataToStorage(data);
     } catch (error) {
       console.error('공시 데이터 로드 실패:', error);
-      setError(error instanceof Error ? error.message : '공시 데이터를 불러오는데 실패했습니다.');
+      modalState.setError(error instanceof Error ? error.message : '공시 데이터를 불러오는데 실패했습니다.');
     } finally {
       // 약간의 지연을 두어 상태 변경을 안정화
       setTimeout(() => {
-        setIsLoading(false);
+        modalState.setIsLoading(false);
       }, 100);
     }
-  };
+  }, [modalState]);
 
   return (
     <>
@@ -251,40 +134,40 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         onPreviewDataSet={handlePreviewDataSet}
         onDeleteDataSet={handleDeleteDataSet}
         onSupportDataLoad={handleSupportDataLoad}
-        onDownload={handleDownload}
-        onUpload={handleUpload}
-        isLoading={isLoading}
-        isCloudMode={isCloudMode}
-        onToggle={handleToggle}
-        scrollRef={scrollRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
+        onDownload={fileOperations.handleDownload}
+        onUpload={fileOperations.handleUpload}
+        isLoading={modalState.isLoading}
+        isCloudMode={cloudMode.isCloudMode}
+        onToggle={cloudMode.toggleCloudMode}
+        scrollRef={dragScroll.scrollRef}
+        onMouseDown={dragScroll.handleMouseDown}
+        onMouseMove={dragScroll.handleMouseMove}
+        onMouseUp={dragScroll.handleMouseUp}
+        onMouseLeave={dragScroll.handleMouseLeave}
       />
 
       {/* 숨겨진 파일 입력 */}
       <input
-        ref={fileInputRef}
+        ref={fileOperations.fileInputRef}
         type="file"
         accept=".json"
-        onChange={handleFileChange}
+        onChange={fileOperations.handleFileChange}
         style={{ display: 'none' }}
       />
 
       <SupportDataModal
-        supportModalOpen={supportModalOpen}
-        setSupportModalOpen={setSupportModalOpen}
-        supportData={supportData}
+        supportModalOpen={modalState.supportModalOpen}
+        setSupportModalOpen={modalState.setSupportModalOpen}
+        supportData={modalState.supportData}
         onRefreshSupportData={handleRefreshSupportData}
-        isLoading={isLoading}
-        error={error}
+        isLoading={modalState.isLoading}
+        error={modalState.error}
       />
 
       <PreviewModal
-        previewModalOpen={previewModalOpen}
-        setPreviewModalOpen={setPreviewModalOpen}
-        selectedDataSet={selectedDataSet}
+        previewModalOpen={modalState.previewModalOpen}
+        setPreviewModalOpen={modalState.setPreviewModalOpen}
+        selectedDataSet={modalState.selectedDataSet}
         onLoadDataSet={handleLoadDataSet}
         onDeleteDataSet={handleDeleteDataSet}
       />

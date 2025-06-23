@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PublicSupportData } from '@/types/dashboard';
 import { RefreshCw } from 'lucide-react';
@@ -17,14 +18,14 @@ interface SupportDataModalProps {
   error: string | null;
 }
 
-export default function SupportDataModal({
+const SupportDataModal = React.memo(({
   supportModalOpen,
   setSupportModalOpen,
   supportData,
   onRefreshSupportData,
   isLoading,
   error
-}: SupportDataModalProps) {
+}: SupportDataModalProps) => {
   return (
     <>
       {/* 공시 데이터 모달 */}
@@ -131,4 +132,8 @@ export default function SupportDataModal({
       )}
     </>
   );
-} 
+});
+
+SupportDataModal.displayName = 'SupportDataModal';
+
+export default SupportDataModal; 

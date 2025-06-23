@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DataSet } from '@/types/dashboard';
 import { BUTTON_THEME, cardStyles } from '@/styles/common';
@@ -13,13 +14,13 @@ interface PreviewModalProps {
   onDeleteDataSet: (dataSet: DataSet) => void;
 }
 
-export default function PreviewModal({
+const PreviewModal = React.memo(({
   previewModalOpen,
   setPreviewModalOpen,
   selectedDataSet,
   onLoadDataSet,
   onDeleteDataSet,
-}: PreviewModalProps) {
+}: PreviewModalProps) => {
   const { toast } = useToast();
 
   const handleDelete = () => {
@@ -148,4 +149,8 @@ export default function PreviewModal({
       </DialogContent>
     </Dialog>
   );
-} 
+});
+
+PreviewModal.displayName = 'PreviewModal';
+
+export default PreviewModal; 
