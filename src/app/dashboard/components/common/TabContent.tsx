@@ -54,6 +54,7 @@ export default function TabContent({
         <ModelDataTab 
           dataSets={dataSets}
           setDataSets={setDataSets}
+          publicData={publicData}
         />
       </div>
       <div style={tabStyle('visualization')}>

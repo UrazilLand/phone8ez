@@ -4,10 +4,12 @@ import { DataSet } from '@/types/dashboard';
 import ModelHeader from './ModelHeader';
 import { DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT, CARRIER_OPTIONS, CONTRACT_OPTIONS, JOIN_TYPE_OPTIONS, PLAN_BG_COLORS, COMPANY_TEXT_COLORS } from '@/styles/common';
 import { useMemo, useState, useEffect } from 'react';
+import { getDynamicCellStyle, getDataCellStyle } from '@/app/dashboard/utils/common/colorUtils';
 
 interface ModelSheetProps {
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
+  publicData: any; // 공시 데이터 추가
 }
 
 // 머리글 정의
@@ -16,7 +18,7 @@ const HEADERS = [
   '출고가', '정책지원금', '공시지원금', '부가서비스', '합계'
 ];
 
-export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
+export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelSheetProps) {
   const [selectedModelContent, setSelectedModelContent] = useState<string>('');
 
   // 통합 데이터셋에서 1~5행 데이터를 가져와서 시트 데이터 생성
@@ -82,23 +84,212 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
     setSheetData(generateSheetData);
   }, [generateSheetData]);
 
-  // 반응형 열 너비 계산
-  const getColumnWidth = useMemo(() => {
-    const numCols = HEADERS.length;
-    
-    // 통신사~업체명(0~4번 인덱스)은 좁게, 출고가부터 합계까지(5~9번 인덱스)는 넓게 설정
-    const narrowWidth = '100px';  // 통신사~업체명 열 너비
-    const wideWidth = '140px';    // 출고가~합계 열 너비
-    
-    const columnWidths = HEADERS.map((_, index) => {
-      if (index >= 5) { // 출고가부터 합계까지
-        return wideWidth;
+  // 출고가 추출 함수
+  const getPriceFromModelContent = (modelContent: string): number => {
+    if (modelContent && modelContent.includes('price:')) {
+      const priceMatch = modelContent.match(/price:(\d+)/);
+      if (priceMatch) {
+        return Number(priceMatch[1]) || 0;
       }
-      return narrowWidth;
-    });
+    }
+    return 0;
+  };
+
+  // 정책지원금 계산 함수 (통합 데이터에서 가져오기)
+  const getPolicySupportAmount = (rowIndex: number): number => {
+    const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
+    if (!integratedDataSet?.data.sheetData) return 0;
+
+    const integratedData = integratedDataSet.data.sheetData;
+    const carrier = sheetData[rowIndex]?.[0]?.trim(); // 해당 행의 통신사
+    const supportType = sheetData[rowIndex]?.[1]?.trim(); // 해당 행의 지원구분
+    const planName = sheetData[rowIndex]?.[2]?.split('|')[0]; // 해당 행의 요금제명
+    const joinType = sheetData[rowIndex]?.[3]?.trim(); // 해당 행의 가입유형
+    const company = sheetData[rowIndex]?.[4]?.trim(); // 해당 행의 업체명
+
+    if (!carrier || !supportType || !planName || !joinType || !company) return 0;
+
+    // 통합 데이터에서 해당 조건에 맞는 데이터 찾기
+    for (let col = 1; col < integratedData[0].length; col++) {
+      const integratedCarrier = integratedData[0]?.[col]?.trim();
+      const integratedSupportType = integratedData[1]?.[col]?.trim();
+      const integratedPlanName = integratedData[2]?.[col]?.split('|')[0];
+      const integratedJoinType = integratedData[3]?.[col]?.trim();
+      const integratedCompany = integratedData[4]?.[col]?.trim();
+
+      if (
+        integratedCarrier === carrier &&
+        integratedSupportType === supportType &&
+        integratedPlanName === planName &&
+        integratedJoinType === joinType &&
+        integratedCompany === company
+      ) {
+        // 6행부터 모델 데이터 확인
+        for (let row = 5; row < integratedData.length; row++) {
+          const modelCellData = integratedData[row]?.[0] || '';
+          if (modelCellData.includes('codes:')) {
+            const codesPart = modelCellData.split('|').find(p => p.startsWith('codes:'));
+            if (codesPart) {
+              const targetModelCodes = codesPart.replace('codes:', '').split(',');
+              
+              // 다른 데이터셋에서 해당 모델 코드의 정책지원금 찾기
+              for (const dataSet of dataSets) {
+                if (dataSet.type === 'integrated') continue;
+                
+                const sourceSheet = dataSet.data.sheetData;
+                if (!sourceSheet || sourceSheet.length < 5) continue;
+
+                for (let sourceCol = 1; sourceCol < sourceSheet[0].length; sourceCol++) {
+                  if (
+                    carrier === sourceSheet[0]?.[sourceCol]?.trim() &&
+                    supportType === sourceSheet[1]?.[sourceCol]?.trim() &&
+                    planName === (sourceSheet[2]?.[sourceCol]?.trim() || '').split('|')[0] &&
+                    joinType === sourceSheet[3]?.[sourceCol]?.trim() &&
+                    company === sourceSheet[4]?.[sourceCol]?.trim()
+                  ) {
+                    for (let sourceRow = 5; sourceRow < sourceSheet.length; sourceRow++) {
+                      const sourceModelCode = sourceSheet[sourceRow]?.[0]?.trim();
+                      if (sourceModelCode && targetModelCodes.includes(sourceModelCode)) {
+                        const cellValue = sourceSheet[sourceRow]?.[sourceCol] || '';
+                        const numericValue = cellValue.replace(/[^\d-]/g, '');
+                        if (numericValue) {
+                          return Number(numericValue);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return 0;
+  };
+
+  // 공시지원금 계산 함수
+  const getPublicSupportAmount = (rowIndex: number): number => {
+    // 헤더의 선택된 드롭박스 내용에서 표준 모델번호 추출
+    const standardModel = selectedModelContent?.split('|').find(p => p.startsWith('standard:'))?.replace('standard:', '') || '';
+    const joinType = sheetData[rowIndex]?.[3]?.trim() || '';
+    const carrier = sheetData[rowIndex]?.[0]?.trim() || '';
     
-    return columnWidths;
-  }, []);
+    // 3열에서 내부 저장된 월 요금 추출
+    const planCell = sheetData[rowIndex]?.[2] || '';
+    const planParts = planCell.split('|');
+    const monthlyFee1 = planParts[1] ? Number(planParts[1]) : null;
+    const monthlyFee2 = planParts[2] ? Number(planParts[2]) : null;
+    
+    if (!standardModel || (monthlyFee1 === null && monthlyFee2 === null) || !carrier) {
+      return 0;
+    }
+
+    if (!publicData) {
+      return 0;
+    }
+    
+    for (const [manufacturerName, manufacturer] of Object.entries(publicData.manufacturers)) {
+      const typedManufacturer = manufacturer as any;
+      if (typedManufacturer.models) {
+        for (const model of typedManufacturer.models) {
+          if (model.model_number === standardModel) {
+            for (const section of model.support_info.sections) {
+              for (const [carrierName, carrierInfo] of Object.entries(section.carriers)) {
+                if (carrierInfo && typeof carrierInfo === 'object' && carrierName === carrier) {
+                  const carrierMonthlyFee = (carrierInfo as any).monthly_fee;
+                  const isMonthlyFeeMatch = (monthlyFee1 !== null && carrierMonthlyFee === monthlyFee1) || 
+                                          (monthlyFee2 !== null && carrierMonthlyFee === monthlyFee2);
+                  
+                  if (isMonthlyFeeMatch) {
+                    let supportAmount = 0;
+                    if (joinType === '번호이동') {
+                      supportAmount = (carrierInfo as any).number_port_support || 0;
+                    } else {
+                      supportAmount = (carrierInfo as any).device_support || 0;
+                    }
+                    
+                    if (supportAmount > 0) {
+                      return Number(supportAmount);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return 0;
+  };
+
+  // 부가서비스 계산 함수
+  const getAdditionalServiceAmount = (rowIndex: number): number => {
+    const carrier = sheetData[rowIndex]?.[0]?.trim() || '';
+    const company = sheetData[rowIndex]?.[4]?.trim() || '';
+    const serviceKey = `${company}-${carrier}`;
+    
+    if (!carrier || !company) {
+      return 0;
+    }
+
+    const additionalDataSet = dataSets.find(ds => ds.type === 'additional');
+    if (!additionalDataSet?.data.additionalServices) {
+        return 0;
+    }
+
+    const additionalServices = additionalDataSet.data.additionalServices;
+    const companyServices = additionalServices[serviceKey];
+
+    if (!companyServices) {
+        return 0;
+    }
+
+    let totalAmount = 0;
+    companyServices.forEach(service => {
+      const discount = Number(service.discount) || 0;
+      totalAmount += discount;
+    });
+
+    return totalAmount;
+  };
+
+  // 최종 계산 함수
+  const calculateFinalAmount = (rowIndex: number): { 
+    finalAmount: number; 
+    price: number; 
+    policySupport: number; 
+    publicSupport: number; 
+    additionalService: number; 
+  } => {
+    const price = getPriceFromModelContent(selectedModelContent);
+    const policySupport = getPolicySupportAmount(rowIndex);
+    const publicSupport = getPublicSupportAmount(rowIndex);
+    const additionalService = getAdditionalServiceAmount(rowIndex);
+    
+    // 정책지원금이 0인 경우 빈칸으로 표시
+    if (policySupport === 0) {
+      return {
+        finalAmount: 0,
+        price,
+        policySupport: 0,
+        publicSupport,
+        additionalService
+      };
+    }
+    
+    // 계산: (출고가 - 정책지원금*10000 - 공시지원금 - 부가서비스) / 10000
+    const finalAmount = Math.floor((price - policySupport * 10000 - publicSupport - additionalService) / 10000);
+    
+    return {
+      finalAmount,
+      price,
+      policySupport,
+      publicSupport,
+      additionalService
+    };
+  };
 
   // 선택된 모델 내용을 처리하는 함수
   const handleModelSelect = (modelContent: string) => {
@@ -122,6 +313,24 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
       }
     }
   };
+
+  // 반응형 열 너비 계산
+  const getColumnWidth = useMemo(() => {
+    const numCols = HEADERS.length;
+    
+    // 통신사~업체명(0~4번 인덱스)은 좁게, 출고가부터 합계까지(5~9번 인덱스)는 넓게 설정
+    const narrowWidth = '100px';  // 통신사~업체명 열 너비
+    const wideWidth = '140px';    // 출고가~합계 열 너비
+    
+    const columnWidths = HEADERS.map((_, index) => {
+      if (index >= 5) { // 출고가부터 합계까지
+        return wideWidth;
+      }
+      return narrowWidth;
+    });
+    
+    return columnWidths;
+  }, []);
 
   // 셀 스타일을 결정하는 함수
   const getCellStyle = (colIndex: number, cellValue: string, rowIndex: number) => {
@@ -170,10 +379,30 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
   };
 
   // 셀 표시 텍스트를 결정하는 함수
-  const getDisplayText = (colIndex: number, cellValue: string) => {
+  const getDisplayText = (colIndex: number, cellValue: string, rowIndex: number) => {
     if (colIndex === 2) {
       // 3열: 요금제명만 표시
       return cellValue.split('|')[0];
+    } else if (colIndex === 6) {
+      // 7열: 정책지원금 계산 결과 표시 (*10000)
+      const calculation = calculateFinalAmount(rowIndex);
+      return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
+    } else if (colIndex === 7) {
+      // 8열: 공시지원금 계산 결과 표시
+      const calculation = calculateFinalAmount(rowIndex);
+      return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
+    } else if (colIndex === 8) {
+      // 9열: 부가서비스 계산 결과 표시
+      const calculation = calculateFinalAmount(rowIndex);
+      return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
+    } else if (colIndex === 9) {
+      // 10열: 합계 계산 결과 표시 (*10000)
+      const calculation = calculateFinalAmount(rowIndex);
+      if (calculation.finalAmount === 0) return '';
+      const finalAmount = calculation.finalAmount * 10000;
+      return finalAmount < 0 ? 
+        `-${Math.abs(finalAmount).toLocaleString()}` : 
+        finalAmount.toLocaleString();
     }
     return cellValue;
   };
@@ -218,7 +447,7 @@ export default function ModelSheet({ dataSets, setDataSets }: ModelSheetProps) {
                       className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
                     >
                       <div className={`w-full h-full flex items-center justify-center ${getCellStyle(colIndex, cell, rowIndex)}`}>
-                        {getDisplayText(colIndex, cell)}
+                        {getDisplayText(colIndex, cell, rowIndex)}
                       </div>
                     </td>
                   ))}

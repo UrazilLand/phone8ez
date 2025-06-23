@@ -5,8 +5,9 @@ import { DataSet } from '@/types/dashboard';
 interface ModelTabProps {
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
+  publicData: any;
 }
 
-export default function ModelTab({ dataSets, setDataSets }: ModelTabProps) {
-  return <ModelSheet dataSets={dataSets} setDataSets={setDataSets} />;
+export default function ModelTab({ dataSets, setDataSets, publicData }: ModelTabProps) {
+  return <ModelSheet dataSets={dataSets} setDataSets={setDataSets} publicData={publicData} />;
 } 
