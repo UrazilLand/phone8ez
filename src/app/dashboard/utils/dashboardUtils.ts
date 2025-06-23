@@ -4,7 +4,7 @@ export const DASHBOARD_TABS: Tab[] = [
   { id: 'local', label: '데이터 입력' },
   { id: 'integrated', label: '통합 데이터' },
   { id: 'model', label: '모델별 데이터' },
-  { id: 'visualization', label: '데이터 시각화' }
+  // { id: 'visualization', label: '데이터 시각화' },
 ];
 
 export const loadPublicDataFromStorage = () => {

@@ -31,6 +31,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface IntegratedSheetProps {
   dataSets: DataSet[];
@@ -765,12 +770,19 @@ export default function IntegratedSheet({
                   >
                     {row.map((cell, colIndex) => {
                       const baseStyle = 'h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-black';
+                      // A열을 제외한 나머지 데이터가 비었는지 확인
+                      const isEmptyRow = row.slice(1).every(c => !c || c.trim() === '');
+                      
                       const positionStyle = colIndex === 0
                         ? rowIndex < 5
                           ? 'text-center font-bold bg-gray-50 sticky left-0 z-20'
                           : 'text-left sticky left-0 z-20 bg-white'
                         : 'text-center';
-                      const dynamicCellStyle = getDataCellStyle(rowIndex, colIndex, currentSheetData);
+
+                      // 빈 행이 아닐 경우에만 통신사별 교차 색상 스타일을 적용
+                      const dynamicCellStyle = !isEmptyRow 
+                        ? getDataCellStyle(rowIndex, colIndex, currentSheetData) 
+                        : '';
 
                       const finalCellStyle = `${baseStyle} ${positionStyle} ${dynamicCellStyle}`;
 
@@ -786,53 +798,51 @@ export default function IntegratedSheet({
                               {SHEET_HEADER_LABELS[rowIndex]}
                             </span>
                           ) : colIndex === 0 ? (
-                            <TooltipProvider delayDuration={100}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div
-                                    className="w-full h-full flex items-center justify-start text-gray-600"
-                                    onDoubleClick={() => {
-                                      if (rowIndex >= 5) {
-                                        handleOpenModelInfoModal(rowIndex);
-                                      }
-                                    }}
-                                    style={{
-                                      cursor: rowIndex >= 5 ? 'pointer' : 'default',
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis'
-                                    }}
-                                  >
-                                    {rowIndex >= 5 ? (() => {
-                                      let displayName = cell;
-                                      if (cell.includes('|')) {
-                                        const parts = cell.split('|');
-                                        const displayPart = parts.find(part => part.startsWith('display:'));
-                                        displayName = displayPart ? displayPart.replace('display:', '') : cell;
-                                      }
-                                      return displayName.replace(/\[(5G|LTE)\]/g, '').trim();
-                                    })() : cell}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <div className="text-left">
-                                    {cell.split('|').map((part, index) => {
-                                      const [key, value] = part.split(':');
-                                      let label = key;
-                                      let finalValue = value;
-                                      switch (key) {
-                                        case 'display': label = '모델명'; break;
-                                        case 'standard': label = '표준 모델'; break;
-                                        case 'price': label = '출고가'; finalValue = `${Number(value).toLocaleString()}원`; break;
-                                        case 'codes': label = '연결된 코드'; break;
-                                        default: return <p key={index}>{part}</p>;
-                                      }
-                                      return <p key={index}><strong>{label}:</strong> {finalValue}</p>;
-                                    })}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <div
+                                  className="w-full h-full flex items-center justify-start text-gray-600"
+                                  onDoubleClick={() => {
+                                    if (rowIndex >= 5) {
+                                      handleOpenModelInfoModal(rowIndex);
+                                    }
+                                  }}
+                                  style={{
+                                    cursor: rowIndex >= 5 ? 'pointer' : 'default',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {rowIndex >= 5 ? (() => {
+                                    let displayName = cell;
+                                    if (cell.includes('|')) {
+                                      const parts = cell.split('|');
+                                      const displayPart = parts.find(part => part.startsWith('display:'));
+                                      displayName = displayPart ? displayPart.replace('display:', '') : cell;
+                                    }
+                                    return displayName.replace(/\[(5G|LTE)\]/g, '').trim();
+                                  })() : cell}
+                                </div>
+                              </PopoverTrigger>
+                              <PopoverContent>
+                                <div className="text-left">
+                                  {cell.split('|').map((part, index) => {
+                                    const [key, value] = part.split(':');
+                                    let label = key;
+                                    let finalValue = value;
+                                    switch (key) {
+                                      case 'display': label = '모델명'; break;
+                                      case 'standard': label = '표준 모델'; break;
+                                      case 'price': label = '출고가'; finalValue = `${Number(value).toLocaleString()}원`; break;
+                                      case 'codes': label = '연결된 코드'; break;
+                                      default: return <p key={index}>{part}</p>;
+                                    }
+                                    return <p key={index}><strong>{label}:</strong> {finalValue}</p>;
+                                  })}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                           ) : (
                             (rowIndex === 0 || rowIndex === 1 || rowIndex === 3 || rowIndex === 4) && colIndex > 0 ? (
                               // 1,2,4,5행은 툴팁 없이 일반 div
@@ -871,159 +881,155 @@ export default function IntegratedSheet({
                                 )}
                               </div>
                             ) : (
-                              <TooltipProvider delayDuration={100}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div
-                                      className={`relative w-full h-full flex items-center justify-center ${
-                                        rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
-                                      }`}
-                                      style={{
-                                        whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
-                                        overflow: rowIndex < 5 ? 'hidden' : 'visible',
-                                        textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
-                                      }}
-                                    >
-                                      {/* 1행 마우스오버 시 X 버튼으로 변환 */}
-                                      {rowIndex === 0 && colIndex > 0 && hoveredColumnIndex === colIndex ? (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteColumn(colIndex);
-                                          }}
-                                          className="w-full h-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-lg font-bold transition-all duration-200"
-                                          title="열 삭제"
-                                        >
-                                          <X className="w-5 h-5" />
-                                        </button>
-                                      ) : (
-                                        <>
-                                          {
-                                            rowIndex < 5 ? (
-                                              // 1~5행 렌더링
-                                              rowIndex === 2 ? cell.split('|')[0] : 
-                                              rowIndex === 3 ? (() => {
-                                                // 4행(가입유형) 축약형 표시
-                                                const fullText = cell.split('|WARN_MULTI')[0].split(';')[0];
-                                                switch (fullText) {
-                                                  case '번호이동': return '번이';
-                                                  case '기기변경': return '기변';
-                                                  case '신규가입': return '신규';
-                                                  default: return fullText;
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <div
+                                    className={`relative w-full h-full flex items-center justify-center ${
+                                      rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell) : 'text-gray-600'
+                                    }`}
+                                    style={{
+                                      whiteSpace: rowIndex < 5 ? 'nowrap' : 'normal',
+                                      overflow: rowIndex < 5 ? 'hidden' : 'visible',
+                                      textOverflow: rowIndex < 5 ? 'ellipsis' : 'clip'
+                                    }}
+                                  >
+                                    {/* 1행 마우스오버 시 X 버튼으로 변환 */}
+                                    {rowIndex === 0 && colIndex > 0 && hoveredColumnIndex === colIndex ? (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteColumn(colIndex);
+                                        }}
+                                        className="w-full h-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-lg font-bold transition-all duration-200"
+                                        title="열 삭제"
+                                      >
+                                        <X className="w-5 h-5" />
+                                      </button>
+                                    ) : (
+                                      <>
+                                        {
+                                          rowIndex < 5 ? (
+                                            // 1~5행 렌더링
+                                            rowIndex === 2 ? cell.split('|')[0] : 
+                                            rowIndex === 3 ? (() => {
+                                              // 4행(가입유형) 축약형 표시
+                                              const fullText = cell.split('|WARN_MULTI')[0].split(';')[0];
+                                              switch (fullText) {
+                                                case '번호이동': return '번이';
+                                                case '기기변경': return '기변';
+                                                case '신규가입': return '신규';
+                                                default: return fullText;
+                                              }
+                                            })() : cell.split('|WARN_MULTI')[0].split(';')[0]
+                                          ) : (
+                                            // 6행 이상 데이터 셀 렌더링
+                                            (() => {
+                                              const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
+                                              const calculation = calculateFinalAmount(rowIndex, colIndex);
+                                              const cellContent = calculation.finalAmount === 0 ? '' : calculation.finalAmount.toString();
+                                              const joinType = sheetHeaders[3]?.[colIndex]?.trim();
+                                              const isNegative = calculation.finalAmount < 0;
+
+                                              if (isHighlighted) {
+                                                let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
+                                                
+                                                switch (joinType) {
+                                                  case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                                  case '기기변경': styleClass += 'bg-green-400 '; break;
+                                                  case '신규가입': styleClass += 'bg-red-400 '; break;
                                                 }
-                                              })() : cell.split('|WARN_MULTI')[0].split(';')[0]
-                                            ) : (
-                                              // 6행 이상 데이터 셀 렌더링
-                                              (() => {
-                                                const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
-                                                const calculation = calculateFinalAmount(rowIndex, colIndex);
-                                                const cellContent = calculation.finalAmount === 0 ? '' : calculation.finalAmount.toString();
-                                                const joinType = sheetHeaders[3]?.[colIndex]?.trim();
-                                                const isNegative = calculation.finalAmount < 0;
 
-                                                if (isHighlighted) {
-                                                  let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
-                                                  
-                                                  switch (joinType) {
-                                                    case '번호이동': styleClass += 'bg-blue-400 '; break;
-                                                    case '기기변경': styleClass += 'bg-green-400 '; break;
-                                                    case '신규가입': styleClass += 'bg-red-400 '; break;
-                                                  }
-
-                                                  if (isNegative) {
-                                                    // 음수이면서 빨간 배경일 경우 글자를 흰색으로 하여 가독성 확보
-                                                    if (joinType === '신규가입') {
-                                                      styleClass += 'text-white';
-                                                    } else {
-                                                      // 다른 배경에서는 진한 빨간색 글씨 사용
-                                                      styleClass += 'text-red-700';
-                                                    }
+                                                if (isNegative) {
+                                                  // 음수이면서 빨간 배경일 경우 글자를 흰색으로 하여 가독성 확보
+                                                  if (joinType === '신규가입') {
+                                                    styleClass += 'text-white';
                                                   } else {
-                                                    styleClass += 'text-black';
+                                                    // 다른 배경에서는 진한 빨간색 글씨 사용
+                                                    styleClass += 'text-red-700';
                                                   }
-                                                  
-                                                  return <span className={styleClass}>{cellContent}</span>;
-
                                                 } else {
-                                                  if (isNegative) {
-                                                    return <span className="text-red-500">{cellContent}</span>;
-                                                  }
-                                                  return cellContent;
+                                                  styleClass += 'text-black';
                                                 }
-                                              })()
-                                            )
-                                          }
-                                          {cell.includes('|WARN_MULTI') && (
-                                            <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
-                                              <AlertTriangle className="w-full h-full" />
-                                            </div>
-                                          )}
-                                        </>
-                                      )}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <div className="text-left">
-                                      {rowIndex === 2 && colIndex > 0 ? (
-                                        // 3행(요금제) 툴팁
-                                        (() => {
-                                          const parts = cell.split('|');
-                                          const planName = parts[0] || '';
-                                          const monthlyFee1 = parts[1] || '';
-                                          const monthlyFee2 = parts[2] || '';
-                                          
-                                          return (
-                                            <div>
-                                              <p><strong>요금제명:</strong> {planName}</p>
-                                              {monthlyFee1 && <p><strong>표준요금:</strong> {Number(monthlyFee1).toLocaleString()}원</p>}
-                                              {monthlyFee2 && <p><strong>표준요금:</strong> {Number(monthlyFee2).toLocaleString()}원</p>}
-                                            </div>
-                                          );
-                                        })()
-                                      ) : rowIndex >= 5 && colIndex > 0 ? (
-                                        // B6셀부터 데이터 툴팁
-                                        (() => {
-                                          const calculation = calculateFinalAmount(rowIndex, colIndex);
-                                          const cellContent = cell.split('|WARN_MULTI')[0];
-                                          const hasWarning = cell.includes('|WARN_MULTI');
-                                          const values = cellContent.split(';').filter(v => v.trim());
-                                          
-                                          // 정책지원금이 0인 경우 툴팁 표시하지 않음
-                                          if (calculation.policySupport === 0) {
-                                            return null;
-                                          }
-                                          
-                                          return (
-                                            <div>
-                                              <p><strong>최종 결과:</strong> {calculation.finalAmount.toLocaleString()}원</p>
-                                              <hr className="my-2" />
-                                              <p><strong>출고가:</strong> {calculation.price.toLocaleString()}원</p>
-                                              {calculation.policySupport > 0 && (
-                                                <p><strong>정책지원금:</strong> {(calculation.policySupport * 10000).toLocaleString()}원</p>
-                                              )}
-                                              <p><strong>공시지원금:</strong> {calculation.publicSupport.toLocaleString()}원</p>
-                                              <p><strong>부가서비스:</strong> {calculation.additionalService.toLocaleString()}원</p>
-                                              {hasWarning && (
-                                                <p className="text-yellow-600 mt-2">
-                                                  <strong>⚠️ 경고:</strong> 여러 값이 발견됨
-                                                </p>
-                                              )}
-                                              {values.length > 1 && !hasWarning && (
-                                                <p className="text-blue-600 mt-2">
-                                                  <strong>ℹ️ 정보:</strong> 여러 값이 있음
-                                                </p>
-                                              )}
-                                            </div>
-                                          );
-                                        })()
-                                      ) : (
-                                        // 기타 셀 툴팁 (3행만)
-                                        <p>{cell}</p>
-                                      )}
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                                                
+                                                return <span className={styleClass}>{cellContent}</span>;
+
+                                              } else {
+                                                if (isNegative) {
+                                                  return <span className="text-red-500">{cellContent}</span>;
+                                                }
+                                                return cellContent;
+                                              }
+                                            })()
+                                          )
+                                        }
+                                        {cell.includes('|WARN_MULTI') && (
+                                          <div className="absolute top-0.5 right-0.5 w-3 h-3 text-yellow-500">
+                                            <AlertTriangle className="w-full h-full" />
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                  <div className="text-left">
+                                    {rowIndex === 2 && colIndex > 0 ? (
+                                      // 3행(요금제) 툴팁
+                                      (() => {
+                                        const parts = cell.split('|');
+                                        const planName = parts[0] || '';
+                                        const monthlyFee1 = parts[1] || '';
+                                        const monthlyFee2 = parts[2] || '';
+                                        
+                                        return (
+                                          <div>
+                                            <p><strong>요금제명:</strong> {planName}</p>
+                                            {monthlyFee1 && <p><strong>표준요금:</strong> {Number(monthlyFee1).toLocaleString()}원</p>}
+                                            {monthlyFee2 && <p><strong>표준요금:</strong> {Number(monthlyFee2).toLocaleString()}원</p>}
+                                          </div>
+                                        );
+                                      })()
+                                    ) : rowIndex >= 5 && colIndex > 0 ? (
+                                      // B6셀부터 데이터 툴팁
+                                      (() => {
+                                        const calculation = calculateFinalAmount(rowIndex, colIndex);
+                                        const cellContent = cell.split('|WARN_MULTI')[0];
+                                        const hasWarning = cell.includes('|WARN_MULTI');
+                                        const values = cellContent.split(';').filter(v => v.trim());
+                                        
+                                        // 정책지원금이 0인 경우 툴팁 표시하지 않음
+                                        if (calculation.policySupport === 0) {
+                                          return null;
+                                        }
+                                        
+                                        return (
+                                          <div>
+                                            <p><strong>출고가:</strong> {calculation.price.toLocaleString()}원</p>
+                                            {calculation.policySupport > 0 && (
+                                              <p><strong>정책지원금:</strong> {(calculation.policySupport * 10000).toLocaleString()}원</p>
+                                            )}
+                                            <p><strong>공시지원금:</strong> {calculation.publicSupport.toLocaleString()}원</p>
+                                            <p><strong>부가서비스:</strong> {calculation.additionalService.toLocaleString()}원</p>
+                                            {hasWarning && (
+                                              <p className="text-yellow-600 mt-2">
+                                                <strong>⚠️ 경고:</strong> 여러 값이 발견됨
+                                              </p>
+                                            )}
+                                            {values.length > 1 && !hasWarning && (
+                                              <p className="text-blue-600 mt-2">
+                                                <strong>ℹ️ 정보:</strong> 여러 값이 있음
+                                              </p>
+                                            )}
+                                          </div>
+                                        );
+                                      })()
+                                    ) : (
+                                      // 기타 셀 툴팁 (3행만)
+                                      <p>{cell}</p>
+                                    )}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                             )
                           )}
                         </td>
