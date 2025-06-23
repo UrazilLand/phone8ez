@@ -481,70 +481,89 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
               </tr>
             </thead>
             <tbody>
-              {sheetData.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-gray-50">
-                  {row.map((cell, colIndex) => (
-                    <td
-                      key={colIndex}
-                      className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
-                    >
-                      <div className={`w-full h-full flex items-center justify-center ${getCellStyle(colIndex, cell, rowIndex)}`}>
-                        {(() => {
-                          if (colIndex === 9) { // 합계 열
-                            const isHighlighted = highlightedTotalCells.has(rowIndex);
-                            const calculation = calculateFinalAmount(rowIndex);
-                            const joinType = sheetData[rowIndex]?.[3]?.trim();
+              {!selectedModelContent ? (
+                // 모델 선택 없을 때 빈 행들 표시
+                Array(DEFAULT_ROW_COUNT - 1).fill(null).map((_, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-gray-50">
+                    {Array(HEADERS.length).fill(null).map((_, colIndex) => (
+                      <td
+                        key={colIndex}
+                        className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
+                      >
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          {colIndex === 0 && rowIndex === 0 }
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                // 모델 선택 시 기존 데이터 표시
+                sheetData.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-gray-50">
+                    {row.map((cell, colIndex) => (
+                      <td
+                        key={colIndex}
+                        className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
+                      >
+                        <div className={`w-full h-full flex items-center justify-center ${getCellStyle(colIndex, cell, rowIndex)}`}>
+                          {(() => {
+                            if (colIndex === 9) { // 합계 열
+                              const isHighlighted = highlightedTotalCells.has(rowIndex);
+                              const calculation = calculateFinalAmount(rowIndex);
+                              const joinType = sheetData[rowIndex]?.[3]?.trim();
 
-                            if (calculation.policySupport === 0 && calculation.finalAmount === 0) {
-                              return '';
-                            }
-                            
-                            const finalAmount = calculation.finalAmount * 10000;
-                            const cellContent = finalAmount.toLocaleString();
-                            
-                            if (isHighlighted) {
-                              let styleClass = 'inline-block text-center min-w-[60px] rounded-md py-0.5 font-bold ';
-                              switch (joinType) {
-                                case '번호이동': styleClass += 'bg-blue-400 '; break;
-                                case '기기변경': styleClass += 'bg-green-400 '; break;
-                                case '신규가입': styleClass += 'bg-red-400 '; break;
-                                default: styleClass += 'bg-gray-400 ';
+                              if (calculation.policySupport === 0 && calculation.finalAmount === 0) {
+                                return '';
                               }
+                              
+                              const finalAmount = calculation.finalAmount * 10000;
+                              const cellContent = finalAmount.toLocaleString();
+                              
+                              if (isHighlighted) {
+                                let styleClass = 'inline-block text-center min-w-[60px] rounded-md py-0.5 font-bold ';
+                                switch (joinType) {
+                                  case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                  case '기기변경': styleClass += 'bg-green-400 '; break;
+                                  case '신규가입': styleClass += 'bg-red-400 '; break;
+                                  default: styleClass += 'bg-gray-400 ';
+                                }
 
-                              if (calculation.finalAmount < 0) styleClass += 'text-red-700';
-                              else styleClass += 'text-black';
+                                if (calculation.finalAmount < 0) styleClass += 'text-red-700';
+                                else styleClass += 'text-black';
 
-                              return <span className={styleClass}>{cellContent}</span>;
+                                return <span className={styleClass}>{cellContent}</span>;
+                              }
+                              
+                              if (calculation.finalAmount < 0) {
+                                return <span className="text-red-500">{cellContent}</span>;
+                              }
+                              return cellContent;
                             }
                             
-                            if (calculation.finalAmount < 0) {
-                              return <span className="text-red-500">{cellContent}</span>;
+                            if (colIndex === 6) { // 정책지원금
+                              const calculation = calculateFinalAmount(rowIndex);
+                              return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
                             }
-                            return cellContent;
-                          }
-                          
-                          if (colIndex === 6) { // 정책지원금
-                            const calculation = calculateFinalAmount(rowIndex);
-                            return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
-                          }
-                          if (colIndex === 7) { // 공시지원금
-                            const calculation = calculateFinalAmount(rowIndex);
-                            return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
-                          }
-                          if (colIndex === 8) { // 부가서비스
-                            const calculation = calculateFinalAmount(rowIndex);
-                            return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
-                          }
-                          if (colIndex === 2) { // 요금제
-                            return cell.split('|')[0];
-                          }
-                          return cell; // 기본 셀 값
-                        })()}
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-              ))}
+                            if (colIndex === 7) { // 공시지원금
+                              const calculation = calculateFinalAmount(rowIndex);
+                              return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
+                            }
+                            if (colIndex === 8) { // 부가서비스
+                              const calculation = calculateFinalAmount(rowIndex);
+                              return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
+                            }
+                            if (colIndex === 2) { // 요금제
+                              return cell.split('|')[0];
+                            }
+                            return cell; // 기본 셀 값
+                          })()}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
