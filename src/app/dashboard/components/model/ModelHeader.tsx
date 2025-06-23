@@ -91,7 +91,7 @@ export default function ModelHeader({
       {/* 왼쪽 드롭다운 */}
       <div className="flex items-center gap-2">
         <Select value={selectedModel} onValueChange={handleModelSelect}>
-          <SelectTrigger className="w-[270px] h-9 bg-gray-100 border-blue-300 dark:bg-gray-800 dark:border-blue-500">
+          <SelectTrigger className="w-[270px] h-9 bg-gray-100 dark:bg-gray-700">
             <SelectValue placeholder="모델 선택" />
           </SelectTrigger>
           <SelectContent>
