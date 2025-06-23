@@ -63,7 +63,7 @@ body {
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -75,7 +75,7 @@ body {
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 217.2 91.2% 59.8%;
     --radius: 0.5rem;
 
     /* Chart colors - can remain default or be themed if charts are complex */
@@ -83,7 +83,7 @@ body {
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-5: 22.1 83.1% 53.3%;
     
     /* Sidebar specific colors, if sidebar component is used heavily */
     --sidebar-background: 200 33% 94%; /* Slightly darker than main background */
@@ -103,8 +103,8 @@ body {
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 210 40% 9.8%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -136,6 +136,7 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
 @font-face {
   font-family: 'Pretendard';
   src: url('/fonts/pretendard/Pretendard-Regular.woff2') format('woff2');
@@ -158,4 +159,13 @@ body {
   padding-bottom: 0 !important;
   vertical-align: middle !important;
   font-size: 0.875rem !important; /* text-sm */
+}
+
+@layer components {
+  .dark .button-variants-outline:hover {
+    @apply bg-blue-500/20;
+  }
+  .dark .button-variants-secondary:hover {
+    @apply brightness-125;
+  }
 }

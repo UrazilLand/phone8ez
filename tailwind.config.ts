@@ -8,6 +8,8 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   safelist: [
+    'text-blue-600',
+    'dark:text-blue-500',
     // BUTTON_THEME 클래스들
     'bg-blue-600',
     'border-blue-600',
@@ -125,7 +127,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;

@@ -39,7 +39,7 @@ export default function HomePage() {
       <FeatureHighlights />
       {/* 가격 정책 카드 */}
       <section className="py-20 bg-transparent">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-600 dark:text-primary">가격 정책</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-600 dark:text-blue-500">가격 정책</h2>
         <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 max-w-4xl mx-auto">
           {plans.map((plan, idx) => (
             <div
@@ -47,7 +47,7 @@ export default function HomePage() {
               className="flex-1 bg-card rounded-2xl shadow-lg p-8 flex flex-col items-center transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl border min-w-[260px] max-w-[350px]"
               style={{ minHeight: 440 }}
             >
-              <div className="text-2xl font-bold mb-1 text-blue-600 dark:text-primary">{plan.name}</div>
+              <div className="text-2xl font-bold mb-1 text-blue-600 dark:text-blue-500">{plan.name}</div>
               <div className="text-sm text-muted-foreground mb-4">{plan.desc}</div>
               <div className="text-3xl font-extrabold mb-1 text-foreground">
                 {plan.name === '프로페셔널' && plan.price.startsWith('월/') ? (
@@ -61,15 +61,15 @@ export default function HomePage() {
               <ul className="mb-8 space-y-2 w-full text-left flex-1">
                 {plan.features.map((f, i) => (
                   <li key={i} className="flex items-center text-foreground font-medium">
-                    <span className="mr-2 text-blue-600 dark:text-primary font-bold">✓</span> {f}
+                    <span className="mr-2 text-blue-600 dark:text-blue-500 font-bold">✓</span> {f}
                   </li>
                 ))}
               </ul>
               <button
                 className={
                   (plan.buttonType === 'primary'
-                    ? 'w-full py-2 rounded-lg bg-blue-600 text-white dark:bg-primary dark:text-primary-foreground font-bold hover:bg-blue-700 dark:hover:bg-primary/90 transition-colors'
-                    : 'w-full py-2 rounded-lg border-2 border-blue-600 text-blue-600 dark:border-primary dark:text-primary font-bold hover:bg-blue-100 dark:hover:bg-primary/10 transition-colors') +
+                    ? 'w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors'
+                    : 'w-full py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-600/10 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-500/10 transition-colors') +
                   ' mt-auto'
                 }
               >

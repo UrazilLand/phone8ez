@@ -1,4 +1,3 @@
-export const cardStyles = "bg-white rounded-xl shadow pt-5 pr-5 pl-5 pb-0";
 export const flexColGap2 = "flex flex-col gap-2";
 export const flexRowGap2 = "flex flex-row gap-2";
 

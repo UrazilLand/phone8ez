@@ -1,6 +1,6 @@
 import React from 'react';
 import { Download, Upload } from 'lucide-react';
-import { BUTTON_THEME } from '@/styles/common';
+import { Button } from '@/components/ui/button';
 
 interface DataCardActionsProps {
   isCloudMode: boolean;
@@ -14,23 +14,25 @@ const DataCardActions = React.memo(({
   onUpload
 }: DataCardActionsProps) => {
   return (
-    <div className="flex gap-2">
-      <button
+    <div className="flex gap-2 mt-auto pt-4">
+      <Button
         onClick={onDownload}
         disabled={isCloudMode}
-        className={`${BUTTON_THEME.secondary} h-10 flex-1 flex items-center justify-center gap-2 min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed`}
+        variant="outline"
+        className="h-10 flex-1 flex items-center justify-center gap-2 min-w-[140px]"
       >
         <Download className="w-4 h-4" />
         {isCloudMode ? 'Cloud 저장하기' : '파일 다운로드'}
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={onUpload}
         disabled={isCloudMode}
-        className={`${BUTTON_THEME.secondary} h-10 flex-1 flex items-center justify-center gap-2 min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed`}
+        variant="outline"
+        className="h-10 flex-1 flex items-center justify-center gap-2 min-w-[140px]"
       >
         <Upload className="w-4 h-4" />
         {isCloudMode ? 'Cloud 불러오기' : '파일 업로드'}
-      </button>
+      </Button>
     </div>
   );
 });

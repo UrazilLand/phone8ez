@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 import { DataSet } from '@/types/dashboard';
-import { BUTTON_THEME } from '@/styles/common';
+import { Button } from '@/components/ui/button';
 
 interface DataCardSliderProps {
   dataSets: DataSet[];
@@ -47,43 +47,46 @@ const DataCardSlider = React.memo(({
         `}</style>
         <div className="flex gap-2 min-w-max">
           {dataSets.length === 0 ? (
-            <div className="text-center text-gray-400 py-2 w-full">
+            <div className="text-center text-muted-foreground py-2 w-full">
               저장된 데이터가 없습니다.
             </div>
           ) : (
             <>
               {/* 통합 데이터셋 */}
               {dataSets.find((d) => d.type === 'integrated') && (
-                <button
+                <Button
                   key={dataSets.find((d) => d.type === 'integrated')!.id}
                   onDoubleClick={() => onPreviewDataSet(dataSets.find((d) => d.type === 'integrated')!)}
-                  className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-700`}
+                  variant="outline"
+                  className="px-5 h-10 text-sm font-bold truncate whitespace-nowrap"
                   style={{ flex: '0 0 auto' }}
                 >
                   {dataSets.find((d) => d.type === 'integrated')!.name}
-                </button>
+                </Button>
               )}
               {/* 부가서비스 데이터셋 */}
               {dataSets.find((d) => d.type === 'additional') && (
-                <button
+                <Button
                   key={dataSets.find((d) => d.type === 'additional')!.id}
                   onDoubleClick={() => onPreviewDataSet(dataSets.find((d) => d.type === 'additional')!)}
-                  className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-green-100 border-green-300 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-700`}
+                  variant="outline"
+                  className="px-5 h-10 text-sm font-bold truncate whitespace-nowrap"
                   style={{ flex: '0 0 auto' }}
                 >
                   {dataSets.find((d) => d.type === 'additional')!.name}
-                </button>
+                </Button>
               )}
               {/* 기타 데이터셋들 */}
               {dataSets.filter((d) => d.type !== 'integrated' && d.type !== 'additional').map((dataSet) => (
-                <button
+                <Button
                   key={dataSet.id}
                   onDoubleClick={() => onPreviewDataSet(dataSet)}
-                  className={`px-5 h-10 text-sm font-bold border rounded-lg transition-colors duration-150 truncate whitespace-nowrap bg-gray-100 border-gray-300 text-gray-800 hover:bg-blue-600 hover:text-white hover:border-blue-700`}
+                  variant="secondary"
+                  className="px-5 h-10 text-sm font-bold truncate whitespace-nowrap"
                   style={{ flex: '0 0 auto' }}
                 >
                   {dataSet.name}
-                </button>
+                </Button>
               ))}
             </>
           )}
@@ -91,13 +94,13 @@ const DataCardSlider = React.memo(({
       </div>
       
       {/* 공시 버튼 - 슬라이드 오른쪽 고정 */}
-      <button
+      <Button
         onClick={onSupportDataLoad}
-        className={`${BUTTON_THEME.primary} flex items-center justify-center gap-2 px-4 h-10 flex-shrink-0`}
+        className="flex items-center justify-center gap-2 px-4 h-10 flex-shrink-0"
       >
         <FileText className="w-4 h-4" />
         공시
-      </button>
+      </Button>
     </div>
   );
 });

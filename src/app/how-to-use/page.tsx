@@ -106,12 +106,9 @@ export default function HowToUsePage() {
   return (
     <div className="max-w-6xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-headline font-bold text-primary mb-4">
+        <h1 className="text-4xl md:text-5xl font-headline font-bold text-blue-500 mb-4">
           Phone8ez 사용 방법
         </h1>
-        <p className="text-lg md:text-xl text-primary/80 max-w-2xl mx-auto">
-          단 5단계로 시작하는 Phone8ez!
-        </p>
       </div>
 
       <div className="space-y-6">

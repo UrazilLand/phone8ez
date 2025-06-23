@@ -38,20 +38,19 @@ export default function IntegratedHeader({
     <div className="flex items-center justify-between px-4 py-2">
       <div className="flex items-center gap-2">
         <Button 
-          className={`${BUTTON_THEME.primary} flex items-center gap-2`}
           size="sm"
           onClick={onSave}
         >
           <Save className="w-4 h-4" />
-          <span className="max-md:hidden">저장하기</span>
+          <span className="max-md:hidden text-sm font-bold">저장하기</span>
         </Button>
         <Button 
-          className={`${BUTTON_THEME.danger_fill} flex items-center gap-2`}
+          variant="destructive"
           size="sm"
           onClick={onReset}
         >
           <RotateCcw className="w-4 h-4" />
-          <span className="max-md:hidden">시트초기화</span>
+          <span className="max-md:hidden text-sm font-bold">시트초기화</span>
         </Button>
         <div className="flex items-center gap-1 ml-1">
           <Tooltip>
@@ -61,11 +60,7 @@ export default function IntegratedHeader({
                 disabled={!canUndo}
                 variant="ghost"
                 size="icon"
-                className={`w-8 h-8 hover:bg-gray-100 hover:text-black ${
-                  canUndo 
-                    ? 'text-black' 
-                    : 'text-gray-300'
-                }`}
+                className="w-8 h-8"
               >
                 <Undo2Icon className="w-4 h-4" />
               </Button>
@@ -81,11 +76,7 @@ export default function IntegratedHeader({
                 disabled={!canRedo}
                 variant="ghost"
                 size="icon"
-                className={`w-8 h-8 hover:bg-gray-100 hover:text-black ${
-                  canRedo 
-                    ? 'text-black' 
-                    : 'text-gray-300'
-                }`}
+                className="w-8 h-8"
               >
                 <Redo2Icon className="w-4 h-4" />
               </Button>
@@ -98,20 +89,20 @@ export default function IntegratedHeader({
       </div>
       <div className="flex items-center gap-2">
         <Button 
-          className={`${BUTTON_THEME.secondary} flex items-center gap-2`}
+          variant="outline"
           size="sm"
           onClick={onOpenAdditionalServiceModal}
         >
           <Plus className="w-4 h-4" />
-          <span className="max-md:hidden">부가서비스</span>
+          <span className="max-md:hidden text-sm font-bold">부가서비스</span>
         </Button>
         <Button 
-          className={`${BUTTON_THEME.secondary} flex items-center gap-2`}
+          variant="outline"
           size="sm"
           onClick={onOpenFilterModal}
         >
           <Filter className="w-4 h-4" />
-          <span className="max-md:hidden">데이터 선택</span>
+          <span className="max-md:hidden text-sm font-bold">데이터 선택</span>
         </Button>
       </div>
     </div>

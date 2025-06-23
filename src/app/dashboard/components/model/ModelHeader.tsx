@@ -91,7 +91,7 @@ export default function ModelHeader({
       {/* 왼쪽 드롭다운 */}
       <div className="flex items-center gap-2">
         <Select value={selectedModel} onValueChange={handleModelSelect}>
-          <SelectTrigger className="w-[270px] h-9">
+          <SelectTrigger className="w-[270px] h-9 bg-gray-100 border-blue-300 dark:bg-gray-800 dark:border-blue-500">
             <SelectValue placeholder="모델 선택" />
           </SelectTrigger>
           <SelectContent>
@@ -107,12 +107,12 @@ export default function ModelHeader({
       {/* 오른쪽 버튼 */}
       <div className="flex items-center">
         <Button 
-          className={`${BUTTON_THEME.secondary} flex items-center gap-2`}
+          variant="outline"
           size="sm"
           onClick={handleOpenPublicDataModal}
         >
           <Database className="w-4 h-4" />
-          <span className="max-md:hidden">공시 데이터</span>
+          <span className="max-md:hidden text-sm font-bold">공시 데이터</span>
         </Button>
       </div>
 

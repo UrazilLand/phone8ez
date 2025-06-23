@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { DataSet } from '@/types/dashboard';
-import { cardStyles } from '@/styles/common';
 import DataCardHeader from './DataCardHeader';
 import DataCardSlider from './DataCardSlider';
 import DataCardActions from './DataCardActions';
@@ -49,7 +48,7 @@ const DataCardBody = React.memo(({
   }, [dataSets]);
 
   return (
-    <div className={`${cardStyles} py-4 px-4`}>
+    <div className="bg-card border border-border rounded-lg p-4 h-full flex flex-col">
       {/* 헤더 */}
       <DataCardHeader
         isCloudMode={isCloudMode}
