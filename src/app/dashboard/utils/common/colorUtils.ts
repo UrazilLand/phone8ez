@@ -95,5 +95,44 @@ export function getDataCellStyle(rowIndex: number, colIndex: number, sheetData: 
     }
   }
 
+  // 교차 색상 적용 (6행부터)
+  if (rowIndex >= 5) {
+    if (rowIndex % 2 === 0) {
+      // 짝수 행: 더 진한 색상
+      if (carrier) {
+        switch (carrier) {
+          case 'SK':
+            styleClasses = 'bg-red-200 ';
+            break;
+          case 'KT':
+            styleClasses = 'bg-gray-200 ';
+            break;
+          case 'LG':
+            styleClasses = 'bg-purple-200 ';
+            break;
+        }
+      } else {
+        styleClasses = 'bg-gray-200 ';
+      }
+    } else {
+      // 홀수 행: 더 연한 색상
+      if (carrier) {
+        switch (carrier) {
+          case 'SK':
+            styleClasses = 'bg-red-50 ';
+            break;
+          case 'KT':
+            styleClasses = 'bg-gray-50 ';
+            break;
+          case 'LG':
+            styleClasses = 'bg-purple-50 ';
+            break;
+        }
+      } else {
+        styleClasses = 'bg-gray-50 ';
+      }
+    }
+  }
+
   return styleClasses;
 } 
