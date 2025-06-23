@@ -167,7 +167,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         style.color = 'var(--color-kt, #000000)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-pink-700 font-bold') {
-        style.color = '#be185d';
+        style.color = 'var(--color-lg, #be185d)';
         style.fontWeight = 'bold';
       }
       
