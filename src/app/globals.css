@@ -125,6 +125,20 @@ body {
     --sidebar-accent-foreground: 200 10% 5%;
     --sidebar-border: 200 10% 25%;
     --sidebar-ring: 207 39% 55%;
+
+    /* 5행 업체명 다크모드 400 톤 색상 */
+    --color-blue-700: #60a5fa;
+    --color-red-700: #f87171;
+    --color-green-700: #4ade80;
+    --color-purple-700: #a78bfa;
+    --color-orange-700: #fb923c;
+    --color-teal-700: #5eead4;
+    --color-pink-700: #f472b6;
+    --color-indigo-700: #818cf8;
+    --color-amber-700: #fbbf24;
+    --color-cyan-700: #22d3ee;
+    --color-cyan-600: #22d3ee;
+    --color-kt: #ffffff;
   }
 }
 

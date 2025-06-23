@@ -164,7 +164,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         style.color = '#dc2626';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-black font-bold') {
-        style.color = '#000000';
+        style.color = 'var(--color-kt, #000000)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-pink-700 font-bold') {
         style.color = '#be185d';
@@ -173,20 +173,20 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       
     } else if (rowIndex === 1) { // 2행 (지원 구분) - CONTRACT_OPTIONS 스타일 적용
       const colorClass = colorMapping[`contract_${trimmedValue}`];      
-      // CONTRACT_OPTIONS의 스타일을 인라인 스타일로 변환
-      if (colorClass === 'text-green-700 font-bold') {
-        style.color = '#15803d';
+      // CONTRACT_OPTIONS의 스타일을 인라인 스타일로 변환 (다크모드에서는 400 톤 사용)
+      if (colorClass === 'text-blue-700 font-bold') {
+        style.color = 'var(--color-blue-700, #1d4ed8)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-cyan-600 font-bold') {
-        style.color = '#0891b2';
+        style.color = 'var(--color-cyan-600, #0891b2)';
         style.fontWeight = 'bold';
       }
       
-    } else if (rowIndex === 2) { // 3행 (요금제) - 배경색 적용
+    } else if (rowIndex === 2) { // 3행 (요금제) - 배경색 적용 (기본 배경색 유지)
       const planName = trimmedValue.split('|')[0];
       const colorClass = colorMapping[`plan_${planName}`];
       
-      // PLAN_BG_COLORS의 배경색을 인라인 스타일로 변환
+      // PLAN_BG_COLORS의 배경색을 인라인 스타일로 변환 (기본 배경색 위에 오버레이)
       if (colorClass === 'bg-blue-300') style.backgroundColor = '#93c5fd';
       else if (colorClass === 'bg-indigo-300') style.backgroundColor = '#a5b4fc';
       else if (colorClass === 'bg-purple-300') style.backgroundColor = '#c4b5fd';
@@ -213,36 +213,36 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     } else if (rowIndex === 4) { // 5행 (업체명) - COMPANY_TEXT_COLORS 스타일 적용
       const colorClass = colorMapping[`company_${trimmedValue}`];
       
-      // COMPANY_TEXT_COLORS 스타일을 인라인 스타일로 변환
+      // COMPANY_TEXT_COLORS 스타일을 인라인 스타일로 변환 (다크모드에서는 400 톤 사용)
       if (colorClass === 'text-blue-700') {
-        style.color = '#1d4ed8';
+        style.color = 'var(--color-blue-700, #1d4ed8)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-red-700') {
-        style.color = '#b91c1c';
+        style.color = 'var(--color-red-700, #b91c1c)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-green-700') {
-        style.color = '#15803d';
+        style.color = 'var(--color-green-700, #15803d)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-purple-700') {
-        style.color = '#7c3aed';
+        style.color = 'var(--color-purple-700, #7c3aed)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-orange-700') {
-        style.color = '#c2410c';
+        style.color = 'var(--color-orange-700, #c2410c)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-teal-700') {
-        style.color = '#0f766e';
+        style.color = 'var(--color-teal-700, #0f766e)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-pink-700') {
-        style.color = '#be185d';
+        style.color = 'var(--color-pink-700, #be185d)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-indigo-700') {
-        style.color = '#4338ca';
+        style.color = 'var(--color-indigo-700, #4338ca)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-amber-700') {
-        style.color = '#a16207';
+        style.color = 'var(--color-amber-700, #a16207)';
         style.fontWeight = 'bold';
       } else if (colorClass === 'text-cyan-700') {
-        style.color = '#0e7490';
+        style.color = 'var(--color-cyan-700, #0e7490)';
         style.fontWeight = 'bold';
       }
     }
@@ -609,7 +609,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       </div>
       <div 
         ref={tableRef}
-        className="bg-white rounded-lg shadow-md border border-gray-200 mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]"
+        className="bg-card rounded-lg shadow-md border border-border mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]"
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
         tabIndex={-1}
@@ -625,18 +625,20 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
               </colgroup>
               <tbody>
                 {currentSheetData.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="hover:bg-gray-50">
+                  <tr key={rowIndex} className="hover:bg-muted/50">
                     {row.map((cell, colIndex) => (
                       <td 
                         key={colIndex}
-                        className={`h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-black align-middle ${
-                          colIndex === 0 ? 
-                            (rowIndex < 5 ? 'text-center font-bold bg-gray-50 sticky left-0 z-20' : 'text-left sticky left-0 z-20 bg-white') : 
-                            'text-center'
+                        className={`h-6 text-sm border-b border-r border-gray-200 dark:border-gray-700 align-middle ${
+                          colIndex === 0
+                            ? `sticky left-0 z-20 ${rowIndex < 5 ? 'text-center font-bold' : 'text-left'}`
+                            : 'text-center'
+                        } ${
+                          rowIndex < 5 ? 'bg-muted/30' : ''
                         }`}
                       >
                         {colIndex === 0 && rowIndex < 5 ? (
-                          <span className="text-black font-bold overflow-hidden truncate block">
+                          <span className="text-foreground font-bold overflow-hidden truncate block">
                             {SHEET_HEADER_LABELS[rowIndex]}
                           </span>
                         ) : (
@@ -646,6 +648,12 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                             onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
                             className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
                               colIndex > 0 ? 'text-center' : ''
+                            } ${
+                              rowIndex === 2 || rowIndex === 3 ? 'text-black dark:text-black' : ''
+                            } ${
+                              rowIndex === 4 ? 'text-white dark:text-white' : ''
+                            } ${
+                              rowIndex === 4 ? 'dark:text-blue-400 dark:text-red-400 dark:text-green-400 dark:text-purple-400 dark:text-orange-400 dark:text-teal-400 dark:text-pink-400 dark:text-indigo-400 dark:text-amber-400 dark:text-cyan-400' : ''
                             }`}
                             style={{
                               ...getCellStyle(rowIndex, colIndex, cell),
