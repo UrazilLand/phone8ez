@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useMemo, useState } from 'react';
+import PublicDataModal from './PublicDataModal';
 
 interface ModelHeaderProps {
   dataSets: DataSet[];
@@ -27,6 +28,7 @@ interface ModelOption {
 
 export default function ModelHeader({ dataSets, setDataSets, onModelSelect }: ModelHeaderProps) {
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const [isPublicDataModalOpen, setIsPublicDataModalOpen] = useState(false);
 
   // 통합 데이터에서 A열 모델 정보 추출
   const modelOptions = useMemo(() => {
@@ -68,6 +70,14 @@ export default function ModelHeader({ dataSets, setDataSets, onModelSelect }: Mo
     }
   };
 
+  const handleOpenPublicDataModal = () => {
+    setIsPublicDataModalOpen(true);
+  };
+
+  const handleClosePublicDataModal = () => {
+    setIsPublicDataModalOpen(false);
+  };
+
   return (
     <div className="flex items-center justify-between p-4">
       {/* 왼쪽 드롭다운 */}
@@ -91,11 +101,18 @@ export default function ModelHeader({ dataSets, setDataSets, onModelSelect }: Mo
         <Button 
           className={`${BUTTON_THEME.secondary} flex items-center gap-2`}
           size="sm"
+          onClick={handleOpenPublicDataModal}
         >
           <Database className="w-4 h-4" />
-          <span className="max-md:hidden">데이터 입력</span>
+          <span className="max-md:hidden">공시 데이터</span>
         </Button>
       </div>
+
+      {/* 공시 데이터 모달 */}
+      <PublicDataModal
+        isOpen={isPublicDataModalOpen}
+        onClose={handleClosePublicDataModal}
+      />
     </div>
   );
 } 

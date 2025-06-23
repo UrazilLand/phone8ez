@@ -84,7 +84,7 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     setSheetData(generateSheetData);
   }, [generateSheetData]);
 
-  // 출고가 추출 함수
+  // 먼저 계산 함수들을 모두 선언합니다.
   const getPriceFromModelContent = (modelContent: string): number => {
     if (modelContent && modelContent.includes('price:')) {
       const priceMatch = modelContent.match(/price:(\d+)/);
@@ -95,7 +95,6 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     return 0;
   };
 
-  // 정책지원금 계산 함수 (통합 데이터에서 가져오기)
   const getPolicySupportAmount = (rowIndex: number): number => {
     const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
     if (!integratedDataSet?.data.sheetData) return 0;
@@ -168,7 +167,6 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     return 0;
   };
 
-  // 공시지원금 계산 함수
   const getPublicSupportAmount = (rowIndex: number): number => {
     // 헤더의 선택된 드롭박스 내용에서 표준 모델번호 추출
     const standardModel = selectedModelContent?.split('|').find(p => p.startsWith('standard:'))?.replace('standard:', '') || '';
@@ -224,7 +222,6 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     return 0;
   };
 
-  // 부가서비스 계산 함수
   const getAdditionalServiceAmount = (rowIndex: number): number => {
     const carrier = sheetData[rowIndex]?.[0]?.trim() || '';
     const company = sheetData[rowIndex]?.[4]?.trim() || '';
@@ -255,7 +252,6 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     return totalAmount;
   };
 
-  // 최종 계산 함수
   const calculateFinalAmount = (rowIndex: number): { 
     finalAmount: number; 
     price: number; 
@@ -268,30 +264,48 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     const publicSupport = getPublicSupportAmount(rowIndex);
     const additionalService = getAdditionalServiceAmount(rowIndex);
     
-    // 정책지원금이 0인 경우 빈칸으로 표시
     if (policySupport === 0) {
-      return {
-        finalAmount: 0,
-        price,
-        policySupport: 0,
-        publicSupport,
-        additionalService
-      };
+      return { finalAmount: 0, price, policySupport: 0, publicSupport, additionalService };
     }
     
-    // 계산: (출고가 - 정책지원금*10000 - 공시지원금 - 부가서비스) / 10000
     const finalAmount = Math.floor((price - policySupport * 10000 - publicSupport - additionalService) / 10000);
-    
-    return {
-      finalAmount,
-      price,
-      policySupport,
-      publicSupport,
-      additionalService
-    };
+    return { finalAmount, price, policySupport, publicSupport, additionalService };
   };
 
-  // 선택된 모델 내용을 처리하는 함수
+  // 계산 함수들이 선언된 후에 useMemo를 사용합니다.
+  const highlightedTotalCells = useMemo(() => {
+    const minTotals: Record<string, number> = {}; // key: `${carrier}-${joinType}`
+    const finalAmounts: { rowIndex: number; carrier: string; joinType: string; total: number }[] = [];
+
+    sheetData.forEach((row, rowIndex) => {
+      const carrier = row[0]?.trim();
+      const joinType = row[3]?.trim();
+      if (carrier && joinType) {
+        const calculation = calculateFinalAmount(rowIndex);
+        if (calculation.policySupport > 0 || calculation.finalAmount !== 0) {
+          finalAmounts.push({ rowIndex, carrier, joinType, total: calculation.finalAmount });
+        }
+      }
+    });
+
+    finalAmounts.forEach(({ carrier, joinType, total }) => {
+      const key = `${carrier}-${joinType}`;
+      if (minTotals[key] === undefined || total < minTotals[key]) {
+        minTotals[key] = total;
+      }
+    });
+
+    const highlightSet = new Set<number>();
+    finalAmounts.forEach(({ rowIndex, carrier, joinType, total }) => {
+      const key = `${carrier}-${joinType}`;
+      if (minTotals[key] === total) {
+        highlightSet.add(rowIndex);
+      }
+    });
+
+    return highlightSet;
+  }, [sheetData, selectedModelContent]); // calculateFinalAmount는 컴포넌트 스코프에 있으므로 의존성 배열에 추가할 필요가 없습니다.
+
   const handleModelSelect = (modelContent: string) => {
     setSelectedModelContent(modelContent);
     
@@ -378,35 +392,6 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     return 'text-black';
   };
 
-  // 셀 표시 텍스트를 결정하는 함수
-  const getDisplayText = (colIndex: number, cellValue: string, rowIndex: number) => {
-    if (colIndex === 2) {
-      // 3열: 요금제명만 표시
-      return cellValue.split('|')[0];
-    } else if (colIndex === 6) {
-      // 7열: 정책지원금 계산 결과 표시 (*10000)
-      const calculation = calculateFinalAmount(rowIndex);
-      return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
-    } else if (colIndex === 7) {
-      // 8열: 공시지원금 계산 결과 표시
-      const calculation = calculateFinalAmount(rowIndex);
-      return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
-    } else if (colIndex === 8) {
-      // 9열: 부가서비스 계산 결과 표시
-      const calculation = calculateFinalAmount(rowIndex);
-      return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
-    } else if (colIndex === 9) {
-      // 10열: 합계 계산 결과 표시 (*10000)
-      const calculation = calculateFinalAmount(rowIndex);
-      if (calculation.finalAmount === 0) return '';
-      const finalAmount = calculation.finalAmount * 10000;
-      return finalAmount < 0 ? 
-        `-${Math.abs(finalAmount).toLocaleString()}` : 
-        finalAmount.toLocaleString();
-    }
-    return cellValue;
-  };
-
   return (
     <div className="flex flex-col w-full h-full">
       <div className="max-w-[61rem] mx-auto w-full px-4">
@@ -447,7 +432,57 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                       className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
                     >
                       <div className={`w-full h-full flex items-center justify-center ${getCellStyle(colIndex, cell, rowIndex)}`}>
-                        {getDisplayText(colIndex, cell, rowIndex)}
+                        {(() => {
+                          if (colIndex === 9) { // 합계 열
+                            const isHighlighted = highlightedTotalCells.has(rowIndex);
+                            const calculation = calculateFinalAmount(rowIndex);
+                            const joinType = sheetData[rowIndex]?.[3]?.trim();
+
+                            if (calculation.policySupport === 0 && calculation.finalAmount === 0) {
+                              return '';
+                            }
+                            
+                            const finalAmount = calculation.finalAmount * 10000;
+                            const cellContent = finalAmount.toLocaleString();
+                            
+                            if (isHighlighted) {
+                              let styleClass = 'inline-block text-center min-w-[60px] rounded-md py-0.5 font-bold ';
+                              switch (joinType) {
+                                case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                case '기기변경': styleClass += 'bg-green-400 '; break;
+                                case '신규가입': styleClass += 'bg-red-400 '; break;
+                                default: styleClass += 'bg-gray-400 ';
+                              }
+
+                              if (calculation.finalAmount < 0) styleClass += 'text-red-700';
+                              else styleClass += 'text-black';
+
+                              return <span className={styleClass}>{cellContent}</span>;
+                            }
+                            
+                            if (calculation.finalAmount < 0) {
+                              return <span className="text-red-500">{cellContent}</span>;
+                            }
+                            return cellContent;
+                          }
+                          
+                          if (colIndex === 6) { // 정책지원금
+                            const calculation = calculateFinalAmount(rowIndex);
+                            return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
+                          }
+                          if (colIndex === 7) { // 공시지원금
+                            const calculation = calculateFinalAmount(rowIndex);
+                            return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
+                          }
+                          if (colIndex === 8) { // 부가서비스
+                            const calculation = calculateFinalAmount(rowIndex);
+                            return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
+                          }
+                          if (colIndex === 2) { // 요금제
+                            return cell.split('|')[0];
+                          }
+                          return cell; // 기본 셀 값
+                        })()}
                       </div>
                     </td>
                   ))}
