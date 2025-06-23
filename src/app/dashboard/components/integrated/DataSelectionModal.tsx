@@ -189,7 +189,9 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
             데이터 선택
           </DialogTitle>
           <DialogDescription className="text-left text-gray-600">
-            적용할 업체의 요금제를 선택하고, 각 요금제에 맞는 월 요금을 지정하세요. (최대 2개까지 선택 가능)
+            통합 데이터에 사용할 업체명과 요금제 구간을 선택하세요.
+            <br />
+            월 요금제는 공시 정보를 수집하는 기준입니다. <a href="https://m.smartchoice.or.kr/smc/mobile/dantongList.do?type=m" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">스마트초이스</a>를 확인하여 정확한 구간을 선택해주세요.
           </DialogDescription>
         </DialogHeader>
 

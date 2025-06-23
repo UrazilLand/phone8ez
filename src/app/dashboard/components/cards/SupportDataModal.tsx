@@ -52,7 +52,7 @@ export default function SupportDataModal({
               </div>
               <div className="flex-1 overflow-y-auto border border-gray-200 rounded-lg p-4 min-h-0">
                 <div className="space-y-4">
-                  {Object.values(supportData.manufacturers).map((manufacturer, mIndex) => (
+                  {Object.values(supportData.manufacturers || {}).map((manufacturer, mIndex) => (
                     <div key={mIndex}>
                       <h3 className="text-lg font-semibold text-gray-800 mb-2">{manufacturer.name}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
