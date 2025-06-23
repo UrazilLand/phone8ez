@@ -18,6 +18,8 @@ interface ModelHeaderProps {
   dataSets: DataSet[];
   setDataSets: (dataSets: DataSet[]) => void;
   onModelSelect: (modelContent: string) => void;
+  selectedModelContent: string;
+  publicData: any;
 }
 
 interface ModelOption {
@@ -26,7 +28,13 @@ interface ModelOption {
   rowIndex: number;
 }
 
-export default function ModelHeader({ dataSets, setDataSets, onModelSelect }: ModelHeaderProps) {
+export default function ModelHeader({ 
+  dataSets, 
+  setDataSets, 
+  onModelSelect, 
+  selectedModelContent,
+  publicData 
+}: ModelHeaderProps) {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isPublicDataModalOpen, setIsPublicDataModalOpen] = useState(false);
 
@@ -112,6 +120,8 @@ export default function ModelHeader({ dataSets, setDataSets, onModelSelect }: Mo
       <PublicDataModal
         isOpen={isPublicDataModalOpen}
         onClose={handleClosePublicDataModal}
+        selectedModelContent={selectedModelContent}
+        publicData={publicData}
       />
     </div>
   );

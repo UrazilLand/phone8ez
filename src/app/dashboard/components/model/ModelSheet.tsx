@@ -456,6 +456,8 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
           dataSets={dataSets} 
           setDataSets={setDataSets}
           onModelSelect={handleModelSelect}
+          selectedModelContent={selectedModelContent}
+          publicData={publicData}
         />
       </div>
 
