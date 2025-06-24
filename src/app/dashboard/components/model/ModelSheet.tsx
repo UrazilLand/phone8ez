@@ -8,7 +8,7 @@ import {
   calculateFinalAmount, 
   calculateHighlightedTotalCells 
 } from '@/app/dashboard/utils/model/calculationUtils';
-import { getDynamicCellStyle, PLAN_BG_COLORS_400 } from '@/components/ui/colors';
+import { getDynamicCellStyle, PLAN_BG_COLORS_400, getModelSheetCellStyle } from '@/components/ui/colors';
 
 interface ModelSheetProps {
   dataSets: DataSet[];
@@ -227,6 +227,24 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                                 const dynamicStyle = getDynamicCellStyle(4, cell);
                                 return `bg-white dark:bg-[#3B3B3B] text-center ${dynamicStyle}`;
                               })()
+                            : colIndex >= 5
+                            ? (() => {
+                                // 디버깅: 강제로 교차색상 적용
+                                const carrier = sheetData[rowIndex]?.[0]?.trim();
+                                const isEvenRow = rowIndex % 2 === 0;
+                                let style = '';
+                                if (carrier === 'SK') {
+                                  style = isEvenRow ? 'bg-red-200 dark:bg-red-800' : 'bg-red-100 dark:bg-red-900';
+                                } else if (carrier === 'KT') {
+                                  style = isEvenRow ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-800';
+                                } else if (carrier === 'LG') {
+                                  style = isEvenRow ? 'bg-purple-200 dark:bg-purple-800' : 'bg-purple-100 dark:bg-purple-900';
+                                } else {
+                                  style = isEvenRow ? 'bg-blue-200 dark:bg-blue-800' : 'bg-blue-100 dark:bg-blue-900';
+                                }
+                                
+                                return `text-center ${style}`;
+                              })()
                             : 'bg-white dark:bg-[#3B3B3B] text-center'
                         }`}
                       >
@@ -236,17 +254,36 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                           {(() => {
                             // 6행 이상 데이터 셀 렌더링 (기존 로직 유지)
                             if (colIndex === 9) { // 합계 열
-                              const isHighlighted = highlightedTotalCells.has(rowIndex);
                               const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              const joinType = sheetData[rowIndex]?.[3]?.trim();
                               if (calculation.policySupport === 0 && calculation.finalAmount === 0) {
                                 return '';
                               }
                               const finalAmount = calculation.finalAmount * 10000;
                               const cellContent = finalAmount.toLocaleString();
-                              return calculation.finalAmount < 0 ? 
-                                <span className="text-red-500 dark:text-red-400">{cellContent}</span> : 
-                                cellContent;
+                              const joinType = sheetData[rowIndex]?.[3]?.trim();
+                              const isHighlighted = highlightedTotalCells.has(rowIndex);
+                              const isNegative = calculation.finalAmount < 0;
+                              
+                              if (isHighlighted) {
+                                // 통합시트와 동일한 도형형식 서식 적용
+                                let styleClass = 'inline-block text-center w-20 rounded-md font-bold ';
+                                switch (joinType) {
+                                  case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                  case '기기변경': styleClass += 'bg-green-400 '; break;
+                                  case '신규가입': styleClass += 'bg-red-400 '; break;
+                                  default: styleClass += 'bg-gray-400 '; break;
+                                }
+                                if (isNegative) {
+                                  styleClass += 'text-red-700 dark:text-red-600';
+                                } else {
+                                  styleClass += 'text-black';
+                                }
+                                return <span className={styleClass}>{cellContent}</span>;
+                              } else {
+                                return calculation.finalAmount < 0 ? 
+                                  <span className="text-red-500 dark:text-red-400">{cellContent}</span> : 
+                                  cellContent;
+                              }
                             }
                             if (colIndex === 6) { // 정책지원금
                               const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
