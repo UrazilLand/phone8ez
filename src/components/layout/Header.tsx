@@ -72,10 +72,10 @@ const Header = () => {
               <img src="/favicon.png" alt="로고 아이콘" className="w-7 h-7 mr-1" />
               <Logo />
             </div>
-            <div className="hidden md:flex flex-1 justify-center space-x-2 items-center">
+            <div className="hidden lg:flex flex-1 justify-center space-x-2 items-center">
               {[...Array(5)].map((_, i) => <div key={i} className="w-20 h-7 bg-muted rounded animate-pulse"></div>)}
             </div>
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="hidden lg:flex items-center space-x-2">
               <div className="w-12 h-8 bg-muted rounded animate-pulse"></div>
               <div className="w-20 h-8 bg-muted rounded animate-pulse"></div>
             </div>
@@ -96,12 +96,12 @@ const Header = () => {
           </div>
 
           {/* 중앙: 네비게이션 (항상 h-10 flex items-center로 정렬) */}
-          <nav className="hidden md:flex flex-1 justify-center space-x-1 items-center h-10">
+          <nav className="hidden lg:flex flex-1 justify-center space-x-1 items-center h-10">
             <NavLinksContent />
           </nav>
 
           {/* 우측: 다크모드, 로그인, 회원가입 */}
-          <div className="hidden md:flex items-center space-x-2 min-w-[180px] justify-end">
+          <div className="hidden lg:flex items-center space-x-2 min-w-[180px] justify-end">
             <Button
               variant="ghost"
               size="icon"
@@ -128,7 +128,7 @@ const Header = () => {
           </div>
 
           {/* 모바일 메뉴 트리거 */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">

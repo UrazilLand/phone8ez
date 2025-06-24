@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const boardCategories = [
   { name: '자유게시판', path: '/board/free' },
   { name: '유머게시판', path: '/board/funny' },
-  { name: '건의사항', path: '/board/suggestion' },
+  { name: '모바일정보', path: '/board/mobile-info' },
   { name: '사용후기', path: '/board/review' },
 ];
 
@@ -16,24 +15,52 @@ const BoardHeader = () => {
   const currentCategoryPath = boardCategories.find(cat => pathname?.startsWith(cat.path))?.path || boardCategories[0].path;
 
   return (
-    <div className="mb-6">
-      <Tabs value={currentCategoryPath} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-blue-50/50 p-1 rounded-lg">
-          {boardCategories.map((category) => (
-            <TabsTrigger 
-              key={category.path} 
-              value={category.path} 
-              asChild 
-              className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm data-[state=active]:font-semibold transition-all duration-200"
-            >
-              <Link href={category.path} className="font-medium text-gray-600 hover:text-blue-600">
-                {category.name}
+    <nav className="mb-6 w-full">
+      {/* 모바일: 가로 스크롤 탭 */}
+      <ul className="flex lg:hidden overflow-x-auto no-scrollbar gap-2 py-2 px-1 bg-blue-50/70 dark:bg-gray-800/80 rounded-lg">
+        {boardCategories.map((cat) => {
+          const isActive = currentCategoryPath === cat.path;
+          return (
+            <li key={cat.path} className="shrink-0">
+              <Link
+                href={cat.path}
+                aria-current={isActive ? 'page' : undefined}
+                className={`block px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
+                  ${isActive
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow font-bold'
+                    : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-gray-700/60'}
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
+                `}
+              >
+                {cat.name}
               </Link>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-    </div>
+            </li>
+          );
+        })}
+      </ul>
+      {/* 데스크탑: 중앙 정렬 탭 */}
+      <ul className="hidden lg:flex justify-center gap-4 py-2 bg-blue-50/70 dark:bg-gray-800/80 rounded-lg">
+        {boardCategories.map((cat) => {
+          const isActive = currentCategoryPath === cat.path;
+          return (
+            <li key={cat.path}>
+              <Link
+                href={cat.path}
+                aria-current={isActive ? 'page' : undefined}
+                className={`px-6 py-2 rounded-full text-base font-medium transition-colors
+                  ${isActive
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow font-bold'
+                    : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-gray-700/60'}
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
+                `}
+              >
+                {cat.name}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 };
 

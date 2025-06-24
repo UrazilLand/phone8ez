@@ -685,7 +685,7 @@ export default function IntegratedSheet({
                           if (rowIndex === 0 && colIndex > 0) {
                             const isDeleteMode = columnToDelete === colIndex;
                             // 통신사별 색상 서식
-                            let carrierColor = 'bg-gray-200 dark:bg-[#3B3B3B] text-gray-700 dark:text-gray-300';
+                            let carrierColor = 'bg-white dark:bg-[#3B3B3B] text-gray-700 dark:text-gray-300';
                             if (cell === 'SK') carrierColor = 'text-red-600 dark:text-red-400';
                             else if (cell === 'KT') carrierColor = 'text-foreground dark:text-gray-100';
                             else if (cell === 'LG') carrierColor = 'text-pink-700 dark:text-pink-400';

@@ -145,7 +145,7 @@ export default function SupportPage() {
               <Plus className="w-4 h-4 mr-1" /> 문의하기
             </Button>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-between p-0">
+          <CardContent className="flex-1 flex flex-col p-0 min-h-[350px]">
             {/* 아코디언 문의 목록 */}
             <div className="space-y-2 px-6 pt-2 flex-1">
               {inquiryItems.map((item, idx) => (
@@ -154,8 +154,8 @@ export default function SupportPage() {
                 </div>
               ))}
             </div>
-            {/* 페이지네이션 - 항상 하단 고정 */}
-            <div className="w-full px-6 py-4 border-t border-blue-100 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 flex justify-center items-center sticky bottom-0 z-10">
+            {/* 페이지네이션 - 카드 하단 고정 */}
+            <div className="w-full px-6 py-4 border-t border-blue-100 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 flex justify-center items-center mt-auto">
               <Pagination currentPage={1} totalPages={5} />
             </div>
           </CardContent>

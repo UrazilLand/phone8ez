@@ -75,34 +75,36 @@ export default function BoardCategoryPage() {
   const categoryTitleMap: { [key: string]: string } = {
     free: '자유게시판',
     funny: '유머게시판',
-    suggestion: '건의사항',
+    'mobile-info': '모바일정보',
     review: '사용후기',
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-headline font-bold text-blue-700">
-        {categoryTitleMap[category] || '커뮤니티'}
-      </h1>
-      <BoardHeader />
-      <BoardFilterBar />
-      {isLoading ? (
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="space-y-2 flex-grow">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+    <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="space-y-6">
+        <h1 className="text-3xl font-headline font-bold text-blue-700 dark:text-blue-400">
+          {categoryTitleMap[category] || '커뮤니티'}
+        </h1>
+        <BoardHeader />
+        <BoardFilterBar />
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2 flex-grow">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+                <Skeleton className="h-8 w-20" />
               </div>
-              <Skeleton className="h-8 w-20" />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <BoardList posts={displayedPosts} category={category} />
-      )}
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            ))}
+          </div>
+        ) : (
+          <BoardList posts={displayedPosts} category={category} />
+        )}
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      </div>
     </div>
   );
 }
