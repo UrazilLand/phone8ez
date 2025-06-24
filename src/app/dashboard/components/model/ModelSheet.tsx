@@ -234,6 +234,18 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                                 const colorClass = planColorMapping[planName] || 'bg-gray-400';
                                 return `${colorClass} text-black font-medium`;
                               })()
+                            : colIndex === 3
+                            ? (() => {
+                                // 4열(가입유형) 색상 적용 - getDynamicCellStyle 함수 사용
+                                const dynamicStyle = getDynamicCellStyle(3, cell);
+                                return `text-center ${dynamicStyle}`;
+                              })()
+                            : colIndex === 4
+                            ? (() => {
+                                // 5열(업체명) 색상 적용 - getDynamicCellStyle 함수 사용
+                                const dynamicStyle = getDynamicCellStyle(4, cell);
+                                return `bg-white dark:bg-[#3B3B3B] text-center ${dynamicStyle}`;
+                              })()
                             : 'bg-white dark:bg-[#3B3B3B] text-center'
                         }`}
                       >
