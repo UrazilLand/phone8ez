@@ -31,23 +31,6 @@ export const JOIN_TYPE_OPTIONS = [
   { value: '신규가입', label: '신규가입', style: 'bg-red-500 text-white',}
 ];
 
-export const PLAN_BG_COLORS = [
-  "bg-blue-300",
-  "bg-indigo-300",
-  "bg-purple-300",
-  "bg-pink-300",
-  "bg-red-300",
-  "bg-orange-300",
-  "bg-amber-300",
-  "bg-yellow-300",
-  "bg-lime-300",
-  "bg-green-300",
-  "bg-emerald-300",
-  "bg-teal-300",
-  "bg-cyan-300",
-  "bg-sky-300"
-];
-
 export const PLAN_BG_COLORS_400 = [
   "bg-blue-400",
   "bg-indigo-400",
@@ -97,17 +80,6 @@ export const JOIN_TYPE_STYLES = [
   { value: '신규', label: '신규', style: 'bg-blue-600 text-white' },
   { value: '번호이동', label: '번호이동', style: 'bg-orange-500 text-white'},
   { value: '기기변경', label: '기기변경', style: 'bg-blue-600 text-white'},
-];
-
-export const PLAN_STYLES = [
-  "bg-blue-300",
-  "bg-indigo-300",
-  "bg-purple-300",
-  "bg-pink-300",
-  "bg-red-300",
-  "bg-orange-300",
-  "bg-blue-300",
-  "bg-teal-300"
 ];
 
 export const SUPPORT_TEXT_COLORS = [
@@ -238,8 +210,8 @@ export function getModelSheetCellStyle(
     return contract ? contract.style : 'text-foreground';
   } else if (colIndex === 2) {
     // 3열: 요금제 배경색 (순환) - 전체 문자열로 색상 결정
-    const planIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % PLAN_BG_COLORS.length;
-    return `${PLAN_BG_COLORS[planIndex]} text-foreground font-medium rounded`;
+    const planIndex = Math.abs(cellValue.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % PLAN_BG_COLORS_400.length;
+    return `${PLAN_BG_COLORS_400[planIndex]} text-foreground font-medium rounded`;
   } else if (colIndex === 3) {
     // 4열: 가입유형 색상
     const joinType = JOIN_TYPE_OPTIONS.find(option => 

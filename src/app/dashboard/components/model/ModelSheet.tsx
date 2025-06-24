@@ -8,7 +8,7 @@ import {
   calculateFinalAmount, 
   calculateHighlightedTotalCells 
 } from '@/app/dashboard/utils/model/calculationUtils';
-import { getDynamicCellStyle } from '@/components/ui/colors';
+import { getDynamicCellStyle, PLAN_BG_COLORS_400 } from '@/components/ui/colors';
 
 interface ModelSheetProps {
   dataSets: DataSet[];
@@ -92,24 +92,6 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
   const highlightedTotalCells = useMemo(() => {
     return calculateHighlightedTotalCells(sheetData, selectedModelContent, dataSets, publicData);
   }, [sheetData, selectedModelContent, dataSets, publicData]);
-
-  // 요금제별 색상 매핑 계산
-  const planColorMapping = useMemo(() => {
-    const colors = ['bg-blue-400', 'bg-green-400', 'bg-yellow-400', 'bg-purple-400', 'bg-pink-400', 'bg-indigo-400', 'bg-orange-400', 'bg-teal-400'];
-    const planColors: Record<string, string> = {};
-    let colorIndex = 0;
-
-    // 시트 데이터에서 요금제명을 추출하여 색상 매핑 생성
-    sheetData.forEach(row => {
-      const planName = row[2]?.split('|')[0] || '';
-      if (planName && !planColors[planName]) {
-        planColors[planName] = colors[colorIndex % colors.length];
-        colorIndex++;
-      }
-    });
-
-    return planColors;
-  }, [sheetData]);
 
   const handleModelSelect = (modelContent: string) => {
     setSelectedModelContent(modelContent);
@@ -229,10 +211,9 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                               })()
                             : colIndex === 2
                             ? (() => {
-                                // 3열(요금제) 배경색 - 열 기준으로 동일한 요금제는 동일한 색상 적용
-                                const planName = cell.split('|')[0];
-                                const colorClass = planColorMapping[planName] || 'bg-gray-400';
-                                return `${colorClass} text-black font-medium`;
+                                // 요금제명별 색상 적용 - getDynamicCellStyle 함수 사용 (통합 시트와 동일)
+                                const dynamicStyle = getDynamicCellStyle(2, cell);
+                                return `${dynamicStyle}`;
                               })()
                             : colIndex === 3
                             ? (() => {
@@ -263,34 +244,40 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                               }
                               const finalAmount = calculation.finalAmount * 10000;
                               const cellContent = finalAmount.toLocaleString();
-                              if (isHighlighted) {
-                                let styleClass = 'inline-block text-center min-w-[60px] rounded-md py-0.5 font-bold ';
-                                switch (joinType) {
-                                  case '번호이동': styleClass += 'bg-blue-400 '; break;
-                                  case '기기변경': styleClass += 'bg-green-400 '; break;
-                                  case '신규가입': styleClass += 'bg-red-400 '; break;
-                                  default: styleClass += 'bg-gray-400 ';
-                                }
-                                if (calculation.finalAmount < 0) styleClass += 'text-red-700 dark:text-red-400';
-                                else styleClass += 'text-black dark:text-white';
-                                return <span className={styleClass}>{cellContent}</span>;
-                              }
-                              if (calculation.finalAmount < 0) {
-                                return <span className="text-red-500 dark:text-red-400">{cellContent}</span>;
-                              }
-                              return <span className="text-muted-foreground">{cellContent}</span>;
+                              return calculation.finalAmount < 0 ? 
+                                <span className="text-red-500 dark:text-red-400">{cellContent}</span> : 
+                                cellContent;
                             }
                             if (colIndex === 6) { // 정책지원금
                               const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
+                              const amount = calculation.policySupport * 10000;
+                              const cellContent = amount.toLocaleString();
+                              return calculation.policySupport > 0 ? 
+                                (calculation.policySupport < 0 ? 
+                                  <span className="text-red-500 dark:text-red-400">{cellContent}</span> : 
+                                  cellContent) : '';
                             }
                             if (colIndex === 7) { // 공시지원금
                               const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
+                              const cellContent = calculation.publicSupport.toLocaleString();
+                              return calculation.publicSupport > 0 ? 
+                                (calculation.publicSupport < 0 ? 
+                                  <span className="text-red-500 dark:text-red-400">{cellContent}</span> : 
+                                  cellContent) : '';
                             }
                             if (colIndex === 8) { // 부가서비스
                               const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
+                              const cellContent = calculation.additionalService.toLocaleString();
+                              return calculation.additionalService > 0 ? 
+                                (calculation.additionalService < 0 ? 
+                                  <span className="text-red-500 dark:text-red-400">{cellContent}</span> : 
+                                  cellContent) : '';
+                            }
+                            if (colIndex === 5) { // 출고가
+                              const amount = parseFloat(cell.replace(/,/g, ''));
+                              return !isNaN(amount) && amount < 0 ? 
+                                <span className="text-red-500 dark:text-red-400">{cell}</span> : 
+                                cell;
                             }
                             if (colIndex === 2) { // 요금제
                               return cell.split('|')[0];
