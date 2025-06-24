@@ -9,6 +9,7 @@ import TabContent from './components/common/TabContent';
 import SubscriptionCard from './components/cards/SubscriptionCard';
 import DataCardContainer from './components/cards/DataCardContainer';
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/nextjs';
 
 export default function Dashboard() {
   const {
@@ -50,42 +51,49 @@ export default function Dashboard() {
   const memoizedPublicData = useMemo(() => publicData, [publicData]);
 
   return (
-    <TooltipProvider>
-      <div className="flex flex-col min-h-screen py-10">
-        <div className="max-w-[61rem] mx-auto px-4 w-full">
-          <DashboardHeader />
+    <>
+      <SignedIn>
+        <TooltipProvider>
+          <div className="flex flex-col min-h-screen py-10">
+            <div className="max-w-[61rem] mx-auto px-4 w-full">
+              <DashboardHeader />
 
-          {/* 상단 카드 2개 */}
-          <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 md:gap-4 mb-4 w-full">
-            <div className="flex flex-col w-full md:w-[36rem]">
-              <DataCardContainer 
-                dataSets={memoizedDataSets}
-                setDataSets={setDataSets}
-                onLoadData={handleLoadData}
-                onTabChange={handleTabChange}
-                onReloadIntegrated={handleReloadIntegrated}
-                onOpenAdditionalServiceModal={handleOpenAdditionalServiceModal}
-              />
+              {/* 상단 카드 2개 */}
+              <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 md:gap-4 mb-4 w-full">
+                <div className="flex flex-col w-full md:w-[36rem]">
+                  <DataCardContainer 
+                    dataSets={memoizedDataSets}
+                    setDataSets={setDataSets}
+                    onLoadData={handleLoadData}
+                    onTabChange={handleTabChange}
+                    onReloadIntegrated={handleReloadIntegrated}
+                    onOpenAdditionalServiceModal={handleOpenAdditionalServiceModal}
+                  />
+                </div>
+                <div className="flex flex-col w-full md:w-[24rem]">
+                  <SubscriptionCard />
+                </div>
+              </div>
+
+              <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
             </div>
-            <div className="flex flex-col w-full md:w-[24rem]">
-              <SubscriptionCard />
-            </div>
+
+            <TabContent 
+              activeTab={activeTab}
+              dataSets={memoizedDataSets}
+              setDataSets={setDataSets}
+              reloadKey={reloadKey}
+              publicData={memoizedPublicData}
+              dataInputTabRef={dataInputTabRef}
+              isAdditionalServiceModalOpen={isAdditionalServiceModalOpen}
+              setIsAdditionalServiceModalOpen={setIsAdditionalServiceModalOpen}
+            />
           </div>
-
-          <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        </div>
-
-        <TabContent 
-          activeTab={activeTab}
-          dataSets={memoizedDataSets}
-          setDataSets={setDataSets}
-          reloadKey={reloadKey}
-          publicData={memoizedPublicData}
-          dataInputTabRef={dataInputTabRef}
-          isAdditionalServiceModalOpen={isAdditionalServiceModalOpen}
-          setIsAdditionalServiceModalOpen={setIsAdditionalServiceModalOpen}
-        />
-      </div>
-    </TooltipProvider>
+        </TooltipProvider>
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
   );
 }

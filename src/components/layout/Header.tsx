@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import Logo from '@/components/ui/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X, LogIn, UserPlus, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
+import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 
 const MAIN_COLOR = 'text-blue-600 border-blue-600';
 
@@ -58,6 +59,36 @@ const Header = () => {
             </Link>
           );
         })}
+      </>
+    );
+  };
+
+  const AuthButtons = ({ mobile = false }: { mobile?: boolean }) => {
+    return (
+      <>
+        <SignedOut>
+          <SignInButton mode="modal">
+            <Button variant="ghost" className={`text-foreground hover:text-blue-600 px-3 ${mobile ? 'w-full justify-start' : ''}`}>
+              로그인
+            </Button>
+          </SignInButton>
+          <SignUpButton mode="modal">
+            <Button variant="default" className={`bg-blue-600 text-white hover:bg-blue-700 px-4 font-semibold shadow-none ${mobile ? 'w-full justify-start' : ''}`}>
+              회원가입
+            </Button>
+          </SignUpButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton 
+            appearance={{
+              elements: {
+                userButtonAvatarBox: "w-8 h-8",
+                userButtonTrigger: "focus:shadow-none",
+              },
+            }}
+            afterSignOutUrl="/"
+          />
+        </SignedIn>
       </>
     );
   };
@@ -115,16 +146,7 @@ const Header = () => {
               )}
               <span className="sr-only">테마 변경</span>
             </Button>
-            <Button variant="ghost" asChild className="text-foreground hover:text-blue-600 px-3">
-              <Link href="/login">
-                로그인
-              </Link>
-            </Button>
-            <Button variant="default" asChild className="bg-blue-600 text-white hover:bg-blue-700 px-4 font-semibold shadow-none">
-              <Link href="/signup">
-                회원가입
-              </Link>
-            </Button>
+            <AuthButtons />
           </div>
 
           {/* 모바일 메뉴 트리거 */}
@@ -168,16 +190,7 @@ const Header = () => {
                       </>
                     )}
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start" asChild>
-                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                      로그인
-                    </Link>
-                  </Button>
-                  <Button variant="default" className="w-full justify-start bg-blue-600 text-white hover:bg-blue-700" asChild>
-                    <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                      회원가입
-                    </Link>
-                  </Button>
+                  <AuthButtons mobile={true} />
                 </nav>
               </SheetContent>
             </Sheet>
