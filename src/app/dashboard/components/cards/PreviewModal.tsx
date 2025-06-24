@@ -44,24 +44,24 @@ const PreviewModal = React.memo(({
           const companyServices = services[companyKey];
           
           return (
-            <div key={companyKey} className="border rounded-lg p-4">
+            <div key={companyKey} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800">
               <div className="flex items-center gap-2 mb-3">
-                <h4 className="font-semibold text-gray-900">{company}</h4>
-                <span className="text-sm text-gray-500">({carrier})</span>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100">{company}</h4>
+                <span className="text-sm text-gray-500 dark:text-gray-400">({carrier})</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-900">부가서비스명</th>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-900">할인금액</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-900 dark:text-gray-100">부가서비스명</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-900 dark:text-gray-100">할인금액</th>
                     </tr>
                   </thead>
                   <tbody>
                     {companyServices.map((service, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-700">{service.service || '-'}</td>
-                        <td className="px-3 py-2 text-gray-700">{service.discount || '-'}</td>
+                      <tr key={index} className="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{service.service || '-'}</td>
+                        <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{service.discount || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -80,10 +80,10 @@ const PreviewModal = React.memo(({
 
     return (
       <table className="w-full text-xs">
-        <thead className="bg-gray-50 sticky top-0 z-10">
+        <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
           <tr>
             {selectedDataSet.data.sheetData[0]?.map((header, index) => (
-              <th key={index} className={`px-2 h-6 font-semibold text-gray-900 border-b whitespace-nowrap ${index === 0 ? 'text-left' : 'text-center'}`}>
+              <th key={index} className={`px-2 h-6 font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-600 whitespace-nowrap ${index === 0 ? 'text-left' : 'text-center'}`}>
                 {header}
               </th>
             ))}
@@ -91,9 +91,9 @@ const PreviewModal = React.memo(({
         </thead>
         <tbody>
           {selectedDataSet.data.sheetData.slice(1).map((row, rowIndex) => (
-            <tr key={rowIndex} className="border-b hover:bg-gray-50">
+            <tr key={rowIndex} className="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
               {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className={`px-2 h-6 text-gray-700 truncate whitespace-nowrap ${cellIndex === 0 ? 'text-left' : 'text-center'}`}>
+                <td key={cellIndex} className={`px-2 h-6 text-gray-700 dark:text-gray-300 truncate whitespace-nowrap ${cellIndex === 0 ? 'text-left' : 'text-center'}`}>
                   {cell}
                 </td>
               ))}
@@ -106,15 +106,15 @@ const PreviewModal = React.memo(({
 
   return (
     <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
-      <DialogContent className="max-w-7xl h-[90vh] p-6 flex flex-col">
-        <DialogTitle className="text-blue-700 font-bold">
+      <DialogContent className="max-w-7xl h-[90vh] p-6 flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+        <DialogTitle className="text-blue-700 dark:text-blue-400 font-bold">
           데이터셋 상세 정보
         </DialogTitle>
         {selectedDataSet && (
           <>
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-bold text-gray-900 p-2">{selectedDataSet.name}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 p-2">{selectedDataSet.name}</h3>
               </div>
               <div className="flex gap-2">
                 <button
@@ -133,7 +133,7 @@ const PreviewModal = React.memo(({
             </div>
             
             {/* 데이터 내용 카드 */}
-            <div className="bg-white rounded-xl shadow pt-5 pr-5 pl-5 pb-5 flex-1 min-h-0">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow pt-5 pr-5 pl-5 pb-5 flex-1 min-h-0 border border-gray-200 dark:border-gray-700">
               <div className="h-full flex flex-col">
                 <div className="flex-1 min-h-0 overflow-hidden">
                   <div className="h-full overflow-y-auto overflow-x-auto">

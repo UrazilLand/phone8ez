@@ -131,7 +131,7 @@ export default function ModelInfoModal({
     let highlightedText = text;
     searchTerms.forEach(term => {
       const regex = new RegExp(`(${term})`, 'gi');
-      highlightedText = highlightedText.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+      highlightedText = highlightedText.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">$1</mark>');
     });
     
     return highlightedText;
@@ -283,21 +283,21 @@ export default function ModelInfoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-black">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-black dark:text-gray-100">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-blue-700">
+          <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
             <Smartphone className="w-5 h-5" />
             모델정보 입력
           </DialogTitle>
-          <DialogDescription className="text-left text-gray-600">
+          <DialogDescription className="text-left text-gray-600 dark:text-gray-400">
             {rowIndex + 1}행의 모델 정보를 입력하세요.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6 py-4 text-black">
+        <div className="space-y-6 py-4 text-black dark:text-gray-100">
           {/* 1. 모델번호 검색 및 선택 */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               모델번호 검색 및 선택 *
             </Label>
             <div className="relative">
@@ -305,40 +305,40 @@ export default function ModelInfoModal({
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="모델번호 검색 (예: 갤럭시 = S931 256, ip15 128, 쉼표나 띄어쓰기로 구분)"
-                className="w-full pr-10 text-black bg-white border-gray-300"
+                className="w-full pr-10 text-black dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
               />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             </div>
             
             {/* 검색 결과 */}
             {searchResults.length > 0 && (
-              <div className="border border-gray-200 rounded-lg p-3 max-h-40 overflow-y-auto bg-white">
-                <div className="text-sm font-medium text-gray-700 mb-2">
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 max-h-40 overflow-y-auto bg-white dark:bg-gray-800">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {searchQuery.trim() ? '검색 결과:' : '모든 모델번호:'}
                 </div>
                 <div className="grid grid-cols-2 gap-1">
                   {searchResults.map((result, index) => (
                     <div
                       key={index}
-                      className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-gray-50 text-black ${
-                        modelInfo.selectedModelCodes.includes(result.modelCode) ? 'bg-blue-50 border border-blue-200' : ''
+                      className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 text-black dark:text-gray-100 ${
+                        modelInfo.selectedModelCodes.includes(result.modelCode) ? 'bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700' : ''
                       }`}
                       onClick={() => handleModelCodeToggle(result.modelCode)}
                     >
                       <div className={`w-4 h-4 border rounded flex items-center justify-center flex-shrink-0 ${
-                        modelInfo.selectedModelCodes.includes(result.modelCode) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                        modelInfo.selectedModelCodes.includes(result.modelCode) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600'
                       }`}>
                         {modelInfo.selectedModelCodes.includes(result.modelCode) && (
                           <Check className="w-3 h-3 text-white" />
                         )}
                       </div>
                       <span 
-                        className="text-sm text-black truncate"
+                        className="text-sm text-black dark:text-gray-100 truncate"
                         dangerouslySetInnerHTML={{ 
                           __html: highlightSearchTerms(result.modelCode, searchQuery) 
                         }}
                       />
-                      <span className="text-xs text-gray-500 truncate">({result.source})</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate">({result.source})</span>
                     </div>
                   ))}
                 </div>
@@ -351,36 +351,36 @@ export default function ModelInfoModal({
 
           {/* 2. 표준 모델번호 선택 */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               표준 모델번호 선택
             </Label>
             <div className="relative">
               <button
                 onClick={() => setShowStandardModelCodes(!showStandardModelCodes)}
-                className="w-full flex items-center justify-between p-2 h-10 border border-gray-300 rounded-lg hover:bg-gray-50 bg-white text-black"
+                className="w-full flex items-center justify-between p-2 h-10 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
               >
-                <span className={modelInfo.standardModelCode ? 'text-gray-900' : 'text-gray-500 text-sm'}>
+                <span className={modelInfo.standardModelCode ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 text-sm'}>
                   {modelInfo.standardModelCode || '표준 모델번호를 선택하세요. (공시 연결)'}
                 </span>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${
+                <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${
                   showStandardModelCodes ? 'rotate-180' : ''
                 }`} />
               </button>
               
               {showStandardModelCodes && (
-                <div className="absolute z-10 w-full mt-1 border border-gray-200 rounded-lg bg-white shadow-lg max-h-40 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shadow-lg max-h-40 overflow-y-auto">
                   {filteredStandardModelCodes.length > 0 ? (
                     filteredStandardModelCodes.map((code: string, index: number) => (
                       <div
                         key={index}
-                        className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-black"
+                        className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0 text-black dark:text-gray-100"
                         onClick={() => handleStandardModelCodeSelect(code)}
                       >
-                        <span className="text-sm text-black">{code}</span>
+                        <span className="text-sm text-black dark:text-gray-100">{code}</span>
                       </div>
                     ))
                   ) : (
-                    <div className="p-2 text-sm text-gray-500">표준 모델번호가 없습니다.</div>
+                    <div className="p-2 text-sm text-gray-500 dark:text-gray-400">표준 모델번호가 없습니다.</div>
                   )}
                 </div>
               )}
@@ -389,7 +389,7 @@ export default function ModelInfoModal({
 
           {/* 3. 모델명 입력 */}
           <div className="space-y-3">
-            <Label htmlFor="modelName" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="modelName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               모델명 *
             </Label>
             <Input
@@ -397,13 +397,13 @@ export default function ModelInfoModal({
               value={modelInfo.modelName}
               onChange={(e) => handleInputChange('modelName', e.target.value)}
               placeholder="모델명을 입력하세요"
-              className="w-full text-black bg-white border-gray-300 h-10"
+              className="w-full text-black dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 h-10"
             />
           </div>
 
           {/* 4. 출고가 입력 */}
           <div className="space-y-3">
-            <Label htmlFor="price" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="price" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               출고가
             </Label>
             <Input
@@ -411,12 +411,12 @@ export default function ModelInfoModal({
               value={modelInfo.price}
               onChange={(e) => handlePriceChange(e.target.value)}
               placeholder="출고가를 입력하세요 (예: 1350000)"
-              className="w-full text-black bg-white border-gray-300 h-10"
+              className="w-full text-black dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 h-10"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button onClick={handleClose} className={`${BUTTON_THEME.gray} flex items-center gap-2`}>
             <X className="w-4 h-4" />
             취소

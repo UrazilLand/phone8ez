@@ -44,30 +44,30 @@ export default function PublicDataModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] flex flex-col h-[90vh]">
+      <DialogContent className="sm:max-w-[900px] flex flex-col h-[90vh] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-blue-600 py-2">
+          <DialogTitle className="text-blue-600 dark:text-blue-400 py-2">
             공시 데이터 - {selectedModelData?.model_name || '모델 정보 없음'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
             선택된 모델의 공시 지원금 정보를 확인할 수 있습니다.
           </DialogDescription>
         </DialogHeader>
         
         <div className="py-4 flex-1 overflow-y-hidden">
           {!selectedModelContent ? (
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-gray-500 dark:text-gray-400 py-8">
               <p>모델을 먼저 선택해주세요.</p>
             </div>
           ) : !selectedModelData ? (
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-gray-500 dark:text-gray-400 py-8">
               <p>해당 모델의 공시 정보를 찾을 수 없습니다.</p>
             </div>
           ) : (
             <div className="h-full flex flex-col">
-              <div className="bg-gray-50 p-4 rounded-lg flex-shrink-0">
-                <h3 className="font-semibold text-gray-800 mb-2">모델 정보</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm text-black">
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg flex-shrink-0">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">모델 정보</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm text-black dark:text-gray-100">
                   <div>
                     <span className="font-medium">모델명:</span> {selectedModelData.model_name}
                   </div>
@@ -87,48 +87,48 @@ export default function PublicDataModal({
               
               {/* 공시 데이터 테이블 (스크롤 적용) */}
               <div className="mt-4 flex-1 overflow-y-auto pr-2">
-                <div className="border rounded-lg bg-white">
+                <div className="border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
                   {/* 테이블 헤더 */}
-                  <div className="grid grid-cols-3 sticky top-0 bg-gray-100 z-10 rounded-t-lg">
+                  <div className="grid grid-cols-3 sticky top-0 bg-gray-100 dark:bg-gray-700 z-10 rounded-t-lg">
                     {['SK', 'KT', 'LG'].map(carrierName => {
                       const carrierStyle = CARRIER_OPTIONS.find(c => c.value === carrierName)?.style || 'font-bold';
                       return (
-                        <div key={carrierName} className={`px-4 py-2 text-center border-b border-gray-200 ${carrierStyle}`}>
+                        <div key={carrierName} className={`px-4 py-2 text-center border-b border-gray-200 dark:border-gray-600 ${carrierStyle}`}>
                           {carrierName}
                         </div>
                       );
                     })}
                   </div>
                   {/* 테이블 바디 */}
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-gray-200 dark:divide-gray-600">
                     {selectedModelData.support_info.sections.map((section, sectionIndex) => (
                       <div key={sectionIndex} className="grid grid-cols-3">
                         {['SK', 'KT', 'LG'].map(carrierName => {
                           const carrierData = section.carriers[carrierName as keyof typeof section.carriers];
                           return (
-                            <div key={carrierName} className="px-3 py-4 border-r last:border-r-0 border-gray-200">
+                            <div key={carrierName} className="px-3 py-4 border-r border-gray-200 dark:border-gray-600 last:border-r-0">
                               {carrierData ? (
                                 <div className="space-y-2 text-sm">
-                                  <div className="font-bold text-base text-blue-700 text-center pb-2">{carrierData.plan_name}</div>
+                                  <div className="font-bold text-base text-blue-700 dark:text-blue-400 text-center pb-2">{carrierData.plan_name}</div>
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">월 요금</span>
-                                    <span className="font-semibold text-gray-800">{carrierData.monthly_fee?.toLocaleString()}원</span>
+                                    <span className="text-gray-600 dark:text-gray-400">월 요금</span>
+                                    <span className="font-semibold text-gray-800 dark:text-gray-200">{carrierData.monthly_fee?.toLocaleString()}원</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">선택약정할인</span>
-                                    <span className="font-bold text-red-600">{calculateSelectiveContractDiscount(carrierData.monthly_fee).toLocaleString()}원</span>
+                                    <span className="text-gray-600 dark:text-gray-400">선택약정할인</span>
+                                    <span className="font-bold text-red-600 dark:text-red-400">{calculateSelectiveContractDiscount(carrierData.monthly_fee).toLocaleString()}원</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">기기변경</span>
-                                    <span className="font-semibold text-gray-800">{carrierData.device_support?.toLocaleString()}원</span>
+                                    <span className="text-gray-600 dark:text-gray-400">기기변경</span>
+                                    <span className="font-semibold text-gray-800 dark:text-gray-200">{carrierData.device_support?.toLocaleString()}원</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">번호이동</span>
-                                    <span className="font-bold text-blue-600">{carrierData.number_port_support?.toLocaleString()}원</span>
+                                    <span className="text-gray-600 dark:text-gray-400">번호이동</span>
+                                    <span className="font-bold text-blue-600 dark:text-blue-400">{carrierData.number_port_support?.toLocaleString()}원</span>
                                   </div>
                                 </div>
                               ) : (
-                                <div className="text-center text-gray-400 h-full flex items-center justify-center">-</div>
+                                <div className="text-center text-gray-400 dark:text-gray-500 h-full flex items-center justify-center">-</div>
                               )}
                             </div>
                           );

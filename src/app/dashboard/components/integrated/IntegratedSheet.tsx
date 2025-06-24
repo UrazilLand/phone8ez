@@ -685,14 +685,14 @@ export default function IntegratedSheet({
                           if (rowIndex === 0 && colIndex > 0) {
                             const isDeleteMode = columnToDelete === colIndex;
                             // 통신사별 색상 서식
-                            let carrierColor = 'bg-gray-200 text-gray-700';
-                            if (cell === 'SK') carrierColor = 'text-red-600';
-                            else if (cell === 'KT') carrierColor = 'text-foreground';
-                            else if (cell === 'LG') carrierColor = 'text-pink-700';
+                            let carrierColor = 'bg-gray-200 dark:bg-[#3B3B3B] text-gray-700 dark:text-gray-300';
+                            if (cell === 'SK') carrierColor = 'text-red-600 dark:text-red-400';
+                            else if (cell === 'KT') carrierColor = 'text-foreground dark:text-gray-100';
+                            else if (cell === 'LG') carrierColor = 'text-pink-700 dark:text-pink-400';
                             return (
                               <td
                                 key={colIndex}
-                                className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap text-center font-bold cursor-pointer relative ${isDeleteMode ? 'bg-red-100 dark:bg-red-900' : carrierColor}`}
+                                className={`h-6 text-sm border border-[#020817] p-0 whitespace-nowrap text-center font-bold cursor-pointer relative ${isDeleteMode ? 'bg-red-100 dark:bg-red-900' : carrierColor}`}
                                 onClick={e => { e.stopPropagation(); handleColumnClick(colIndex); }}
                               >
                                 <span className="font-bold overflow-hidden truncate block z-10 relative">

@@ -253,9 +253,9 @@ export default function DataInputModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-lg font-bold text-blue-600">
+          <DialogTitle className="text-lg font-bold text-blue-600 dark:text-blue-400">
             데이터 입력
           </DialogTitle>
         </DialogHeader>
@@ -266,26 +266,26 @@ export default function DataInputModal({
             <div className="space-y-2">
               {/* 통신사 선택 */}
               <div className="flex items-center justify-between">
-                <div className="px-6 text-base font-semibold text-black">통신사</div>
+                <div className="px-6 text-base font-semibold text-black dark:text-gray-100">통신사</div>
                 <select 
-                  className={`w-32 h-8 px-4 text-sm font-bold border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    selectedCarrier === 'SK' ? 'text-red-600' :
-                    selectedCarrier === 'KT' ? 'text-black' :
-                    selectedCarrier === 'LG' ? 'text-pink-700' : 'text-black'
+                  className={`w-32 h-8 px-4 text-sm font-bold border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100 ${
+                    selectedCarrier === 'SK' ? 'text-red-600 dark:text-red-400' :
+                    selectedCarrier === 'KT' ? 'text-black dark:text-gray-100' :
+                    selectedCarrier === 'LG' ? 'text-pink-700 dark:text-pink-400' : 'text-black dark:text-gray-100'
                   }`}
                   value={selectedCarrier}
                   onChange={handleCarrierChange}
                 >
                   <option value="" disabled hidden>선택하세요</option>
-                  <option value="SK" className="text-red-600 font-bold">SK</option>
-                  <option value="KT" className="text-black font-bold">KT</option>
-                  <option value="LG" className="text-pink-700 font-bold">LG</option>
+                  <option value="SK" className="text-red-600 dark:text-red-400 font-bold">SK</option>
+                  <option value="KT" className="text-black dark:text-gray-100 font-bold">KT</option>
+                  <option value="LG" className="text-pink-700 dark:text-pink-400 font-bold">LG</option>
                 </select>
               </div>
 
-              <Card className="h-40">
+              <Card className="h-40 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold text-black">
+                  <CardTitle className="text-base font-semibold text-black dark:text-gray-100">
                     지원 구분
                   </CardTitle>
                 </CardHeader>
@@ -299,9 +299,9 @@ export default function DataInputModal({
                       <div className="space-y-2">
                         {supportItems.map((item) => (
                           <SortableItem key={item.id} id={item.id}>
-                            <div className="flex items-center justify-between border border-gray-200 rounded-md bg-white hover:bg-gray-50 cursor-move">
+                            <div className="flex items-center justify-between border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-move">
                               <div className="flex items-center gap-2">
-                                <GripVertical className="w-6 h-4 text-gray-400" />
+                                <GripVertical className="w-6 h-4 text-gray-400 dark:text-gray-500" />
                                 <span className={`text-sm ${item.style}`}>{item.label}</span>
                               </div>
                               <div 
@@ -319,7 +319,7 @@ export default function DataInputModal({
                                   onTouchStart={(e) => e.stopPropagation()}
                                   onPointerDown={(e) => e.stopPropagation()}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="w-24 h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="w-24 h-8 px-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                                 />
                               </div>
                             </div>
@@ -332,9 +332,9 @@ export default function DataInputModal({
               </Card>
             </div>
             
-            <Card className="h-50">
+            <Card className="h-50 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold text-black">
+                <CardTitle className="text-base font-semibold text-black dark:text-gray-100">
                   가입 유형
                 </CardTitle>
               </CardHeader>
@@ -348,9 +348,9 @@ export default function DataInputModal({
                     <div className="space-y-2">
                       {joinItems.map((item) => (
                         <SortableItem key={item.id} id={item.id}>
-                          <div className="flex items-center justify-between border border-gray-200 rounded-md bg-white hover:bg-gray-50 cursor-move">
+                          <div className="flex items-center justify-between border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-move">
                             <div className="flex items-center gap-2">
-                              <GripVertical className="w-6 h-4 text-gray-400" />
+                              <GripVertical className="w-6 h-4 text-gray-400 dark:text-gray-500" />
                               <span className={`text-sm px-2 py-1 rounded ${item.style}`}>{item.label}</span>
                             </div>
                             <div 
@@ -368,7 +368,7 @@ export default function DataInputModal({
                                 onTouchStart={(e) => e.stopPropagation()}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-24 h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-24 h-8 px-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                               />
                             </div>
                           </div>
@@ -383,9 +383,9 @@ export default function DataInputModal({
 
           {/* 하단 가로로 긴 카드 2개 */}
           <div className="space-y-4">
-            <Card className="w-full h-54">
+            <Card className="w-full h-54 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold text-black">
+                <CardTitle className="text-base font-semibold text-black dark:text-gray-100">
                   요금제 분류
                 </CardTitle>
               </CardHeader>
@@ -398,14 +398,14 @@ export default function DataInputModal({
                       value={planMainInput}
                       onChange={(e) => setPlanMainInput(e.target.value)}
                       onPaste={handlePlanPaste}
-                      className="flex-1 h-8 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="flex-1 h-8 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                     />
                     <input 
                       type="number" 
                       placeholder="반복 횟수" 
                       value={planRepeatCount}
                       onChange={(e) => setPlanRepeatCount(e.target.value)}
-                      className="w-24 h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-24 h-8 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                     />
                   </div>
                   
@@ -418,7 +418,7 @@ export default function DataInputModal({
                         placeholder={`입력창 ${index + 1}`}
                         value={value}
                         onChange={(e) => handlePlanSubInputChange(index, e.target.value)}
-                        className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-8 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                       />
                     ))}
                   </div>
@@ -432,7 +432,7 @@ export default function DataInputModal({
                         placeholder={`입력창 ${index + 5}`}
                         value={value}
                         onChange={(e) => handlePlanSubInputChange(index + 4, e.target.value)}
-                        className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-8 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                       />
                     ))}
                   </div>
@@ -440,9 +440,9 @@ export default function DataInputModal({
               </CardContent>
             </Card>
             
-            <Card className="w-full h-54">
+            <Card className="w-full h-54 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold text-black">
+                <CardTitle className="text-base font-semibold text-black dark:text-gray-100">
                   업체명 분류
                 </CardTitle>
               </CardHeader>
@@ -455,14 +455,14 @@ export default function DataInputModal({
                       value={companyMainInput}
                       onChange={(e) => setCompanyMainInput(e.target.value)}
                       onPaste={handleCompanyPaste}
-                      className="flex-1 h-8 px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="flex-1 h-8 px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                     />
                     <input 
                       type="number" 
                       placeholder="반복 횟수" 
                       value={companyRepeatCount}
                       onChange={(e) => setCompanyRepeatCount(e.target.value)}
-                      className="w-24 h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-24 h-8 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                     />
                   </div>
                   
@@ -475,7 +475,7 @@ export default function DataInputModal({
                         placeholder={`입력창 ${index + 1}`}
                         value={value}
                         onChange={(e) => handleCompanySubInputChange(index, e.target.value)}
-                        className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-8 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                       />
                     ))}
                   </div>
@@ -489,7 +489,7 @@ export default function DataInputModal({
                         placeholder={`입력창 ${index + 5}`}
                         value={value}
                         onChange={(e) => handleCompanySubInputChange(index + 4, e.target.value)}
-                        className="h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-8 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-black dark:text-gray-100"
                       />
                     ))}
                   </div>
@@ -500,7 +500,7 @@ export default function DataInputModal({
         </div>
 
         {/* 하단 버튼 영역 */}
-        <div className="flex justify-between gap-3 border-gray-200">
+        <div className="flex justify-between gap-3 border-gray-200 dark:border-gray-700">
           <Button 
             className={`${BUTTON_THEME.danger_fill}`}
             onClick={handleReset}

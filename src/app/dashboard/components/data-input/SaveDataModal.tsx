@@ -69,16 +69,16 @@ export default function SaveDataModal({
     <>
       {/* 메인 저장 모달 */}
       <Dialog open={isOpen && !showOverwriteConfirm} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-bold text-blue-600">
+            <DialogTitle className="text-lg font-bold text-blue-600 dark:text-blue-400">
               데이터 저장
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="dataName" className="text-sm font-medium text-black">
+              <Label htmlFor="dataName" className="text-sm font-medium text-black dark:text-gray-100">
                 데이터 세트 이름
               </Label>
               <Input
@@ -86,7 +86,7 @@ export default function SaveDataModal({
                 value={dataName}
                 onChange={(e) => setDataName(e.target.value)}
                 placeholder="데이터 세트 이름을 입력하세요"
-                className="w-full bg-white border-2 border-gray-300 rounded-md text-black"
+                className="w-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md text-black dark:text-gray-100"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleConfirm();
@@ -94,7 +94,7 @@ export default function SaveDataModal({
                 }}
               />
               {dataName.trim() && isDuplicateName(dataName.trim()) && (
-                <p className="text-sm text-orange-600">
+                <p className="text-sm text-orange-600 dark:text-orange-400">
                   ⚠️ 동일한 이름의 데이터셋이 이미 존재합니다.
                 </p>
               )}
@@ -121,18 +121,18 @@ export default function SaveDataModal({
 
       {/* 덮어쓰기 확인 모달 */}
       <Dialog open={showOverwriteConfirm} onOpenChange={handleOverwriteCancel}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-orange-600">
+            <DialogTitle className="text-lg font-bold text-orange-600 dark:text-orange-400">
               덮어쓰기 확인
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
-            <p className="text-gray-700">
+            <p className="text-gray-700 dark:text-gray-300">
               <strong>"{pendingDataName}"</strong> 이름의 데이터셋이 이미 존재합니다.
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               기존 데이터를 덮어쓰시겠습니까?
             </p>
             

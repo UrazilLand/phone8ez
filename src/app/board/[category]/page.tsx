@@ -2,10 +2,10 @@
 
 import { useParams, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import BoardHeader from '@/components/board/BoardHeader';
-import BoardFilterBar from '@/components/board/BoardFilterBar';
-import BoardList, { type Post } from '@/components/board/BoardList';
-import Pagination from '@/components/board/Pagination';
+import BoardHeader from '../components/BoardHeader';
+import BoardFilterBar from '../components/BoardFilterBar';
+import BoardList, { type Post } from '../components/BoardList';
+import Pagination from '../components/Pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const ITEMS_PER_PAGE = 20;

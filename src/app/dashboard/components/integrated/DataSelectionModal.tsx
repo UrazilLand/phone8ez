@@ -184,22 +184,22 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl h-[600px] flex flex-col bg-white">
+      <DialogContent className="max-w-2xl h-[600px] flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
         <DialogHeader className="flex-shrink-0 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-blue-700">
+          <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
             <Filter className="w-5 h-5" />
             데이터 선택
           </DialogTitle>
-          <DialogDescription className="text-left text-gray-600">
+          <DialogDescription className="text-left text-gray-600 dark:text-gray-400">
             통합 데이터에 사용할 업체명과 요금제 구간을 선택하세요.
             <br />
-            월 요금제는 공시 정보를 수집하는 기준입니다. <a href="https://m.smartchoice.or.kr/smc/mobile/dantongList.do?type=m" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">스마트초이스</a>를 확인하여 정확한 구간을 선택해주세요.
+            월 요금제는 공시 정보를 수집하는 기준입니다. <a href="https://m.smartchoice.or.kr/smc/mobile/dantongList.do?type=m" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">스마트초이스</a>를 확인하여 정확한 구간을 선택해주세요.
           </DialogDescription>
         </DialogHeader>
 
         <div className="w-full flex-1 flex flex-col min-h-0">
           <div className="px-4">
-            <div className="flex space-x-2 border-b border-gray-200">
+            <div className="flex space-x-2 border-b border-gray-200 dark:border-gray-700">
               {['SK', 'KT', 'LG'].map((carrier) => {
                 const carrierOption = CARRIER_OPTIONS.find(option => option.value === carrier);
                 const isActive = activeTab === carrier;
@@ -210,8 +210,8 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                     onClick={() => setActiveTab(carrier)}
                     className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors whitespace-pre-wrap min-w-[80px] text-center ${
                       isActive
-                        ? `bg-white border-b-2 border-blue-600 ${carrierOption?.style || 'text-blue-600'}`
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                        ? `bg-white dark:bg-gray-800 border-b-2 border-blue-600 ${carrierOption?.style || 'text-blue-600 dark:text-blue-400'}`
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                     aria-label={`${carrier} 탭으로 전환`}
                   >
@@ -227,7 +227,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
               
               {/* 1열: 업체명 탭 */}
               <div className="space-y-3">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
                   <Building2 className="w-4 h-4" />
                   업체명
                 </div>
@@ -244,7 +244,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                           isCurrentCompany 
                             ? BUTTON_THEME.primary 
                             : hasSelectedPlans 
-                              ? 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200' 
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800' 
                               : BUTTON_THEME.secondary
                         }`}
                       >
@@ -260,11 +260,11 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
 
               {/* 2열: 요금제 */}
               <div className="space-y-3">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
                   <CreditCard className="w-4 h-4" />
                   요금제 선택
                 </div>
-                <div className="space-y-2 text-gray-800">
+                <div className="space-y-2 text-gray-800 dark:text-gray-200">
                   {currentDisplayCompany ? (
                     currentPlans.length > 0 ? (
                       currentPlans.map((plan) => {
@@ -281,17 +281,17 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-sm p-2 text-center">업체를 선택하세요.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm p-2 text-center">업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
 
               {/* 3열: 월 요금제 1 */}
               <div className="space-y-3">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
                   월 요금제 1
                 </div>
                 <div className="space-y-2">
@@ -308,19 +308,19 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                                 value={planSelection?.monthlyFee1?.toString() || ""}
                                 onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee1', value)}
                               >
-                                <SelectTrigger className="text-gray-800 h-8 text-center justify-center">
+                                <SelectTrigger className="text-gray-800 dark:text-gray-200 h-8 text-center justify-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                                   <SelectValue placeholder="월 요금 선택" className="text-center" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                                   {currentCarrierData.monthlyFees
                                     .sort((a, b) => b - a)
                                     .map((fee) => (
-                                    <SelectItem key={fee} value={fee.toString()}>{fee.toLocaleString()}원</SelectItem>
+                                    <SelectItem key={fee} value={fee.toString()} className="text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{fee.toLocaleString()}원</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <div className="w-full h-8 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-sm">
+                              <div className="w-full h-8 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                                 -
                               </div>
                             )}
@@ -328,17 +328,17 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-sm p-2 text-center">업체를 선택하세요.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm p-2 text-center">업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
 
               {/* 4열: 월 요금제 2 */}
               <div className="space-y-3">
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600">
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
                   월 요금제 2
                 </div>
                 <div className="space-y-2">
@@ -355,19 +355,19 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                                 value={planSelection?.monthlyFee2?.toString() || ""}
                                 onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee2', value)}
                               >
-                                <SelectTrigger className="text-gray-800 h-8 text-center justify-center">
+                                <SelectTrigger className="text-gray-800 dark:text-gray-200 h-8 text-center justify-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                                   <SelectValue placeholder="월 요금 선택" className="text-center" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                                   {currentCarrierData.monthlyFees
                                     .sort((a, b) => b - a)
                                     .map((fee) => (
-                                    <SelectItem key={fee} value={fee.toString()}>{fee.toLocaleString()}원</SelectItem>
+                                    <SelectItem key={fee} value={fee.toString()} className="text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{fee.toLocaleString()}원</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <div className="w-full h-8 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-sm">
+                              <div className="w-full h-8 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                                 -
                               </div>
                             )}
@@ -375,10 +375,10 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                         );
                       })
                     ) : (
-                      <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-sm p-2 text-center">업체를 선택하세요.</div>
                     )
                   ) : (
-                    <div className="text-gray-500 text-sm p-2 text-center">업체를 선택하세요.</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm p-2 text-center">업체를 선택하세요.</div>
                   )}
                 </div>
               </div>
@@ -386,7 +386,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
           </div>
         </div>
 
-        <div className="flex justify-between gap-2 pt-2 border-t mt-2 flex-shrink-0">
+        <div className="flex justify-between gap-2 pt-2 border-t border-gray-200 dark:border-gray-700 mt-2 flex-shrink-0">
           <Button onClick={handleReset} className={`${BUTTON_THEME.danger_fill} flex items-center gap-2`}>
             <RotateCcw className="w-4 h-4" />
             초기화

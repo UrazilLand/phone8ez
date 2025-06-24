@@ -9,5 +9,11 @@ interface ModelTabProps {
 }
 
 export default function ModelTab({ dataSets, setDataSets, publicData }: ModelTabProps) {
-  return <ModelSheet dataSets={dataSets} setDataSets={setDataSets} publicData={publicData} />;
+  return (
+    <div className="flex justify-center w-full">
+      <div style={{ minWidth: '1500px', maxWidth: '1500px' }}>
+        <ModelSheet dataSets={dataSets} setDataSets={setDataSets} publicData={publicData} />
+      </div>
+    </div>
+  );
 } 
