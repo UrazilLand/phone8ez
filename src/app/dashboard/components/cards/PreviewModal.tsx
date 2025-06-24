@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DataSet } from '@/types/dashboard';
-import { BUTTON_THEME, cardStyles } from '@/styles/common';
+import { BUTTON_THEME } from '@/components/ui/colors';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from "@/components/ui/button";
 
 interface PreviewModalProps {
   previewModalOpen: boolean;

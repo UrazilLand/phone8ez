@@ -2,9 +2,8 @@
 
 import { DataSet } from '@/types/dashboard';
 import ModelHeader from './ModelHeader';
-import { DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT, CARRIER_OPTIONS, CONTRACT_OPTIONS, JOIN_TYPE_OPTIONS, PLAN_BG_COLORS, COMPANY_TEXT_COLORS } from '@/styles/common';
+import { DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 import { useMemo, useState, useEffect } from 'react';
-import { getDynamicCellStyle, getDataCellStyle, getModelSheetCellStyle } from '@/app/dashboard/utils/common/colorUtils';
 import { 
   calculateFinalAmount, 
   calculateHighlightedTotalCells 
@@ -29,7 +28,7 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
   const generateSheetData = useMemo(() => {
     const integratedDataSet = dataSets.find(dataset => dataset.type === 'integrated');
     if (!integratedDataSet?.data.sheetData) {
-      return Array(DEFAULT_ROW_COUNT - 1).fill(null).map(() => Array(HEADERS.length).fill(''));
+      return Array(DEFAULT_ROW_COUNT - 2).fill(null).map(() => Array(HEADERS.length).fill(''));
     }
 
     const integratedData = integratedDataSet.data.sheetData;
@@ -74,7 +73,7 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
     }
 
     // 최소 행 수 보장
-    while (result.length < DEFAULT_ROW_COUNT - 1) {
+    while (result.length < DEFAULT_ROW_COUNT - 2) {
       result.push(Array(HEADERS.length).fill(''));
     }
 
@@ -146,7 +145,7 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
       </div>
 
       {/* 테이블 카드 */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-4 h-[1200px] max-w-full mx-4 sm:max-w-6xl sm:mx-auto lg:max-w-7xl">
+      <div className="bg-card rounded-lg shadow-md mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]">
         <div className="overflow-auto h-full">
           <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
             <colgroup>
@@ -155,11 +154,13 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
               ))}
             </colgroup>
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
+              <tr className="bg-card border-b border-border">
                 {HEADERS.map((header, index) => (
                   <th
                     key={index}
-                    className="h-8 text-sm font-bold text-gray-800 border-r border-gray-300 px-2 text-center"
+                    className={`h-6 text-sm font-bold text-foreground border border-[#020817] border-[1px] p-0 text-center ${
+                      index === 0 ? 'sticky left-0 z-20 bg-card text-center font-bold' : ''
+                    }`}
                   >
                     {header}
                   </th>
@@ -169,14 +170,18 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
             <tbody>
               {!selectedModelContent ? (
                 // 모델 선택 없을 때 빈 행들 표시
-                Array(DEFAULT_ROW_COUNT - 1).fill(null).map((_, rowIndex) => (
-                  <tr key={rowIndex} className="hover:bg-gray-50">
+                Array(DEFAULT_ROW_COUNT - 2).fill(null).map((_, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-muted/50">
                     {Array(HEADERS.length).fill(null).map((_, colIndex) => (
                       <td
                         key={colIndex}
-                        className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
+                        className={`h-6 text-sm border border-[#020817] border-[1px] p-0 bg-white dark:bg-[#3B3B3B] ${
+                          colIndex === 0
+                            ? `sticky left-0 z-20 bg-card text-center font-bold`
+                            : 'text-center'
+                        }`}
                       >
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                           {colIndex === 0 && rowIndex === 0 }
                         </div>
                       </td>
@@ -186,65 +191,73 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
               ) : (
                 // 모델 선택 시 기존 데이터 표시
                 sheetData.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="hover:bg-gray-50">
+                  <tr key={rowIndex} className="hover:bg-muted/50">
                     {row.map((cell, colIndex) => (
-                      <td
+                      <td 
                         key={colIndex}
-                        className="h-6 text-sm border-b border-gray-200 border-r border-gray-300 text-center"
+                        className={`h-6 text-sm border border-[#020817] border-[1px] p-0 bg-white dark:bg-[#3B3B3B] ${
+                          colIndex === 0
+                            ? `sticky left-0 z-20 bg-card text-center font-bold`
+                            : 'text-center'
+                        }`}
                       >
-                        <div className={`w-full h-full flex items-center justify-center ${getModelSheetCellStyle(colIndex, cell, rowIndex, sheetData)}`}>
-                          {(() => {
-                            if (colIndex === 9) { // 합계 열
-                              const isHighlighted = highlightedTotalCells.has(rowIndex);
-                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              const joinType = sheetData[rowIndex]?.[3]?.trim();
-
-                              if (calculation.policySupport === 0 && calculation.finalAmount === 0) {
-                                return '';
-                              }
-                              
-                              const finalAmount = calculation.finalAmount * 10000;
-                              const cellContent = finalAmount.toLocaleString();
-                              
-                              if (isHighlighted) {
-                                let styleClass = 'inline-block text-center min-w-[60px] rounded-md py-0.5 font-bold ';
-                                switch (joinType) {
-                                  case '번호이동': styleClass += 'bg-blue-400 '; break;
-                                  case '기기변경': styleClass += 'bg-green-400 '; break;
-                                  case '신규가입': styleClass += 'bg-red-400 '; break;
-                                  default: styleClass += 'bg-gray-400 ';
+                        {colIndex === 0 && rowIndex < 5 ? (
+                          <span className="text-foreground font-bold overflow-hidden truncate block">
+                            {HEADERS[colIndex]}
+                          </span>
+                        ) : (
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                          >
+                            {(() => {
+                              // 6행 이상은 계산값, 1~5행은 셀 값 그대로
+                              if (rowIndex < 5) return cell;
+                              // 6행 이상 데이터 셀 렌더링 (기존 로직 유지)
+                              if (colIndex === 9) { // 합계 열
+                                const isHighlighted = highlightedTotalCells.has(rowIndex);
+                                const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
+                                const joinType = sheetData[rowIndex]?.[3]?.trim();
+                                if (calculation.policySupport === 0 && calculation.finalAmount === 0) {
+                                  return '';
                                 }
-
-                                if (calculation.finalAmount < 0) styleClass += 'text-red-700';
-                                else styleClass += 'text-black';
-
-                                return <span className={styleClass}>{cellContent}</span>;
+                                const finalAmount = calculation.finalAmount * 10000;
+                                const cellContent = finalAmount.toLocaleString();
+                                if (isHighlighted) {
+                                  let styleClass = 'inline-block text-center min-w-[60px] rounded-md py-0.5 font-bold ';
+                                  switch (joinType) {
+                                    case '번호이동': styleClass += 'bg-blue-400 '; break;
+                                    case '기기변경': styleClass += 'bg-green-400 '; break;
+                                    case '신규가입': styleClass += 'bg-red-400 '; break;
+                                    default: styleClass += 'bg-gray-400 ';
+                                  }
+                                  if (calculation.finalAmount < 0) styleClass += 'text-red-700 dark:text-red-400';
+                                  else styleClass += 'text-black dark:text-white';
+                                  return <span className={styleClass}>{cellContent}</span>;
+                                }
+                                if (calculation.finalAmount < 0) {
+                                  return <span className="text-red-500 dark:text-red-400">{cellContent}</span>;
+                                }
+                                return <span className="text-muted-foreground">{cellContent}</span>;
                               }
-                              
-                              if (calculation.finalAmount < 0) {
-                                return <span className="text-red-500">{cellContent}</span>;
+                              if (colIndex === 6) { // 정책지원금
+                                const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
+                                return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
                               }
-                              return cellContent;
-                            }
-                            
-                            if (colIndex === 6) { // 정책지원금
-                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              return calculation.policySupport > 0 ? (calculation.policySupport * 10000).toLocaleString() : '';
-                            }
-                            if (colIndex === 7) { // 공시지원금
-                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
-                            }
-                            if (colIndex === 8) { // 부가서비스
-                              const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
-                              return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
-                            }
-                            if (colIndex === 2) { // 요금제
-                              return cell.split('|')[0];
-                            }
-                            return cell; // 기본 셀 값
-                          })()}
-                        </div>
+                              if (colIndex === 7) { // 공시지원금
+                                const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
+                                return calculation.publicSupport > 0 ? calculation.publicSupport.toLocaleString() : '';
+                              }
+                              if (colIndex === 8) { // 부가서비스
+                                const calculation = calculateFinalAmount(rowIndex, sheetData, selectedModelContent, dataSets, publicData);
+                                return calculation.additionalService > 0 ? calculation.additionalService.toLocaleString() : '';
+                              }
+                              if (colIndex === 2) { // 요금제
+                                return cell.split('|')[0];
+                              }
+                              return cell; // 기본 셀 값
+                            })()}
+                          </div>
+                        )}
                       </td>
                     ))}
                   </tr>

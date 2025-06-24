@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { DataSet } from '@/types/dashboard';
 import { Database } from 'lucide-react';
-import { BUTTON_THEME } from '@/styles/common';
+import { BUTTON_THEME } from '@/components/ui/colors';
 import {
   Select,
   SelectContent,
@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { useMemo, useState } from 'react';
 import PublicDataModal from './PublicDataModal';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ModelHeaderProps {
   dataSets: DataSet[];

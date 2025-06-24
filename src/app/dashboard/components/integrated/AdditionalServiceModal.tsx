@@ -11,8 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { BUTTON_THEME } from '@/styles/common';
+import { BUTTON_THEME } from '@/components/ui/colors';
 import { DataSet } from '@/types/dashboard';
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdditionalServiceModalProps {
   isOpen: boolean;

@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, GripVertical } from 'lucide-react';
-import { BUTTON_THEME, CONTRACT_OPTIONS, JOIN_TYPE_OPTIONS } from '@/styles/common';
-import { useState } from 'react';
+import { BUTTON_THEME, CONTRACT_OPTIONS, JOIN_TYPE_OPTIONS } from '@/components/ui/colors';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,

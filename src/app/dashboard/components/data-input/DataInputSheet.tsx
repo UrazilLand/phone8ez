@@ -7,15 +7,11 @@ import {
   SHEET_HEADER_LABELS, 
   DEFAULT_ROW_COUNT, 
   DEFAULT_COLUMN_COUNT,
-  PLAN_BG_COLORS,
-  CARRIER_OPTIONS,
-  CONTRACT_OPTIONS,
-  JOIN_TYPE_OPTIONS,
-  COMPANY_TEXT_COLORS
+  BUTTON_THEME
 } from '@/styles/common';
+import { getDynamicCellStyle } from '@/components/ui/colors';
 import { useState, useCallback, useRef, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { getColorIndex } from '@/app/dashboard/utils/common/colorUtils';
 
 interface DataInputSheetProps {
   dataSets: DataSet[];
@@ -33,7 +29,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
   const tableRef = useRef<HTMLDivElement>(null);
   
   const [sheetData, setSheetData] = useState<string[][]>(
-    Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''))
+    Array(DEFAULT_ROW_COUNT - 1).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''))
   );
 
   const [
@@ -45,83 +41,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     canUndo,
     canRedo
   ] = useUndo<string[][]>(sheetData);
-
-  // 1,2,3,4,5행의 색상 매핑 생성
-  const colorMapping = useMemo(() => {
-    const mapping: { [key: string]: string } = {};
-
-    // 1행(통신사) 색상 매핑 - CARRIER_OPTIONS 사용
-    const carrierValues = new Set<string>();
-    for (let col = 1; col < currentSheetData[0]?.length; col++) {
-      const value = currentSheetData[0][col]?.trim();
-      if (value && !carrierValues.has(value)) {
-        carrierValues.add(value);
-        // variants 배열을 사용하여 대소문자와 변형들을 모두 매칭
-        const carrierOption = CARRIER_OPTIONS.find(option => 
-          option.variants && option.variants.some(variant => 
-            variant.toLowerCase() === value.toLowerCase()
-          )
-        );
-        if (carrierOption) {
-          mapping[`carrier_${value}`] = carrierOption.style;
-        }
-      }
-    }
-
-    // 2행(지원 구분) 색상 매핑 - CONTRACT_OPTIONS 사용
-    const contractValues = new Set<string>();
-    for (let col = 1; col < currentSheetData[1]?.length; col++) {
-      const value = currentSheetData[1][col]?.trim();
-      if (value && !contractValues.has(value)) {
-        contractValues.add(value);
-        const contractOption = CONTRACT_OPTIONS.find(option => option.value === value);
-        if (contractOption) {
-          mapping[`contract_${value}`] = contractOption.style;
-        }
-      }
-    }
-
-    // 3행(요금제) 색상 매핑 - PLAN_BG_COLORS 사용 (배경색)
-    const planValues = new Set<string>();
-    for (let col = 1; col < currentSheetData[2]?.length; col++) {
-      const value = currentSheetData[2][col]?.trim();
-      if (value) {
-        const planName = value.split('|')[0];
-        if (planName && !planValues.has(planName)) {
-          planValues.add(planName);
-          // 요금제 이름 해시값에 따라 일관된 배경색 부여
-          const colorIndex = getColorIndex(planName, PLAN_BG_COLORS);
-          mapping[`plan_${planName}`] = PLAN_BG_COLORS[colorIndex];
-        }
-      }
-    }
-
-    // 4행(가입 유형) 색상 매핑 - JOIN_TYPE_OPTIONS 사용
-    const joinTypeValues = new Set<string>();
-    for (let col = 1; col < currentSheetData[3]?.length; col++) {
-      const value = currentSheetData[3][col]?.trim();
-      if (value && !joinTypeValues.has(value)) {
-        joinTypeValues.add(value);
-        const joinTypeOption = JOIN_TYPE_OPTIONS.find(option => option.value === value);
-        if (joinTypeOption) {
-          mapping[`joinType_${value}`] = joinTypeOption.style;
-        }
-      }
-    }
-
-    // 5행(업체명) 색상 매핑 - COMPANY_TEXT_COLORS 사용
-    const companyValues = new Set<string>();
-    for (let col = 1; col < currentSheetData[4]?.length; col++) {
-      const value = currentSheetData[4][col]?.trim();
-      if (value && !companyValues.has(value)) {
-        companyValues.add(value);
-        // 업체명 해시값에 따라 일관된 색상 부여
-        const colorIndex = getColorIndex(value, COMPANY_TEXT_COLORS);
-        mapping[`company_${value}`] = COMPANY_TEXT_COLORS[colorIndex];
-      }
-    }
-    return mapping;
-  }, [currentSheetData]);
 
   // 테이블의 전체 너비를 동적으로 계산
   const tableWidth = useMemo(() => {
@@ -147,108 +66,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     
     return { aCol: aColWidth, otherCols: remainingWidth };
   }, [currentSheetData]);
-
-  // 셀의 색상 스타일을 반환하는 함수 (B열부터 적용)
-  const getCellStyle = (rowIndex: number, colIndex: number, value: string) => {
-    if (colIndex === 0) return {}; // A열은 색상 적용 안함
-    
-    const trimmedValue = value?.trim();
-    if (!trimmedValue) return {};
-
-    const style: React.CSSProperties = {};
-
-    if (rowIndex === 0) { // 1행 (통신사) - CARRIER_OPTIONS 스타일 적용
-      const colorClass = colorMapping[`carrier_${trimmedValue}`];
-      // CARRIER_OPTIONS의 스타일을 인라인 스타일로 변환
-      if (colorClass === 'text-red-600 font-bold') {
-        style.color = '#dc2626';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-black font-bold') {
-        style.color = 'var(--color-kt, #000000)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-pink-700 font-bold') {
-        style.color = 'var(--color-lg, #be185d)';
-        style.fontWeight = 'bold';
-      }
-      
-    } else if (rowIndex === 1) { // 2행 (지원 구분) - CONTRACT_OPTIONS 스타일 적용
-      const colorClass = colorMapping[`contract_${trimmedValue}`];      
-      // CONTRACT_OPTIONS의 스타일을 인라인 스타일로 변환 (다크모드에서는 400 톤 사용)
-      if (colorClass === 'text-blue-700 font-bold') {
-        style.color = 'var(--color-blue-700, #1d4ed8)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-cyan-600 font-bold') {
-        style.color = 'var(--color-cyan-600, #0891b2)';
-        style.fontWeight = 'bold';
-      }
-      
-    } else if (rowIndex === 2) { // 3행 (요금제) - 배경색 적용 (기본 배경색 유지)
-      const planName = trimmedValue.split('|')[0];
-      const colorClass = colorMapping[`plan_${planName}`];
-      
-      // PLAN_BG_COLORS의 배경색을 인라인 스타일로 변환 (기본 배경색 위에 오버레이)
-      if (colorClass === 'bg-blue-300') style.backgroundColor = '#93c5fd';
-      else if (colorClass === 'bg-indigo-300') style.backgroundColor = '#a5b4fc';
-      else if (colorClass === 'bg-purple-300') style.backgroundColor = '#c4b5fd';
-      else if (colorClass === 'bg-pink-300') style.backgroundColor = '#f9a8d4';
-      else if (colorClass === 'bg-red-300') style.backgroundColor = '#fca5a5';
-      else if (colorClass === 'bg-orange-300') style.backgroundColor = '#fdba74';
-      else if (colorClass === 'bg-green-300') style.backgroundColor = '#86efac';
-      else if (colorClass === 'bg-teal-300') style.backgroundColor = '#5eead4';
-      
-    } else if (rowIndex === 3) { // 4행 (가입 유형) - JOIN_TYPE_OPTIONS 스타일 적용
-      const colorClass = colorMapping[`joinType_${trimmedValue}`];
-      // JOIN_TYPE_OPTIONS의 스타일을 인라인 스타일로 변환
-      if (colorClass === 'bg-blue-500 text-white') {
-        style.backgroundColor = '#3b82f6';
-        style.color = '#ffffff';
-      } else if (colorClass === 'bg-green-600 text-white') {
-        style.backgroundColor = '#16a34a';
-        style.color = '#ffffff';
-      } else if (colorClass === 'bg-red-500 text-white') {
-        style.backgroundColor = '#ef4444';
-        style.color = '#ffffff';
-      }
-      
-    } else if (rowIndex === 4) { // 5행 (업체명) - COMPANY_TEXT_COLORS 스타일 적용
-      const colorClass = colorMapping[`company_${trimmedValue}`];
-      
-      // COMPANY_TEXT_COLORS 스타일을 인라인 스타일로 변환 (다크모드에서는 400 톤 사용)
-      if (colorClass === 'text-blue-700') {
-        style.color = 'var(--color-blue-700, #1d4ed8)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-red-700') {
-        style.color = 'var(--color-red-700, #b91c1c)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-green-700') {
-        style.color = 'var(--color-green-700, #15803d)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-purple-700') {
-        style.color = 'var(--color-purple-700, #7c3aed)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-orange-700') {
-        style.color = 'var(--color-orange-700, #c2410c)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-teal-700') {
-        style.color = 'var(--color-teal-700, #0f766e)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-pink-700') {
-        style.color = 'var(--color-pink-700, #be185d)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-indigo-700') {
-        style.color = 'var(--color-indigo-700, #4338ca)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-amber-700') {
-        style.color = 'var(--color-amber-700, #a16207)';
-        style.fontWeight = 'bold';
-      } else if (colorClass === 'text-cyan-700') {
-        style.color = 'var(--color-cyan-700, #0e7490)';
-        style.fontWeight = 'bold';
-      }
-    }
-
-    return style;
-  };
 
   useImperativeHandle(ref, () => ({
     fillAllData: (modalData: any) => {
@@ -443,7 +260,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
   };
 
   const handleReset = useCallback(() => {
-    const emptySheet = Array(DEFAULT_ROW_COUNT).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
+    const emptySheet = Array(DEFAULT_ROW_COUNT - 1).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
     setCurrentSheetDataWithoutUndo(emptySheet);
     toast({
       title: "초기화 완료",
@@ -609,7 +426,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       </div>
       <div 
         ref={tableRef}
-        className="bg-card rounded-lg shadow-md border border-border mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]"
+        className="bg-card rounded-lg shadow-md mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]"
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
         tabIndex={-1}
@@ -624,47 +441,52 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                 ))}
               </colgroup>
               <tbody>
-                {currentSheetData.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="hover:bg-muted/50">
-                    {row.map((cell, colIndex) => (
-                      <td 
-                        key={colIndex}
-                        className={`h-6 text-sm border-b border-r border-gray-200 dark:border-gray-700 align-middle ${
-                          colIndex === 0
-                            ? `sticky left-0 z-20 ${rowIndex < 5 ? 'text-center font-bold' : 'text-left'}`
-                            : 'text-center'
-                        } ${
-                          rowIndex < 5 ? 'bg-muted/30' : ''
-                        }`}
-                      >
-                        {colIndex === 0 && rowIndex < 5 ? (
-                          <span className="text-foreground font-bold overflow-hidden truncate block">
-                            {SHEET_HEADER_LABELS[rowIndex]}
-                          </span>
-                        ) : (
-                          <input
-                            type="text"
-                            value={cell}
-                            onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                            className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
-                              colIndex > 0 ? 'text-center' : ''
-                            } ${
-                              rowIndex === 2 || rowIndex === 3 ? 'text-black dark:text-black' : ''
-                            } ${
-                              rowIndex === 4 ? 'text-white dark:text-white' : ''
-                            } ${
-                              rowIndex === 4 ? 'dark:text-blue-400 dark:text-red-400 dark:text-green-400 dark:text-purple-400 dark:text-orange-400 dark:text-teal-400 dark:text-pink-400 dark:text-indigo-400 dark:text-amber-400 dark:text-cyan-400' : ''
+                {/* 3행(요금제) 고유값 배열 생성 */}
+                {(() => {
+                  const planRow = currentSheetData[2] || [];
+                  const uniquePlans = Array.from(new Set(planRow.slice(1).filter(Boolean)));
+                  return currentSheetData.map((row, rowIndex) => (
+                    <tr key={rowIndex} className="hover:bg-muted/50">
+                      {row.map((cell, colIndex) => {
+                        let planColorIdx = undefined;
+                        if (rowIndex === 2 && colIndex > 0 && cell) {
+                          planColorIdx = uniquePlans.indexOf(cell);
+                        }
+                        return (
+                          <td 
+                            key={colIndex}
+                            className={`h-6 text-sm border border-[#020817] border-[1px] p-0 text-center ${
+                              colIndex === 0
+                                ? `sticky left-0 z-20 bg-card text-center font-bold`
+                                : 'text-center'
                             }`}
-                            style={{
-                              ...getCellStyle(rowIndex, colIndex, cell),
-                              fontWeight: rowIndex < 5 ? 'bold' : 'normal'
-                            }}
-                          />
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                          >
+                            {colIndex === 0 && rowIndex < 5 ? (
+                              <span className="text-foreground font-bold overflow-hidden truncate block">
+                                {SHEET_HEADER_LABELS[rowIndex]}
+                              </span>
+                            ) : (
+                              <input
+                                type="text"
+                                value={cell}
+                                onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
+                                className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                                  colIndex > 0 ? 'text-center' : ''
+                                } ${
+                                  rowIndex === 2 && colIndex > 0 && cell
+                                    ? getDynamicCellStyle(rowIndex, cell, planColorIdx)
+                                    : rowIndex < 5 && colIndex > 0
+                                      ? getDynamicCellStyle(rowIndex, cell, colIndex)
+                                      : ''
+                                }`}
+                              />
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           </div>

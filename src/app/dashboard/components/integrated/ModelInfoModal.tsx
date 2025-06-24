@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { BUTTON_THEME } from '@/styles/common';
+import { BUTTON_THEME } from '@/components/ui/colors';
 import { Smartphone, Save, X, Search, Check, ChevronDown } from 'lucide-react';
 import { DataSet, PublicSupportData, ModelInfo as ModelInfoType } from '@/types/dashboard';
 

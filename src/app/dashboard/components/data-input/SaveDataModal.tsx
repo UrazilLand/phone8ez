@@ -1,13 +1,13 @@
 "use client";
 
 import { DataSet } from '@/types/dashboard';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
-import { BUTTON_THEME } from '@/styles/common';
-import { useState } from 'react';
+import { BUTTON_THEME } from '@/components/ui/colors';
+import { useState, useEffect } from 'react';
 
 interface SaveDataModalProps {
   isOpen: boolean;

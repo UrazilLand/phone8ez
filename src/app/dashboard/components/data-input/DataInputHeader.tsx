@@ -53,18 +53,18 @@ export default function DataInputHeader({
       <div className="flex items-center justify-between px-1 py-2">
         <div className="flex items-center gap-2">
           <Button 
-            size="sm"
+            size="default"
             onClick={handleSaveClick}
           >
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="w-4 h-4 mr-2"/>
             <span className="max-md:hidden text-sm font-bold">저장하기</span>
           </Button>
           <Button 
             variant="destructive"
-            size="sm"
+            size="default"
             onClick={onReset}
           >
-            <RotateCcw className="w-4 h-4 mr-2" />
+            <RotateCcw className="w-4 h-4 mr-2"/>
             <span className="max-md:hidden text-sm font-bold">시트초기화</span>
           </Button>
           <div className="flex items-center gap-1 ml-1">

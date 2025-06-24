@@ -3,7 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { DataSet } from '@/types/dashboard';
 import { Save, RotateCcw, Undo, Filter, Plus } from 'lucide-react';
-import { BUTTON_THEME, SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
+import { BUTTON_THEME } from '@/components/ui/colors';
+import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Undo2Icon, Redo2Icon } from "lucide-react";
 
@@ -35,21 +36,21 @@ export default function IntegratedHeader({
   onOpenAdditionalServiceModal,
 }: IntegratedHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-2">
+    <div className="flex items-center justify-between px-1 py-2">
       <div className="flex items-center gap-2">
         <Button 
-          size="sm"
+          size="default"
           onClick={onSave}
         >
-          <Save className="w-4 h-4" />
+          <Save className="w-4 h-4 mr-2" />
           <span className="max-md:hidden text-sm font-bold">저장하기</span>
         </Button>
         <Button 
           variant="destructive"
-          size="sm"
+          size="default"
           onClick={onReset}
         >
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="w-4 h-4 mr-2" />
           <span className="max-md:hidden text-sm font-bold">시트초기화</span>
         </Button>
         <div className="flex items-center gap-1 ml-1">

@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PublicSupportData } from '@/types/dashboard';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { PublicSupportData, DataSet } from '@/types/dashboard';
 import { RefreshCw } from 'lucide-react';
-import { BUTTON_THEME } from '@/styles/common';
+import { BUTTON_THEME } from '@/components/ui/colors';
+import { Button } from "@/components/ui/button";
 
 interface SupportDataModalProps {
   // 공시 데이터 모달 props
