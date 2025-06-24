@@ -7,7 +7,7 @@ import DataSelectionModal from './DataSelectionModal';
 import ModelInfoModal from './ModelInfoModal';
 import AdditionalServiceModal from './AdditionalServiceModal';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
-import { BUTTON_THEME, getDynamicCellStyle } from '@/components/ui/colors';
+import { BUTTON_THEME, getDynamicCellStyle, getDataCellStyle } from '@/components/ui/colors';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -69,6 +69,11 @@ const getInitialSheetData = (dataSets: DataSet[]): string[][] => {
   return Array(DEFAULT_ROW_COUNT - 1).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
 };
 
+// 숫자 포맷팅 함수 (쉼표 + 원)
+const formatCurrency = (value: number): string => {
+  return value.toLocaleString() + '원';
+};
+
 export default function IntegratedSheet({ 
   dataSets, 
   setDataSets, 
@@ -102,8 +107,8 @@ export default function IntegratedSheet({
   const aColumnData = useMemo(() => currentSheetData.map(row => row[0]), [currentSheetData]);
 
   const highlightedCells = useMemo(() => {
-    return calculateHighlightedCells(currentSheetData, sheetHeaders);
-  }, [currentSheetData, sheetHeaders]);
+    return calculateHighlightedCells(currentSheetData, sheetHeaders, aColumnData, dataSets, publicData);
+  }, [currentSheetData, sheetHeaders, aColumnData, dataSets, publicData]);
 
   useEffect(() => {
     const newSheet = currentSheetData.map(row => [...row]);
@@ -548,166 +553,240 @@ export default function IntegratedSheet({
       <div className="bg-card rounded-lg shadow-md mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]">
         <div className="overflow-auto h-full w-full">
           <div className="relative">
-            <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
-              <colgroup>
-                <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
-                {currentSheetData[0]?.slice(1).map((_, index) => (
-                  <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '40px' }} />
-                ))}
-              </colgroup>
-              <tbody>
-                {/* 3행(요금제) 고유값 배열 생성 */}
-                {(() => {
-                  const planRow = currentSheetData[2] || [];
-                  const uniquePlans = Array.from(new Set(planRow.slice(1).filter(Boolean)));
-                  return currentSheetData.map((row, rowIndex) => (
-                    <tr 
-                      key={rowIndex} 
-                      className="hover:bg-muted/50"
-                      onMouseEnter={() => rowIndex === 0 ? setHoveredColumnIndex(-1) : undefined}
-                    >
-                      {row.map((cell, colIndex) => {
-                        let planColorIdx = undefined;
-                        if (rowIndex === 2 && colIndex > 0 && cell) {
-                          planColorIdx = uniquePlans.indexOf(cell);
-                        }
-                        return (
-                          <td 
-                            key={colIndex}
-                            className={`h-6 text-sm border border-[#020817] border-[1px] p-0 bg-white dark:bg-[#3B3B3B] whitespace-nowrap ${
-                              colIndex === 0 && rowIndex < 5 ? 'dark:bg-[#020817]' : ''
-                            } ${
-                              colIndex === 0
-                                ? `sticky left-0 z-20 bg-card text-center font-bold`
-                                : 'text-center'
-                            }`}
-                            onDoubleClick={colIndex === 0 && rowIndex >= 5 ? () => handleOpenModelInfoModal(rowIndex) : undefined}
-                          >
-                            {colIndex === 0 && rowIndex < 5 ? (
-                              <span className="text-foreground font-bold overflow-hidden truncate block">
-                                {SHEET_HEADER_LABELS[rowIndex]}
-                              </span>
-                            ) : (
-                              <div
-                                className={`w-full h-full flex items-center justify-center whitespace-nowrap ${
-                                  rowIndex === 2 && colIndex > 0 && cell
-                                    ? getDynamicCellStyle(rowIndex, cell, planColorIdx)
-                                    : rowIndex < 5 && colIndex > 0
-                                      ? getDynamicCellStyle(rowIndex, cell, colIndex)
-                                      : ''
-                                }`}
-                              >
-                                {/* 1~5행은 셀 값 그대로, 6행 이상은 기존 계산값 렌더링 */}
-                                {colIndex === 0 ? (() => {
-                                  // display:로 시작하는 값 추출
-                                  const displayMatch = typeof cell === 'string' ? cell.match(/display:([^|]+)/) : null;
-                                  let displayValue = displayMatch ? displayMatch[1].trim() : cell;
-                                  // [5G], [LTE] 제거
-                                  displayValue = displayValue.replace(/\[5G\]|\[LTE\]/gi, '').trim();
-                                  return displayValue;
-                                })() 
-                                : rowIndex === 2 ? (typeof cell === 'string' ? cell.split('|')[0] : cell)
-                                : rowIndex === 3 ? (cell === '번호이동' ? '번이' : cell === '기기변경' ? '기변' : cell === '신규가입' ? '신규' : cell)
-                                : rowIndex < 5 ? cell 
-                                : (() => {
-                                  const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
-                                  const calculation = calculateFinalAmount(rowIndex, colIndex, sheetHeaders, aColumnData, dataSets, publicData, currentSheetData);
-                                  const cellContent = calculation.finalAmount === 0 ? '' : calculation.finalAmount.toString();
-                                  const joinType = sheetHeaders[3]?.[colIndex]?.trim();
-                                  const isNegative = calculation.finalAmount < 0;
-
-                                  if (isHighlighted) {
-                                    let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
-                                    switch (joinType) {
-                                      case '번호이동': styleClass += 'bg-blue-400 '; break;
-                                      case '기기변경': styleClass += 'bg-green-400 '; break;
-                                      case '신규가입': styleClass += 'bg-red-400 '; break;
-                                    }
-                                    if (isNegative) {
-                                      styleClass += 'text-red-500 dark:text-red-400';
-                                    } else {
-                                      styleClass += 'text-black';
-                                    }
-                                    return <span className={styleClass}>{cellContent}</span>;
-                                  } else {
-                                    if (isNegative) {
-                                      return <span className="text-red-500 dark:text-red-400">{cellContent}</span>;
-                                    }
-                                    return <span className="text-black dark:text-white">{cellContent}</span>;
-                                  }
-                                })()}
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ));
-                })()}
-                {currentSheetData.map((row, rowIndex) => (
-                  <tr 
-                    key={rowIndex} 
-                    className="hover:bg-muted/50"
-                    onMouseEnter={() => rowIndex === 0 ? setHoveredColumnIndex(-1) : undefined}
-                  >
-                    {row.map((cell, colIndex) => (
-                      <td 
-                        key={colIndex}
-                        className={`h-6 text-sm border border-[#020817] border-[1px] p-0 bg-white dark:bg-[#3B3B3B] whitespace-nowrap ${
-                          colIndex === 0 && rowIndex < 5 ? 'dark:bg-[#020817]' : ''
-                        } ${
-                          colIndex === 0
-                            ? `sticky left-0 z-20 bg-card text-center font-bold`
-                            : 'text-center'
-                        }`}
-                        onDoubleClick={colIndex === 0 && rowIndex >= 5 ? () => handleOpenModelInfoModal(rowIndex) : undefined}
+            <TooltipProvider>
+              <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: getColumnWidth.aCol, minWidth: '160px' }} />
+                  {currentSheetData[0]?.slice(1).map((_, index) => (
+                    <col key={index + 1} style={{ width: getColumnWidth.otherCols, minWidth: '40px' }} />
+                  ))}
+                </colgroup>
+                <tbody
+                  onClick={e => {
+                    // 삭제 모드일 때, X버튼이 아닌 다른 셀 클릭 시 삭제 모드 해제
+                    if (columnToDelete > 0) setColumnToDelete(-1);
+                  }}
+                >
+                  {(() => {
+                    const planRow = currentSheetData[2] || [];
+                    const uniquePlans = Array.from(new Set(planRow.slice(1).filter(Boolean)));
+                    return currentSheetData.map((row, rowIndex) => (
+                      <tr 
+                        key={rowIndex} 
+                        className="hover:bg-muted/50"
+                        onMouseEnter={() => rowIndex === 0 ? setHoveredColumnIndex(-1) : undefined}
                       >
-                        {colIndex === 0 && rowIndex < 5 ? (
-                          <span className="text-foreground font-bold overflow-hidden truncate block">
-                            {SHEET_HEADER_LABELS[rowIndex]}
-                          </span>
-                        ) : (
-                          <div
-                            className="w-full h-full flex items-center justify-center whitespace-nowrap"
-                          >
-                            {(() => {
-                              // 6행 이상은 계산값, 1~5행은 셀 값 그대로
-                              if (rowIndex < 5) return cell;
-                              // 6행 이상 데이터 셀 렌더링 (기존 로직 유지)
+                        {row.map((cell, colIndex) => {
+                          // A열(모델명) 6행 이상: 모델 정보만 Popover
+                          if (colIndex === 0) {
+                            if (rowIndex < 5) {
+                              // 헤더
+                              return (
+                                <td
+                                  key={colIndex}
+                                  className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-gray-200 dark:bg-[#020817] sticky left-0 z-20 text-center font-bold`}
+                                >
+                                  <span className="text-foreground font-bold overflow-hidden truncate block">
+                                    {SHEET_HEADER_LABELS[rowIndex]}
+                                  </span>
+                                </td>
+                              );
+                            }
+                            // 6행 이상: Popover(모델 정보만)
+                            const displayMatch = typeof cell === 'string' ? cell.match(/display:([^|]+)/) : null;
+                            let displayValue = displayMatch ? displayMatch[1].trim() : cell;
+                            displayValue = displayValue.replace(/\[5G\]|\[LTE\]/gi, '').trim();
+                            return (
+                              <td
+                                key={colIndex}
+                                className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-white dark:bg-[#3B3B3B] sticky left-0 z-20 text-left font-bold overflow-hidden`}
+                              >
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <div className="w-full h-full flex items-center px-1 overflow-hidden cursor-pointer" onDoubleClick={() => handleOpenModelInfoModal(rowIndex)}>
+                                      <span>{displayValue}</span>
+                                    </div>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-3 bg-white text-black border border-gray-300 shadow-lg">
+                                    <div className="space-y-1 text-sm">
+                                      {(() => {
+                                        // A열 데이터 파싱
+                                        const codesMatch = cell.match(/codes:([^|]+)/);
+                                        const standardMatch = cell.match(/standard:([^|]+)/);
+                                        const priceMatch = cell.match(/price:(\d+)/);
+                                        const displayContentMatch = cell.match(/display:([^|]+)/);
+                                        return (
+                                          <>
+                                            {codesMatch && (
+                                              <div><strong>선택 모델번호:</strong> {codesMatch[1]}</div>
+                                            )}
+                                            {standardMatch && (
+                                              <div><strong>표준 모델번호:</strong> {standardMatch[1]}</div>
+                                            )}
+                                            {priceMatch && (
+                                              <div><strong>출고가:</strong> {formatCurrency(Number(priceMatch[1]))}</div>
+                                            )}
+                                            {displayContentMatch && (
+                                              <div><strong>모델명:</strong> {displayContentMatch[1]}</div>
+                                            )}
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </td>
+                            );
+                          }
+                          // B열~N열 6행 이상: 계산 정보만 Popover
+                          const shouldShowPopover = (rowIndex === 2) || rowIndex >= 5;
+                          const cellContent = (
+                            rowIndex === 2 ? (typeof cell === 'string' ? cell.split('|')[0] : cell)
+                            : rowIndex === 3 ? (cell === '번호이동' ? '번이' : cell === '기기변경' ? '기변' : cell === '신규가입' ? '신규' : cell)
+                            : rowIndex < 5 ? cell
+                            : (() => {
                               const isHighlighted = highlightedCells.has(`${rowIndex}-${colIndex}`);
                               const calculation = calculateFinalAmount(rowIndex, colIndex, sheetHeaders, aColumnData, dataSets, publicData, currentSheetData);
-                              const cellContent = calculation.finalAmount === 0 ? '' : calculation.finalAmount.toString();
+                              const value = calculation.finalAmount === 0 ? '' : calculation.finalAmount.toString();
                               const joinType = sheetHeaders[3]?.[colIndex]?.trim();
                               const isNegative = calculation.finalAmount < 0;
-
                               if (isHighlighted) {
-                                let styleClass = 'inline-block text-center w-12 rounded-md py-0 font-bold ';
+                                let styleClass = 'inline-block text-center w-8 rounded-md font-bold ';
                                 switch (joinType) {
                                   case '번호이동': styleClass += 'bg-blue-400 '; break;
                                   case '기기변경': styleClass += 'bg-green-400 '; break;
                                   case '신규가입': styleClass += 'bg-red-400 '; break;
                                 }
                                 if (isNegative) {
-                                  styleClass += 'text-red-500 dark:text-red-400';
+                                  styleClass += 'text-red-700 dark:text-red-600';
                                 } else {
                                   styleClass += 'text-black';
                                 }
-                                return <span className={styleClass}>{cellContent}</span>;
+                                return <span className={styleClass}>{value}</span>;
                               } else {
                                 if (isNegative) {
-                                  return <span className="text-red-500 dark:text-red-400">{cellContent}</span>;
+                                  return <span className="text-red-700 dark:text-red-600">{value}</span>;
                                 }
-                                return <span className="text-black dark:text-white">{cellContent}</span>;
+                                return <span className="text-black dark:text-white">{value}</span>;
                               }
-                            })()}
-                          </div>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                            })()
+                          );
+
+                          // B열~N열 6행 이상 Popover
+                          const calculation = rowIndex >= 5 && colIndex > 0 
+                            ? calculateFinalAmount(rowIndex, colIndex, sheetHeaders, aColumnData, dataSets, publicData, currentSheetData)
+                            : null;
+                          const isHighlighted = rowIndex >= 5 && colIndex > 0 ? highlightedCells.has(`${rowIndex}-${colIndex}`) : false;
+                          const isNegative = calculation ? calculation.finalAmount < 0 : false;
+
+                          const dynamicStyle = rowIndex < 5 ? getDynamicCellStyle(rowIndex, cell, colIndex) : '';
+                          const hasBg = dynamicStyle.includes('bg-');
+
+                          if (rowIndex === 0 && colIndex > 0) {
+                            const isDeleteMode = columnToDelete === colIndex;
+                            // 통신사별 색상 서식
+                            let carrierColor = 'bg-gray-200 text-gray-700';
+                            if (cell === 'SK') carrierColor = 'text-red-600';
+                            else if (cell === 'KT') carrierColor = 'text-foreground';
+                            else if (cell === 'LG') carrierColor = 'text-pink-700';
+                            return (
+                              <td
+                                key={colIndex}
+                                className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap text-center font-bold cursor-pointer relative ${isDeleteMode ? 'bg-red-100 dark:bg-red-900' : carrierColor}`}
+                                onClick={e => { e.stopPropagation(); handleColumnClick(colIndex); }}
+                              >
+                                <span className="font-bold overflow-hidden truncate block z-10 relative">
+                                  {cell}
+                                </span>
+                                {isDeleteMode && (
+                                  <button
+                                    className="absolute inset-0 w-full h-full flex items-center justify-center bg-red-500/80 hover:bg-red-600/90 transition-colors z-20"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      handleDeleteColumn(colIndex);
+                                    }}
+                                  >
+                                    <span className="text-white text-lg font-bold">×</span>
+                                  </button>
+                                )}
+                              </td>
+                            );
+                          }
+                          return (
+                            <td
+                              key={colIndex}
+                              className={`h-6 border border-[#020817] p-0 text-center text-sm relative ${
+                                rowIndex < 5
+                                  ? dynamicStyle + ' whitespace-nowrap' + (hasBg ? '' : ' dark:bg-[#3B3B3B]')
+                                  : getDataCellStyle(rowIndex, colIndex, currentSheetData)
+                              } ${
+                                rowIndex >= 5 && colIndex > 0 && isNegative 
+                                  ? 'text-red-700 dark:text-red-600' 
+                                  : rowIndex >= 5 && colIndex > 0 
+                                    ? 'text-black dark:text-white' 
+                                    : ''
+                              }`}
+                            >
+                              {rowIndex < 5 ? (
+                                rowIndex === 2 ? (
+                                  // 3행(요금제)만 Popover 표시
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <div className="w-full h-full flex items-center justify-center cursor-pointer">
+                                        {cellContent}
+                                      </div>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-3 bg-white text-black border border-gray-300 shadow-lg">
+                                      {(() => {
+                                        const parts = cell.split('|');
+                                        return (
+                                          <div className="space-y-1 text-sm">
+                                            <div><strong>요금제명:</strong> {parts[0]}</div>
+                                            {parts[1] && <div><strong>월 요금제1:</strong> {formatCurrency(Number(parts[1]))}</div>}
+                                            {parts[2] && <div><strong>월 요금제2:</strong> {formatCurrency(Number(parts[2]))}</div>}
+                                          </div>
+                                        );
+                                      })()}
+                                    </PopoverContent>
+                                  </Popover>
+                                ) : (
+                                  // 1,2,4,5행은 일반 텍스트만 표시
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    {cellContent}
+                                  </div>
+                                )
+                              ) : colIndex > 0 ? (
+                                // B열~N열 6행 이상 Popover
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <div className="w-full h-full flex items-center justify-center cursor-pointer">
+                                      {/* 셀 내부 컨텐츠에만 하이라이트 배경 적용 */}
+                                      {isHighlighted ? (
+                                        <span className="font-bold rounded-sm px-1 py-0">{cellContent}</span>
+                                      ) : (
+                                        cellContent
+                                      )}
+                                    </div>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-3 bg-white text-black border border-gray-300 shadow-lg">
+                                    <div className="space-y-1 text-sm">
+                                      <div><strong>출고가:</strong> {formatCurrency(calculation?.price || 0)}</div>
+                                      <div><strong>정책지원금:</strong> {formatCurrency((calculation?.policySupport || 0) * 10000)}</div>
+                                      <div><strong>공시지원금:</strong> {formatCurrency(calculation?.publicSupport || 0)}</div>
+                                      <div><strong>부가서비스:</strong> {formatCurrency(calculation?.additionalService || 0)}</div>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              ) : null}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -759,19 +838,6 @@ export default function IntegratedSheet({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* 열 삭제 취소 버튼 */}
-      {columnToDelete > 0 && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Button
-            onClick={handleCancelDelete}
-            className="bg-gray-500 hover:bg-gray-600 text-white"
-            size="sm"
-          >
-            삭제 취소
-          </Button>
-        </div>
-      )}
     </div>
   );
 } 

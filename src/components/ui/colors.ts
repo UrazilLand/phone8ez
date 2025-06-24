@@ -48,6 +48,23 @@ export const PLAN_BG_COLORS = [
   "bg-sky-300"
 ];
 
+export const PLAN_BG_COLORS_400 = [
+  "bg-blue-400",
+  "bg-indigo-400",
+  "bg-purple-400",
+  "bg-pink-400",
+  "bg-red-400",
+  "bg-orange-400",
+  "bg-amber-400",
+  "bg-yellow-400",
+  "bg-lime-400",
+  "bg-green-400",
+  "bg-emerald-400",
+  "bg-teal-400",
+  "bg-cyan-400",
+  "bg-sky-400"
+];
+
 export const COMPANY_TEXT_COLORS = [
   "text-blue-500",
   "text-red-500", 
@@ -128,42 +145,31 @@ export function getColorIndex(text: string, colorsArray: string[]): number {
  */
 export function getDynamicCellStyle(rowIndex: number, cellValue: string, colIndex?: number): string {
   if (!cellValue) {
-    return 'text-muted-foreground'; // 기본 텍스트 색상
+    return 'text-muted-foreground';
   }
-  
   const value = cellValue.trim();
-
   switch (rowIndex) {
     // 통신사
     case 0:
       return CARRIER_OPTIONS.find(opt => opt.variants.includes(value))?.style || 'text-foreground font-bold';
-    
     // 지원 구분 (계약 유형)
     case 1:
       return CONTRACT_OPTIONS.find(opt => opt.value === value)?.style || 'text-foreground font-medium';
-      
-    // 요금제
-    case 2:
-      // 열 인덱스 기반 색상 순환 적용
-      if (typeof colIndex === 'number' && colIndex > 0) {
-        const planColorIndex = (colIndex - 1) % PLAN_BG_COLORS.length;
-        return `${PLAN_BG_COLORS[planColorIndex]} text-black font-medium`;
-      } else {
-        // fallback: 기존 해시 방식
-        const planColorIndex = getColorIndex(value, PLAN_BG_COLORS);
-        return `${PLAN_BG_COLORS[planColorIndex]} text-black font-medium`;
-      }
-
-    // 가입 유형
-    case 3:
-      return JOIN_TYPE_OPTIONS.find(opt => opt.value === value)?.style || 'text-foreground bg-muted/30';
-
+    // 요금제 (3행)
+    case 2: {
+      // 같은 값은 같은 색상, 400계열, 글자색은 항상 검정
+      const planColorIndex = getColorIndex(value, PLAN_BG_COLORS_400);
+      return `${PLAN_BG_COLORS_400[planColorIndex]} text-black font-medium`;
+    }
+    // 가입 유형 (4행)
+    case 3: {
+      const joinType = JOIN_TYPE_OPTIONS.find(opt => opt.value === value);
+      return joinType ? joinType.style : 'bg-muted/30 text-black';
+    }
     // 업체명
     case 4:
-      // 업체명 이름을 기반으로 텍스트 색상 적용
       const companyColorIndex = getColorIndex(value, COMPANY_TEXT_COLORS);
       return `${COMPANY_TEXT_COLORS[companyColorIndex]} font-bold`;
-      
     default:
       return 'text-muted-foreground';
   }
@@ -177,70 +183,31 @@ export function getDynamicCellStyle(rowIndex: number, cellValue: string, colInde
  * @returns Tailwind CSS 클래스 문자열
  */
 export function getDataCellStyle(rowIndex: number, colIndex: number, sheetData: string[][]): string {
-  // B열(인덱스 1)부터 6행(인덱스 5)부터만 적용
-  if (colIndex === 0 || rowIndex < 5) {
-    return '';
-  }
-
-  const carrier = sheetData[0]?.[colIndex]?.trim();
-  
-  let styleClasses = '';
-
-  // 1행 데이터(통신사)에 따른 배경색
-  if (carrier) {
-    switch (carrier) {
-      case 'SK':
-        styleClasses += 'bg-red-100 ';
-        break;
-      case 'KT':
-        styleClasses += 'bg-gray-100 ';
-        break;
-      case 'LG':
-        styleClasses += 'bg-purple-100 ';
-        break;
-    }
-  }
-
-  // 교차 색상 적용 (6행부터)
   if (rowIndex >= 5) {
-    if (rowIndex % 2 === 0) {
-      // 짝수 행: 더 진한 색상
-      if (carrier) {
-        switch (carrier) {
-          case 'SK':
-            styleClasses = 'bg-red-200 ';
-            break;
-          case 'KT':
-            styleClasses = 'bg-gray-200 ';
-            break;
-          case 'LG':
-            styleClasses = 'bg-purple-200 ';
-            break;
-        }
-      } else {
-        styleClasses = 'bg-gray-200 ';
-      }
-    } else {
-      // 홀수 행: 더 연한 색상
-      if (carrier) {
-        switch (carrier) {
-          case 'SK':
-            styleClasses = 'bg-red-50 ';
-            break;
-          case 'KT':
-            styleClasses = 'bg-gray-50 ';
-            break;
-          case 'LG':
-            styleClasses = 'bg-purple-50 ';
-            break;
-        }
-      } else {
-        styleClasses = 'bg-gray-50 ';
-      }
+    const carrier = sheetData[0]?.[colIndex]?.trim();
+    const isEven = rowIndex % 2 === 0;
+    if (carrier === 'SK') {
+      return isEven
+        ? 'bg-red-100 dark:bg-red-800'
+        : 'bg-red-200 dark:bg-red-900';
     }
+    if (carrier === 'KT') {
+      return isEven
+        ? 'bg-gray-100 dark:bg-gray-700'
+        : 'bg-gray-200 dark:bg-gray-800';
+    }
+    if (carrier === 'LG') {
+      return isEven
+        ? 'bg-purple-100 dark:bg-fuchsia-800'
+        : 'bg-purple-200 dark:bg-fuchsia-900';
+    }
+    // 기타: 기본 교차색상
+    return isEven
+      ? 'bg-white dark:bg-[#232323]'
+      : 'bg-gray-100 dark:bg-[#353535]';
   }
-
-  return styleClasses;
+  // 1~5행 헤더
+  return 'bg-white dark:bg-[#3B3B3B]';
 }
 
 /**

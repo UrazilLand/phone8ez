@@ -66,7 +66,10 @@ export const findMatchingValue = (
  */
 export const calculateHighlightedCells = (
   currentSheetData: string[][], 
-  sheetHeaders: string[][]
+  sheetHeaders: string[][],
+  aColumnData: string[],
+  dataSets: DataSet[],
+  publicData: any
 ): Set<string> => {
   const highlightSet = new Set<string>();
   if (currentSheetData.length < 5) return highlightSet;
@@ -82,14 +85,16 @@ export const calculateHighlightedCells = (
     for (let c = 1; c < row.length; c++) {
       const carrier = sheetHeaders[0]?.[c]?.trim();
       const joinType = sheetHeaders[3]?.[c]?.trim();
-      const cellValue = row[c]?.split('|')[0].split(';')[0].trim();
-
-      if (carrier && joinType && cellValue && !isNaN(Number(cellValue))) {
-        const key = `${carrier}-${joinType}`;
-        const numValue = Number(cellValue);
-
-        if (minValues[key] === undefined || numValue < minValues[key]) {
-          minValues[key] = numValue;
+      
+      if (carrier && joinType) {
+        const calculation = calculateFinalAmount(r, c, sheetHeaders, aColumnData, dataSets, publicData, currentSheetData);
+        const finalAmount = calculation.finalAmount;
+        
+        if (finalAmount !== 0) {
+          const key = `${carrier}-${joinType}`;
+          if (minValues[key] === undefined || finalAmount < minValues[key]) {
+            minValues[key] = finalAmount;
+          }
         }
       }
     }
@@ -98,14 +103,16 @@ export const calculateHighlightedCells = (
     for (let c = 1; c < row.length; c++) {
       const carrier = sheetHeaders[0]?.[c]?.trim();
       const joinType = sheetHeaders[3]?.[c]?.trim();
-      const cellValue = row[c]?.split('|')[0].split(';')[0].trim();
-
-      if (carrier && joinType && cellValue && !isNaN(Number(cellValue))) {
-        const key = `${carrier}-${joinType}`;
-        const numValue = Number(cellValue);
-
-        if (minValues[key] === numValue) {
-          highlightSet.add(`${r}-${c}`);
+      
+      if (carrier && joinType) {
+        const calculation = calculateFinalAmount(r, c, sheetHeaders, aColumnData, dataSets, publicData, currentSheetData);
+        const finalAmount = calculation.finalAmount;
+        
+        if (finalAmount !== 0) {
+          const key = `${carrier}-${joinType}`;
+          if (minValues[key] === finalAmount) {
+            highlightSet.add(`${r}-${c}`);
+          }
         }
       }
     }
