@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { DataSet } from '@/types/dashboard';
 import { Save, RotateCcw, Undo2Icon, Redo2Icon, Database } from 'lucide-react';
+import { BUTTON_THEME } from '@/components/ui/colors';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from 'react';
 import DataInputModal from './DataInputModal';
@@ -53,15 +54,14 @@ export default function DataInputHeader({
       <div className="flex items-center justify-between px-1 py-2">
         <div className="flex items-center gap-2">
           <Button 
-            size="default"
+            className={BUTTON_THEME.primary}
             onClick={handleSaveClick}
           >
             <Save className="w-4 h-4 mr-2"/>
             <span className="max-md:hidden text-sm font-bold">저장하기</span>
           </Button>
           <Button 
-            variant="destructive"
-            size="default"
+            className={BUTTON_THEME.danger_fill}
             onClick={onReset}
           >
             <RotateCcw className="w-4 h-4 mr-2"/>
@@ -108,7 +108,7 @@ export default function DataInputHeader({
             size="sm"
             onClick={handleDataInputClick}
           >
-            <Database className="w-4 h-4 mr-2" />
+            <Database className="w-4 h-4" />
             <span className="max-md:hidden text-sm font-bold">데이터 입력</span>
           </Button>
         </div>

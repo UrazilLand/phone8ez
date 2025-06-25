@@ -159,7 +159,7 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                 {HEADERS.map((header, index) => (
                   <th
                     key={index}
-                    className={`h-6 text-sm font-bold text-foreground border border-[#020817] border-[1px] p-0 text-center ${
+                    className={`h-6 text-sm font-bold text-foreground bg-gray-200 dark:bg-[#222222] border border-[#020817] border-[1px] p-0 text-center ${
                       index === 0 ? 'sticky left-0 z-20 bg-card text-center font-bold' : ''
                     }`}
                   >
@@ -176,7 +176,7 @@ export default function ModelSheet({ dataSets, setDataSets, publicData }: ModelS
                     {Array(HEADERS.length).fill(null).map((_, colIndex) => (
                       <td
                         key={colIndex}
-                        className={`h-6 text-sm border border-[#020817] border-[1px] p-0 bg-white dark:bg-[#3B3B3B] ${
+                        className={`h-6 text-sm border border-[#020817] border-[1px] p-0 dark:bg-[#3B3B3B] ${
                           colIndex === 0
                             ? `sticky left-0 z-20 bg-white dark:bg-[#3B3B3B] text-center font-bold`
                             : 'text-center'

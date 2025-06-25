@@ -30,7 +30,8 @@ interface CarrierSpecificState {
 interface ExtractedDataByCarrier {
   companies: string[];
   plansByCompany: Record<string, string[]>; // { [companyName]: plans[] }
-  monthlyFees: number[];
+  monthlyFees5G: number[];
+  monthlyFeesLTE: number[];
 }
 
 const getInitialCarrierState = (): CarrierSpecificState => ({
@@ -60,19 +61,22 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
 
   // 모든 데이터를 미리 추출하여 저장
   const [extractedDataByCarrier, setExtractedDataByCarrier] = useState<Record<string, ExtractedDataByCarrier>>({
-    SK: { companies: [], plansByCompany: {}, monthlyFees: [] },
-    KT: { companies: [], plansByCompany: {}, monthlyFees: [] },
-    LG: { companies: [], plansByCompany: {}, monthlyFees: [] },
+    SK: { companies: [], plansByCompany: {}, monthlyFees5G: [], monthlyFeesLTE: [] },
+    KT: { companies: [], plansByCompany: {}, monthlyFees5G: [], monthlyFeesLTE: [] },
+    LG: { companies: [], plansByCompany: {}, monthlyFees5G: [], monthlyFeesLTE: [] },
   });
 
   // 모달 열릴 때 모든 데이터를 한 번에 추출
   useEffect(() => {
     if (isOpen) {
+      console.log('publicData:', publicData);
+      console.log('publicData.carrier_monthly_fees:', publicData?.carrier_monthly_fees);
+      
       const carriers: ('SK' | 'KT' | 'LG')[] = ['SK', 'KT', 'LG'];
       const newExtractedData: Record<string, ExtractedDataByCarrier> = {
-        SK: { companies: [], plansByCompany: {}, monthlyFees: [] },
-        KT: { companies: [], plansByCompany: {}, monthlyFees: [] },
-        LG: { companies: [], plansByCompany: {}, monthlyFees: [] },
+        SK: { companies: [], plansByCompany: {}, monthlyFees5G: [], monthlyFeesLTE: [] },
+        KT: { companies: [], plansByCompany: {}, monthlyFees5G: [], monthlyFeesLTE: [] },
+        LG: { companies: [], plansByCompany: {}, monthlyFees5G: [], monthlyFeesLTE: [] },
       };
 
       // '통합' 데이터셋을 제외한 일반 데이터셋만 필터링
@@ -89,12 +93,17 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
         });
         
         // 월 요금제 추출
-        const monthlyFees = extractMonthlyFeesByCarrier(publicData, carrier);
+        const monthlyFees5G = extractMonthlyFeesByCarrier(publicData, carrier, '5G');
+        const monthlyFeesLTE = extractMonthlyFeesByCarrier(publicData, carrier, 'LTE');
+
+        console.log(`${carrier} 5G fees:`, monthlyFees5G);
+        console.log(`${carrier} LTE fees:`, monthlyFeesLTE);
 
         newExtractedData[carrier] = {
           companies,
           plansByCompany,
-          monthlyFees
+          monthlyFees5G,
+          monthlyFeesLTE
         };
       });
 
@@ -292,7 +301,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
               {/* 3열: 월 요금제 1 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                  월 요금제 1
+                  5G 월 요금제
                 </div>
                 <div className="space-y-2">
                   {currentDisplayCompany ? (
@@ -312,7 +321,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                                   <SelectValue placeholder="월 요금 선택" className="text-center" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                                  {currentCarrierData.monthlyFees
+                                  {currentCarrierData.monthlyFees5G
                                     .sort((a, b) => b - a)
                                     .map((fee) => (
                                     <SelectItem key={fee} value={fee.toString()} className="text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{fee.toLocaleString()}원</SelectItem>
@@ -339,7 +348,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
               {/* 4열: 월 요금제 2 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                  월 요금제 2
+                  LTE 월 요금제
                 </div>
                 <div className="space-y-2">
                   {currentDisplayCompany ? (
@@ -359,7 +368,7 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                                   <SelectValue placeholder="월 요금 선택" className="text-center" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                                  {currentCarrierData.monthlyFees
+                                  {currentCarrierData.monthlyFeesLTE
                                     .sort((a, b) => b - a)
                                     .map((fee) => (
                                     <SelectItem key={fee} value={fee.toString()} className="text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{fee.toLocaleString()}원</SelectItem>

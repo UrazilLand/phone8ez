@@ -39,15 +39,14 @@ export default function IntegratedHeader({
     <div className="flex items-center justify-between px-1 py-2">
       <div className="flex items-center gap-2">
         <Button 
-          size="default"
+          className={BUTTON_THEME.primary}
           onClick={onSave}
         >
           <Save className="w-4 h-4 mr-2" />
           <span className="max-md:hidden text-sm font-bold">저장하기</span>
         </Button>
         <Button 
-          variant="destructive"
-          size="default"
+          className={BUTTON_THEME.danger_fill}
           onClick={onReset}
         >
           <RotateCcw className="w-4 h-4 mr-2" />

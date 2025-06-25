@@ -89,7 +89,7 @@ export default function ModelHeader({
   };
 
   return (
-    <div className="flex items-center justify-between p-4">
+    <div className="flex items-center justify-between p-2">
       {/* 왼쪽 드롭다운 */}
       <div className="flex items-center gap-2">
         <Select value={selectedModel} onValueChange={handleModelSelect}>

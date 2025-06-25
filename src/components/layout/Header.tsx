@@ -26,7 +26,6 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const { isSignedIn } = useAuth();
-  const { openSignIn } = useSignIn();
 
   useEffect(() => {
     setIsMounted(true);

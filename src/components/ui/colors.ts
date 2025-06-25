@@ -62,12 +62,12 @@ export const COMPANY_TEXT_COLORS = [
 ];
 
 export const BUTTON_THEME = {
-  primary: "bg-blue-600 border-2 border-blue-600 text-white font-extrabold rounded hover:bg-blue-700 transition-colors",
-  secondary: "bg-card border-2 border-blue-600 text-blue-600 font-extrabold rounded hover:bg-blue-100 transition-colors",
-  danger: "bg-card border-2 border-red-600 text-red-600 font-extrabold rounded hover:bg-red-100 transition-colors",
-  danger_fill: "bg-red-600 border-2 border-red-600 text-white font-extrabold rounded hover:bg-red-700 transition-colors",
-  disabled: "bg-gray-100 border-2 border-gray-300 text-gray-400 font-extrabold rounded cursor-not-allowed",
-  gray: "bg-gray-100 border-2 border-gray-300 text-gray-600 font-extrabold rounded hover:bg-gray-200 transition-colors"
+  primary: "h-10 py-2 min-w-0 min-h-0 leading-none text-base flex items-center justify-center bg-blue-600 border-2 border-blue-600 text-white font-extrabold rounded hover:bg-blue-700 transition-colors",
+  secondary: "h-10 py-2 min-w-0 min-h-0 leading-none text-base flex items-center justify-center bg-card border-2 border-blue-600 text-blue-600 font-extrabold rounded hover:bg-blue-100 transition-colors",
+  danger: "h-10 py-2 min-w-0 min-h-0 leading-none text-base flex items-center justify-center bg-card border-2 border-red-600 text-red-600 font-extrabold rounded hover:bg-red-100 transition-colors",
+  danger_fill: "h-10 py-2 min-w-0 min-h-0 leading-none text-base flex items-center justify-center bg-red-600 border-2 border-red-600 text-white font-extrabold rounded hover:bg-red-700 transition-colors",
+  disabled: "h-10 py-2 min-w-0 min-h-0 leading-none text-base flex items-center justify-center bg-gray-100 border-2 border-gray-300 text-gray-400 font-extrabold rounded cursor-not-allowed",
+  gray: "h-10 py-2 min-w-0 min-h-0 leading-none text-base flex items-center justify-center bg-gray-100 border-2 border-gray-300 text-gray-600 font-extrabold rounded hover:bg-gray-200 transition-colors"
 };
 
 export const SUPPORT_TYPE_STYLES = [
@@ -156,6 +156,10 @@ export function getDynamicCellStyle(rowIndex: number, cellValue: string, colInde
  */
 export function getDataCellStyle(rowIndex: number, colIndex: number, sheetData: string[][]): string {
   if (rowIndex >= 5) {
+    // 데이터가 없으면 라이트모드: 흰색, 다크모드: #3B3B3B
+    if (!sheetData[rowIndex]?.[colIndex]) {
+      return 'bg-white dark:bg-[#3B3B3B]';
+    }
     const carrier = sheetData[0]?.[colIndex]?.trim();
     const isEven = rowIndex % 2 === 0;
     if (carrier === 'SK') {

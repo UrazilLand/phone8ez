@@ -63,14 +63,15 @@ export function extractPlansByCarrierAndCompany(dataSets: DataSet[], carrier: st
  * 공시 데이터에서 특정 통신사의 월 요금제를 추출합니다.
  * @param publicData 공시 데이터
  * @param carrier 통신사
+ * @param networkType 네트워크 타입 ('5G' 또는 'LTE')
  * @returns 중복 제거된 월 요금제 배열 (숫자 형식)
  */
-export function extractMonthlyFeesByCarrier(publicData: PublicSupportData | null, carrier: 'SK' | 'KT' | 'LG'): number[] {
-  if (!publicData?.carrier_monthly_fees?.[carrier]) {
+export function extractMonthlyFeesByCarrier(publicData: PublicSupportData | null, carrier: 'SK' | 'KT' | 'LG', networkType: '5G' | 'LTE' = '5G'): number[] {
+  if (!publicData?.carrier_monthly_fees?.[carrier]?.[networkType]) {
     return [];
   }
   
-  const monthlyFees = publicData.carrier_monthly_fees[carrier];
+  const monthlyFees = publicData.carrier_monthly_fees[carrier][networkType];
   return Array.isArray(monthlyFees) ? [...new Set(monthlyFees)].sort((a, b) => a - b) : [];
 }
 

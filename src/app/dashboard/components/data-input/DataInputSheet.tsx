@@ -456,9 +456,11 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                           <td 
                             key={colIndex}
                             className={`h-6 text-sm border border-[#020817] border-[1px] p-0 text-center ${
-                              colIndex === 0
-                                ? `sticky left-0 z-20 bg-gray-200 dark:bg-card text-center font-bold`
-                                : 'text-center'
+                              colIndex === 0 && rowIndex < 5
+                                ? `sticky left-0 z-20 bg-gray-200 dark:bg-[#222222] text-center font-bold`
+                                : colIndex === 0
+                                  ? `sticky left-0 z-20 bg-gray-200 dark:bg-card text-center font-bold`
+                                  : 'text-center'
                             }`}
                           >
                             {colIndex === 0 && rowIndex < 5 ? (

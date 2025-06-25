@@ -139,9 +139,21 @@ export interface PublicSupportData {
   total_models: number;
   model_info: ModelInfo[];
   carrier_monthly_fees: {
-    SK: number[];
-    KT: number[];
-    LG: number[];
+    SK: {
+      "5G": number[];
+      "LTE": number[];
+      "Unknown": number[];
+    };
+    KT: {
+      "5G": number[];
+      "LTE": number[];
+      "Unknown": number[];
+    };
+    LG: {
+      "5G": number[];
+      "LTE": number[];
+      "Unknown": number[];
+    };
   };
   manufacturers: {
     [key: string]: Manufacturer;
