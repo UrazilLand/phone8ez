@@ -262,6 +262,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
   const handleReset = useCallback(() => {
     const emptySheet = Array(DEFAULT_ROW_COUNT - 1).fill(null).map(() => Array(DEFAULT_COLUMN_COUNT).fill(''));
     setCurrentSheetDataWithoutUndo(emptySheet);
+    setLastAppliedData(null);
     toast({
       title: "초기화 완료",
       description: "시트가 초기화되었습니다.",
@@ -472,15 +473,15 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                 type="text"
                                 value={cell}
                                 onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                                className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
-                                  colIndex > 0 ? 'text-center' : ''
-                                } ${
-                                  rowIndex === 2 && colIndex > 0 && cell
+                                className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+                                  ${colIndex === 0 && rowIndex >= 5 ? 'bg-gray-100 dark:bg-[#353535] text-left font-bold' : ''}
+                                  ${colIndex > 0 ? 'text-center' : ''}
+                                  ${rowIndex === 2 && colIndex > 0 && cell
                                     ? getDynamicCellStyle(rowIndex, cell, planColorIdx)
                                     : rowIndex < 5 && colIndex > 0
                                       ? getDynamicCellStyle(rowIndex, cell, colIndex)
-                                      : ''
-                                }`}
+                                      : ''}
+                                `}
                               />
                             )}
                           </td>

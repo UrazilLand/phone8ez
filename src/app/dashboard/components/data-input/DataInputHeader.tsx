@@ -5,7 +5,7 @@ import { DataSet } from '@/types/dashboard';
 import { Save, RotateCcw, Undo2Icon, Redo2Icon, Database } from 'lucide-react';
 import { BUTTON_THEME } from '@/components/ui/colors';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import DataInputModal from './DataInputModal';
 import SaveDataModal from './SaveDataModal';
 
@@ -34,6 +34,7 @@ export default function DataInputHeader({
 }: DataInputHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const modalRef = useRef<any>(null);
 
   const handleDataInputClick = () => {
     setIsModalOpen(true);
@@ -49,6 +50,11 @@ export default function DataInputHeader({
     setIsSaveModalOpen(false);
   };
 
+  const handleResetAll = () => {
+    onReset();
+    modalRef.current?.reset();
+  };
+
   return (
     <>
       <div className="flex items-center justify-between px-1 py-2">
@@ -62,7 +68,7 @@ export default function DataInputHeader({
           </Button>
           <Button 
             className={BUTTON_THEME.danger_fill}
-            onClick={onReset}
+            onClick={handleResetAll}
           >
             <RotateCcw className="w-4 h-4 mr-2"/>
             <span className="max-md:hidden text-sm font-bold">시트초기화</span>
@@ -115,6 +121,7 @@ export default function DataInputHeader({
       </div>
 
       <DataInputModal 
+        ref={modalRef}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         dataSets={dataSets}

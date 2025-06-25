@@ -47,6 +47,8 @@ interface DataSelectionModalProps {
   publicData: PublicSupportData | null;
 }
 
+const COMPANY_BUTTON_STYLE = "w-full justify-center text-center h-8 rounded border font-bold text-sm transition-colors";
+
 export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets, publicData }: DataSelectionModalProps) {
   const [activeTab, setActiveTab] = useState('SK');
   
@@ -249,12 +251,12 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                       <Button
                         key={company}
                         onClick={() => handleCompanySelect(company)}
-                        className={`w-full justify-center text-center h-8 ${
-                          isCurrentCompany 
-                            ? BUTTON_THEME.primary 
-                            : hasSelectedPlans 
-                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800' 
-                              : BUTTON_THEME.secondary
+                        className={`${COMPANY_BUTTON_STYLE} ${
+                          isCurrentCompany
+                            ? 'bg-blue-600 border-blue-600 text-white'
+                            : hasSelectedPlans
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800'
+                              : 'bg-white border-gray-300 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                         }`}
                       >
                         {company}
@@ -282,8 +284,13 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                           <Button
                             key={plan}
                             onClick={() => handlePlanToggle(plan)}
-                            variant={isSelected ? 'default' : 'outline'}
-                            className={`w-full justify-center text-center h-8 ${isSelected ? BUTTON_THEME.primary : ''}`}
+                            variant={undefined}
+                            size={undefined}
+                            className={`w-full justify-center text-center h-8 rounded border font-bold text-sm transition-colors ${
+                              isSelected
+                                ? 'bg-blue-600 border-blue-600 text-white'
+                                : 'bg-white border-gray-300 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                            }`}
                           >
                             {plan}
                           </Button>
@@ -314,13 +321,14 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                           <div key={plan} className="h-8 flex items-center">
                             {isSelected ? (
                               <Select
-                                value={planSelection?.monthlyFee1?.toString() || ""}
-                                onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee1', value)}
+                                value={planSelection?.monthlyFee1?.toString() || "none"}
+                                onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee1', value === "none" ? null : value)}
                               >
                                 <SelectTrigger className="text-gray-800 dark:text-gray-200 h-8 text-center justify-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                                   <SelectValue placeholder="월 요금 선택" className="text-center" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                                  <SelectItem value="none">선택 없음</SelectItem>
                                   {currentCarrierData.monthlyFees5G
                                     .sort((a, b) => b - a)
                                     .map((fee) => (
@@ -361,13 +369,14 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
                           <div key={plan} className="h-8 flex items-center">
                             {isSelected ? (
                               <Select
-                                value={planSelection?.monthlyFee2?.toString() || ""}
-                                onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee2', value)}
+                                value={planSelection?.monthlyFee2?.toString() || "none"}
+                                onValueChange={(value) => handleMonthlyFeeChange(plan, 'monthlyFee2', value === "none" ? null : value)}
                               >
                                 <SelectTrigger className="text-gray-800 dark:text-gray-200 h-8 text-center justify-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                                   <SelectValue placeholder="월 요금 선택" className="text-center" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                                  <SelectItem value="none">선택 없음</SelectItem>
                                   {currentCarrierData.monthlyFeesLTE
                                     .sort((a, b) => b - a)
                                     .map((fee) => (

@@ -599,7 +599,7 @@ export default function IntegratedSheet({
                             return (
                               <td
                                 key={colIndex}
-                                className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-white dark:bg-[#3B3B3B] sticky left-0 z-20 text-left font-bold overflow-hidden`}
+                                className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-gray-100 dark:bg-[#353535] sticky left-0 z-20 text-left font-bold overflow-hidden border-r border-r-gray-300 dark:border-r-gray-700`}
                               >
                                 <Popover>
                                   <PopoverTrigger asChild>

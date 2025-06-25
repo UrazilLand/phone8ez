@@ -212,8 +212,11 @@ export default function AdditionalServiceModal({
                         <Input
                           className="w-1/3 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-600"
                           placeholder="할인금액"
-                          value={service.discount}
-                          onChange={(e) => handleServiceChange(index, 'discount', e.target.value)}
+                          value={service.discount !== '' ? Number(service.discount).toLocaleString() : ''}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, "");
+                            handleServiceChange(index, 'discount', raw);
+                          }}
                         />
                       </div>
                     ))}

@@ -70,7 +70,7 @@ const Header = () => {
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium flex items-center justify-center h-10 transition-colors duration-150${mobile ? ' block w-full text-center my-1' : ''} ${isActive ? 'text-blue-600' : 'text-muted-foreground'} hover:text-blue-600`}
+              className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium flex items-center justify-center h-10 transition-colors duration-150${mobile ? ' block w-full text-center my-1' : ''} ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'} hover:text-blue-600 dark:hover:text-blue-400`}
               onClick={() => mobile && setIsMobileMenuOpen(false)}
             >
               {link.label}
@@ -86,12 +86,12 @@ const Header = () => {
       <>
         <SignedOut>
           <SignInButton mode="modal">
-            <Button variant="ghost" className={`text-foreground hover:text-blue-600 px-3 ${mobile ? 'w-full justify-start' : ''}`}>
+            <Button variant="ghost" className={`text-foreground hover:text-blue-600 px-3 ${mobile ? 'w-full justify-start text-gray-900 dark:text-white' : ''}`}>
               로그인
             </Button>
           </SignInButton>
           <SignUpButton mode="modal">
-            <Button variant="default" className={`bg-blue-600 text-white hover:bg-blue-700 px-4 font-semibold shadow-none ${mobile ? 'w-full justify-start' : ''}`}>
+            <Button variant="default" className={`bg-blue-600 text-white hover:bg-blue-700 px-4 font-semibold shadow-none ${mobile ? 'w-full justify-start text-gray-900 dark:text-white' : ''}`}>
               회원가입
             </Button>
           </SignUpButton>
@@ -176,35 +176,31 @@ const Header = () => {
                   <span className="sr-only">메뉴 열기</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full max-w-xs bg-white p-6">
+              <SheetContent side="right" className="w-full max-w-xs bg-white dark:bg-[#222222] p-6">
                 <div className="flex justify-between items-center mb-6">
                   {/* 모바일에서도 파비콘 + 로고 */}
                   <div className="flex items-center min-w-[48px] space-x-2">
                     <img src="/favicon.png" alt="로고 아이콘" className="w-7 h-7 mr-1" />
                     <Logo />
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
-                    <X className="h-6 w-6" />
-                    <span className="sr-only">메뉴 닫기</span>
-                  </Button>
                 </div>
                 <nav className="flex flex-col space-y-1">
                   <NavLinksContent mobile={true} />
                   <hr className="my-3 border-border" />
                   <Button
                     variant="ghost"
-                    className="w-full justify-start"
+                    className="w-full justify-center text-gray-900 dark:text-white"
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   >
                     {theme === 'dark' ? (
                       <>
-                        <Moon className="mr-2 h-4 w-4" />
-                        라이트 모드
+                        <Moon className="mr-2 h-4 w-4 hidden lg:inline" />
+                        다크 모드
                       </>
                     ) : (
                       <>
-                        <Sun className="mr-2 h-4 w-4" />
-                        다크 모드
+                        <Sun className="mr-2 h-4 w-4 hidden lg:inline" />
+                        라이트 모드
                       </>
                     )}
                   </Button>

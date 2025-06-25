@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, GripVertical } from 'lucide-react';
 import { BUTTON_THEME, CONTRACT_OPTIONS, JOIN_TYPE_OPTIONS } from '@/components/ui/colors';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -56,13 +56,13 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
-export default function DataInputModal({
+const DataInputModal = forwardRef(function DataInputModal({
   isOpen,
   onClose,
   dataSets,
   setDataSets,
   onApplyData,
-}: DataInputModalProps) {
+}: DataInputModalProps, ref) {
   // 지원 구분 항목들 (CONTRACT_OPTIONS 참고)
   const [supportItems, setSupportItems] = useState([
     { id: 'support-1', label: '공시', value: '', style: 'text-green-700 font-bold' },
@@ -250,6 +250,10 @@ export default function DataInputModal({
     
     onClose();
   };
+
+  useImperativeHandle(ref, () => ({
+    reset: handleReset
+  }));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -517,4 +521,6 @@ export default function DataInputModal({
       </DialogContent>
     </Dialog>
   );
-} 
+});
+
+export default DataInputModal; 
