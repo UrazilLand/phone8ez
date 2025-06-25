@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
-import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
+import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut, useAuth, useSignIn } from '@clerk/nextjs';
 
 const MAIN_COLOR = 'text-blue-600 border-blue-600';
 
@@ -25,6 +25,8 @@ const Header = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
+  const { isSignedIn } = useAuth();
+  const { openSignIn } = useSignIn();
 
   useEffect(() => {
     setIsMounted(true);
@@ -35,8 +37,25 @@ const Header = () => {
       <>
         {navLinks.map((link) => {
           if (link.emphasized) {
+            if (!isSignedIn) {
+              return (
+                <SignInButton mode="modal" key={link.href}>
+                  <a
+                    href="#"
+                    className={`px-3 py-1.5 rounded-full font-bold border-4 bg-white shadow-sm transition-all duration-200 text-sm md:text-base hover:scale-110 hover:bg-blue-50 focus:scale-110 active:scale-105 flex items-center justify-center h-10 ${MAIN_COLOR} ${mobile ? 'block w-full text-center my-1' : ''}`}
+                    style={{ minWidth: 110, minHeight: 36 }}
+                    onClick={e => {
+                      e.preventDefault();
+                      if (mobile) setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    {link.label}
+                  </a>
+                </SignInButton>
+              );
+            }
             return (
-              <Link
+              <a
                 key={link.href}
                 href={link.href}
                 className={`px-3 py-1.5 rounded-full font-bold border-4 bg-white shadow-sm transition-all duration-200 text-sm md:text-base hover:scale-110 hover:bg-blue-50 focus:scale-110 active:scale-105 flex items-center justify-center h-10 ${MAIN_COLOR} ${mobile ? 'block w-full text-center my-1' : ''}`}
@@ -44,7 +63,7 @@ const Header = () => {
                 onClick={() => mobile && setIsMobileMenuOpen(false)}
               >
                 {link.label}
-              </Link>
+              </a>
             );
           }
           const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
