@@ -149,12 +149,12 @@ const howToUseSteps = [
   {
     title: '5. 동영상 가이드',
     videos: [
-      'https://www.youtube.com/embed/dQw4w9WgXcQ',
-      'https://www.youtube.com/embed/HdFxavSE9H8',
+      'https://www.youtube.com/embed/GLs7U2jrITg',
+      'https://www.youtube.com/embed/UuaoCJgtErk',
     ],
     descriptions: [
-      '설명1: 기본 사용법을 영상으로 확인하세요.',
-      '설명2: 고급 기능 활용법을 배우세요.'
+      '데이터를 입력하는 방법을 영상으로 확인하세요.',
+      '통합 데이터를 설정하는 방법을 영상으로 확인하세요.'
     ],
   },
 ];
