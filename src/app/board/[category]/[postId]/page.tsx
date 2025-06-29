@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Post } from '@/app/board/components/BoardList';
+import type { Comment } from '@/app/comment/components/CommentList';
 
 // Mock data generation
 const generateMockPostDetail = (category: string, postId: number): Post & { content: string; image_url?: string; video_url?: string } => {
