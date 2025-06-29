@@ -292,24 +292,5 @@ const customLocalization = {
 };
 
 export default function ClerkAppearanceProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider
-      localization={customLocalization}
-      appearance={{
-        elements: {
-          card: 'rounded-xl shadow-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700',
-          headerTitle: 'text-lg font-bold text-gray-900 dark:text-white',
-          headerSubtitle: 'text-sm text-gray-600 dark:text-gray-300',
-          formFieldLabel: 'text-sm text-gray-700 dark:text-gray-200',
-          formFieldInput: 'bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500',
-          formButtonPrimary: 'bg-blue-500 text-white hover:bg-blue-600 font-semibold',
-          socialButtonsBlockButton: 'bg-gray-100 dark:bg-neutral-600 border border-gray-300 dark:border-neutral-400 text-gray-900 dark:text-gray-200 hover:bg-white dark:hover:bg-neutral-100',
-          footerActionText: 'text-sm text-gray-600 dark:text-gray-300',
-          footerActionLink: 'text-blue-500 hover:text-blue-600 font-semibold',
-        },
-      }}
-    >
-      {children}
-    </ClerkProvider>
-  );
+  return <ClerkProvider>{children}</ClerkProvider>;
 } 
