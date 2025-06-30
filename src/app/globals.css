@@ -7,6 +7,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 초기 로딩 시 깜빡임 방지 */
+html {
+  visibility: hidden;
+}
+
+html.theme-loaded {
+  visibility: visible;
+}
+
+/* 폰트 로딩 최적화 */
 @font-face {
   font-family: 'SUIT';
   src: url('/fonts/SUIT-Regular.woff2') format('woff2');
@@ -29,6 +39,15 @@
   font-weight: 700;
   font-style: normal;
   font-display: swap;
+}
+
+/* 폰트 fallback 최적화 */
+.font-suit {
+  font-family: 'SUIT', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-pretendard {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 :root {
@@ -149,6 +168,10 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    /* 폰트 렌더링 최적화 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 }
 
@@ -157,12 +180,14 @@ body {
   src: url('/fonts/pretendard/Pretendard-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 @font-face {
   font-family: 'Pretendard';
   src: url('/fonts/pretendard/Pretendard-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 .force-row-6px > td, .force-row-6px > th {

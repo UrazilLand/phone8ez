@@ -322,7 +322,7 @@ erDiagram
   - 세션 관리
 
 ### 2. 결제 시스템
-- **Stripe**
+- **PortOne(아임포트)**
   - 구독 결제 처리
   - 결제 이력 관리
   - 환불 처리
@@ -348,11 +348,11 @@ erDiagram
   - CDN 통합
   - 백업 저장소
 
-- **Hyperdrive**
-  - 데이터베이스 캐싱
-  - 성능 최적화
-  - 실시간 동기화
-  - 글로벌 엣지 네트워크
+- **Vercel**
+  - Next.js 호스팅
+  - 글로벌 CDN
+  - 서버리스 함수 지원
+  - 자동 배포
 
 ### 5. 모니터링 및 에러 추적
 - **Sentry**
@@ -376,11 +376,13 @@ graph TD
     C --> D[대시보드]
     D --> E[SQLite]
     D --> F[Cloudflare R2]
-    D --> G[Stripe]
+    D --> G[PortOne(아임포트)]
     G --> H[결제 처리]
     I[Sentry] --> D
     J[Upstash] --> D
     K[Cloudflare Workers] --> D
+    D --> J[Vercel]
+    J --> D
 ```
 
 ## 📊 서비스별 주요 기능
@@ -391,7 +393,7 @@ graph TD
 - 세션 관리
 - 보안 정책
 
-### Stripe
+### PortOne(아임포트)
 - 구독 관리
 - 결제 처리
 - 웹훅
@@ -408,6 +410,23 @@ graph TD
 - CDN
 - 스토리지
 - 보안
+- R2 오브젝트 스토리지
+- Workers 서버리스 함수
+- 글로벌 엣지 네트워크
+- 자동 스케일링
+- 백업 저장소
+- 이미지/파일 저장
+- API 엔드포인트
+- Turso DB와 연동
+
+### Vercel
+- Next.js 호스팅
+- 글로벌 CDN
+- 서버리스 함수 지원
+- 자동 배포
+- 환경 변수 관리
+- GitHub 연동
+- 미리보기 배포
 
 ### Sentry
 - 에러 추적
@@ -455,7 +474,7 @@ graph TD
 
 ### 🔴 예정된 사항
 1. 결제 시스템
-   - Stripe 연동
+   - PortOne(아임포트) 연동
    - 구독 플랜 구현
    - 결제 이력 관리
 
@@ -569,66 +588,57 @@ src/
 
 ---
 
-## 🛡️ Clerk 인증 연동 및 UX 정책 (2024.06)
+## 🛡️ 전체 서비스 아키텍처 및 데이터 흐름 (Clerk + PortOne + Turso)
 
-### 1. Clerk 연동 목적 및 기본 정책
-- **Clerk**는 Phone8ez의 모든 인증(이메일/비밀번호, 소셜 로그인, 세션 관리 등)을 담당합니다.
-- 회원가입/로그인/로그아웃/프로필 등 모든 인증 UI는 Clerk의 모달 컴포넌트로 제공합니다.
-- 인증이 필요한 주요 페이지(예: 대시보드)는 반드시 로그인 상태에서만 접근할 수 있습니다.
+### 1. 인증(로그인) - Clerk
+- 사용자는 Clerk를 통해 회원가입/로그인(이메일, 소셜 등)
+- 로그인 성공 시 Clerk가 사용자 세션 및 인증 토큰을 관리
+- 프론트엔드에서는 Clerk의 useAuth() 등으로 로그인 상태, 사용자 정보, userId 등을 쉽게 확인 가능
 
-### 2. 로그인/회원가입 UX
-- 헤더의 "로그인", "회원가입" 버튼은 모두 Clerk의 `<SignInButton mode="modal">`, `<SignUpButton mode="modal">`로 구현합니다.
-- 로그인/회원가입은 항상 모달(팝업) 형태로 뜨며, 별도의 페이지 이동 없이 인증이 진행됩니다.
-- 로그인 성공 시, 기존 위치에서 인증 상태가 즉시 반영됩니다.
+### 2. 구독 결제 - PortOne(아임포트)
+- 로그인한 사용자가 구독 결제 버튼 클릭
+- 프론트엔드에서 PortOne(아임포트) JS SDK로 결제창 호출
+- 결제 성공 시, PortOne에서 결제 결과(imp_uid, merchant_uid 등)를 콜백으로 전달
+- 결제 결과를 백엔드 API로 전송하여 결제 검증 및 DB 저장
 
-### 3. 대시보드 접근 제어
-- **로그인하지 않은 사용자가 대시보드 메뉴(DASHBOARD)를 클릭하면 페이지 이동 없이 Clerk 모달 로그인창이 뜨도록 구현**
-  - `<SignInButton mode="modal">`로 대시보드 메뉴를 감싸서 UX 일관성 유지
-  - 로그인한 경우에만 실제로 /dashboard로 이동
-- 서버/클라이언트 모두에서 인증 가드 적용 가능(추후 SSR 보호 필요시)
+### 3. 데이터 저장 - Turso(DB)
+- 백엔드(Next.js API Route 또는 서버리스 함수)에서
+  1. Clerk의 인증 토큰으로 사용자 인증(userId 확인)
+  2. PortOne REST API로 결제 검증(imp_uid 등으로 실제 결제 성공 여부 확인)
+  3. 결제 정보(구독 시작/종료일, 결제 상태, userId 등)를 Turso DB에 저장
+- 이후 구독 상태, 결제 이력, 사용자 정보 등은 Turso DB에서 관리
 
-### 4. 인증 상태 기반 UI 렌더링
-- 헤더/네비게이션 등에서 `useAuth()` 훅을 사용해 로그인 상태에 따라 메뉴/버튼을 조건부 렌더링
-- 예시: 로그인하지 않은 경우 "대시보드" 클릭 시 모달, 로그인한 경우에만 이동
+### 실제 서비스 흐름 예시
+```mermaid
+sequenceDiagram
+  participant User as 사용자
+  participant FE as 프론트엔드(Next.js)
+  participant Clerk as Clerk(인증)
+  participant PortOne as PortOne(아임포트)
+  participant BE as 백엔드(API Route)
+  participant Turso as Turso(DB)
 
-### 5. 인증 가드(보호 라우트) 패턴
-- 대시보드 등 보호가 필요한 페이지에서는 Clerk의 `auth()`(서버) 또는 `useAuth()`(클라이언트)로 인증 상태 확인
-- 미인증 시 리다이렉트 또는 모달 로그인 유도
-
-### 6. Clerk 연동 코드 예시
-```tsx
-// 헤더에서 대시보드 메뉴 조건부 모달
-import { SignInButton, useAuth } from '@clerk/nextjs';
-
-const { isSignedIn } = useAuth();
-return (
-  {isSignedIn ? (
-    <a href="/dashboard">대시보드</a>
-  ) : (
-    <SignInButton mode="modal">
-      <a href="#" onClick={e => e.preventDefault()}>대시보드</a>
-    </SignInButton>
-  )}
-);
+  User->>FE: 회원가입/로그인
+  FE->>Clerk: 인증 요청
+  Clerk-->>FE: 인증 성공(userId 등 반환)
+  User->>FE: 구독 결제 버튼 클릭
+  FE->>PortOne: 결제창 호출
+  PortOne-->>FE: 결제 결과(imp_uid 등)
+  FE->>BE: 결제 결과(imp_uid, userId 등) 전달
+  BE->>Clerk: 인증 토큰 검증(userId 확인)
+  BE->>PortOne: 결제 검증(imp_uid)
+  PortOne-->>BE: 결제 검증 결과(성공/실패)
+  BE->>Turso: 결제/구독 정보 저장
+  Turso-->>BE: 저장 완료
+  BE-->>FE: 결제/구독 처리 결과 반환
+  FE-->>User: 구독 완료 안내
 ```
 
-```tsx
-// 대시보드 보호(서버 컴포넌트 예시)
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+### 각 서비스별 역할 요약
+- **Clerk**: 사용자 인증/세션 관리, userId 등 사용자 정보 제공
+- **PortOne(아임포트)**: 결제창 제공, 결제 결과 콜백, 결제 검증 API 제공
+- **Turso(DB)**: 사용자, 구독, 결제 이력 등 모든 데이터 저장, 구독 상태/권한 체크 등 비즈니스 로직에 활용
 
-export default async function DashboardPage() {
-  const { userId } = auth();
-  if (!userId) {
-    redirect('/sign-in');
-  }
-  // ...대시보드 내용...
-}
-```
-
-### 7. 기타
-- Clerk의 appearance/localization 커스터마이징으로 한글화 및 UI 일관성 유지
-- 세션 만료/로그아웃 시 즉시 인증 상태 반영
-- 모든 인증 관련 UX는 Clerk 모달 기반으로 통일
-
----
+### 실제 코드 구조 예시
+- 프론트엔드: Clerk로 로그인 상태 확인, PortOne 결제창 호출, 결제 결과를 Next.js API Route로 전달
+- 백엔드(API Route): Clerk 인증 토큰 검증, PortOne 결제 검증, Turso DB에 결제/구독 정보 저장

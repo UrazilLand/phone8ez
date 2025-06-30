@@ -28,12 +28,32 @@ export default function RootLayout({
   return (
     <ClerkAppearanceProvider>
       <html lang="ko" suppressHydrationWarning>
+        <head>
+          {/* CSS 깜빡임 방지를 위한 초기 스타일 */}
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+                /* 초기 로딩 시 깜빡임 방지 */
+                html { visibility: hidden; }
+                html.theme-loaded { visibility: visible; }
+                
+                /* 다크모드 초기 설정 */
+                html.dark { color-scheme: dark; }
+                html.light { color-scheme: light; }
+                
+                /* 폰트 로딩 최적화 */
+                body { font-display: swap; }
+              `,
+            }}
+          />
+        </head>
         <body className={notoSansKr.className}>
           <DarkModeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
-            disableTransitionOnChange
+            disableTransitionOnChange={false}
+            storageKey="phone8ez-theme"
           >
             <MainLayout>
               {children}
@@ -43,21 +63,43 @@ export default function RootLayout({
           <script
             dangerouslySetInnerHTML={{
               __html: `
-                // 메시지 채널 에러 무시
-                window.addEventListener('error', function(e) {
-                  if (e.message.includes('message channel closed')) {
-                    e.preventDefault();
-                    return false;
+                // 테마 로딩 완료 후 페이지 표시 (hydration 안전하게 처리)
+                (function() {
+                  try {
+                    const html = document.documentElement;
+                    const theme = localStorage.getItem('phone8ez-theme') || 'system';
+                    
+                    // 시스템 테마 감지
+                    if (theme === 'system') {
+                      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                      html.classList.add(systemTheme);
+                    } else {
+                      html.classList.add(theme);
+                    }
+                    
+                    // 페이지 표시
+                    html.classList.add('theme-loaded');
+                  } catch (error) {
+                    // 에러 발생 시 기본 라이트 모드로 설정
+                    document.documentElement.classList.add('light', 'theme-loaded');
                   }
-                });
-                
-                // Promise rejection 에러 무시
-                window.addEventListener('unhandledrejection', function(e) {
-                  if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
-                    e.preventDefault();
-                    return false;
-                  }
-                });
+                  
+                  // 메시지 채널 에러 무시
+                  window.addEventListener('error', function(e) {
+                    if (e.message.includes('message channel closed')) {
+                      e.preventDefault();
+                      return false;
+                    }
+                  });
+                  
+                  // Promise rejection 에러 무시
+                  window.addEventListener('unhandledrejection', function(e) {
+                    if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
+                      e.preventDefault();
+                      return false;
+                    }
+                  });
+                })();
               `,
             }}
           />
