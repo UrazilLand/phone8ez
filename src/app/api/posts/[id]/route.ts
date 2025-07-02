@@ -13,10 +13,11 @@ const updatePostSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const postId = parseInt(params.id);
+    const { id } = context.params;
+    const postId = parseInt(id);
     if (isNaN(postId)) {
       return NextResponse.json(
         { error: '잘못된 게시글 ID입니다.' },
@@ -83,10 +84,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const postId = parseInt(params.id);
+    const { id } = context.params;
+    const postId = parseInt(id);
     if (isNaN(postId)) {
       return NextResponse.json(
         { error: '잘못된 게시글 ID입니다.' },
@@ -231,10 +233,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const postId = parseInt(params.id);
+    const { id } = context.params;
+    const postId = parseInt(id);
     if (isNaN(postId)) {
       return NextResponse.json(
         { error: '잘못된 게시글 ID입니다.' },
