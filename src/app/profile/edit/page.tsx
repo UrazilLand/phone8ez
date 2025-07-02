@@ -2,6 +2,8 @@
 
 import { useAuth } from '@/lib/auth';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import UserDefaultIcon from '@/components/ui/UserDefaultIcon';
 
 export default function ProfileEditPage() {
   const { user } = useAuth();
@@ -9,11 +11,32 @@ export default function ProfileEditPage() {
   const [avatarUrl, setAvatarUrl] = useState(
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '/favicon.png'
   );
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
 
-  // TODO: 프로필 저장 로직 구현 필요
-  const handleSave = (e: React.FormEvent) => {
+  const getRandomNickname = () => {
+    return 'user' + Math.floor(100000 + Math.random() * 900000);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('프로필 저장 기능은 추후 구현 예정입니다.');
+    setSaving(true);
+    setMessage('');
+    const finalNickname = nickname.trim() ? nickname : getRandomNickname();
+    const { error } = await supabase
+      .from('users')
+      .update({
+        nickname: finalNickname,
+        avatar_url: avatarUrl.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('email', user?.email);
+    setSaving(false);
+    if (error) {
+      setMessage('저장에 실패했습니다. 다시 시도해 주세요.');
+    } else {
+      setMessage('프로필이 성공적으로 저장되었습니다.');
+    }
   };
 
   return (
@@ -21,13 +44,24 @@ export default function ProfileEditPage() {
       <h1 className="text-2xl font-bold mb-6 text-center">내 정보 수정</h1>
       <form onSubmit={handleSave} className="space-y-6">
         <div className="flex flex-col items-center">
-          <img
-            src={avatarUrl}
-            alt="프로필 이미지"
-            className="w-24 h-24 rounded-full object-cover border border-gray-300 shadow mb-2"
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="프로필 이미지"
+              className="w-24 h-24 rounded-full object-cover border border-gray-300 shadow mb-2"
+              onError={e => (e.currentTarget.src = '')}
+            />
+          ) : (
+            <UserDefaultIcon className="w-24 h-24 rounded-full border border-gray-300 bg-white shadow mb-2 p-2 text-gray-400" />
+          )}
+          <label className="block text-sm font-medium text-gray-700">프로필 이미지 URL</label>
+          <input
+            type="text"
+            value={avatarUrl}
+            onChange={e => setAvatarUrl(e.target.value)}
+            className="w-full px-3 py-2 border rounded mt-1"
+            placeholder="이미지 주소를 입력하세요"
           />
-          <label className="block text-sm font-medium text-gray-700">프로필 이미지</label>
-          {/* 실제 이미지 업로드 기능은 추후 구현 */}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
@@ -50,9 +84,13 @@ export default function ProfileEditPage() {
         <button
           type="submit"
           className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+          disabled={saving}
         >
-          저장
+          {saving ? '저장 중...' : '저장'}
         </button>
+        {message && (
+          <div className="text-center text-sm mt-2 text-green-600">{message}</div>
+        )}
       </form>
     </div>
   );

@@ -9,6 +9,7 @@ import { Menu, X, Sun, Moon, User, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
+import UserDefaultIcon from '@/components/ui/UserDefaultIcon';
 
 const MAIN_COLOR = 'text-blue-600 border-blue-600';
 
@@ -96,12 +97,10 @@ const Header = () => {
             <img src="/favicon.png" alt="로고 아이콘" className="w-7 h-7 mr-1" />
             <Logo />
           </div>
-
-          {/* 중앙: 네비게이션 (항상 h-10 flex items-center로 정렬) */}
-          <nav className="hidden lg:flex flex-1 justify-center space-x-1 items-center h-10">
+          {/* 중앙: 네비게이션 (항상 중앙 고정) */}
+          <nav className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 h-10 flex items-center justify-center">
             <NavLinksContent />
           </nav>
-
           {/* 우측: 다크모드, 로그인/로그아웃 */}
           <div className="hidden lg:flex items-center space-x-2 min-w-[180px] justify-end">
             <Button
@@ -119,21 +118,21 @@ const Header = () => {
             </Button>
             
             {user ? (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-4">
                 <button
                   onClick={() => window.location.href = '/profile/edit'}
                   className="focus:outline-none"
                   title="내 정보 수정"
                 >
-                  <img
-                    src={
-                      user.user_metadata?.avatar_url ||
-                      user.user_metadata?.picture ||
-                      '/favicon.png'
-                    }
-                    alt="프로필 이미지"
-                    className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
-                  />
+                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                    <img
+                      src={user.user_metadata?.avatar_url || user.user_metadata?.picture}
+                      alt="프로필 이미지"
+                      className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
+                    />
+                  ) : (
+                    <UserDefaultIcon className="w-9 h-9 rounded-full border border-gray-300 bg-white shadow-sm p-1 text-gray-400 hover:ring-2 hover:ring-blue-400 transition-all" />
+                  )}
                 </button>
                 <Button
                   variant="outline"
@@ -193,15 +192,15 @@ const Header = () => {
                         className="focus:outline-none"
                         title="내 정보 수정"
                       >
-                        <img
-                          src={
-                            user.user_metadata?.avatar_url ||
-                            user.user_metadata?.picture ||
-                            '/favicon.png'
-                          }
-                          alt="프로필 이미지"
-                          className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
-                        />
+                        {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                          <img
+                            src={user.user_metadata?.avatar_url || user.user_metadata?.picture}
+                            alt="프로필 이미지"
+                            className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
+                          />
+                        ) : (
+                          <UserDefaultIcon className="w-9 h-9 rounded-full border border-gray-300 bg-white shadow-sm p-1 text-gray-400 hover:ring-2 hover:ring-blue-400 transition-all" />
+                        )}
                       </button>
                       <Button
                         variant="outline"
