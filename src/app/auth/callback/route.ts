@@ -6,6 +6,10 @@ export async function GET(request: Request) {
   const code = searchParams.get('code');
   let next = searchParams.get('next') ?? '/dashboard';
 
+  console.log('[AUTH CALLBACK] code:', code);
+  console.log('[AUTH CALLBACK] next:', next);
+  console.log('[AUTH CALLBACK] origin:', origin);
+
   if (!next.startsWith('/')) {
     next = '/dashboard';
   }
@@ -14,6 +18,8 @@ export async function GET(request: Request) {
     try {
       const supabase = await createClient();
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      console.log('[AUTH CALLBACK] exchangeCodeForSession data:', data);
+      console.log('[AUTH CALLBACK] exchangeCodeForSession error:', error);
       
       if (error) {
         console.error('Auth callback error:', error);
@@ -46,6 +52,8 @@ export async function GET(request: Request) {
               ignoreDuplicates: false
             });
 
+          console.log('[AUTH CALLBACK] users upsert error:', insertError);
+
           if (insertError) {
             console.error('사용자 정보 저장 오류:', insertError);
             // 사용자 정보 저장 실패해도 인증은 성공으로 처리
@@ -59,12 +67,17 @@ export async function GET(request: Request) {
       // 인증 성공 시 리다이렉트
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
+      console.log('[AUTH CALLBACK] isLocalEnv:', isLocalEnv);
+      console.log('[AUTH CALLBACK] forwardedHost:', forwardedHost);
       
       if (isLocalEnv) {
+        console.log('[AUTH CALLBACK] Redirecting to:', `${origin}${next}`);
         return NextResponse.redirect(`${origin}${next}`);
       } else if (forwardedHost) {
+        console.log('[AUTH CALLBACK] Redirecting to:', `https://${forwardedHost}${next}`);
         return NextResponse.redirect(`https://${forwardedHost}${next}`);
       } else {
+        console.log('[AUTH CALLBACK] Redirecting to:', `${origin}${next}`);
         return NextResponse.redirect(`${origin}${next}`);
       }
     } catch (error) {
@@ -74,5 +87,6 @@ export async function GET(request: Request) {
   }
 
   // 코드가 없으면 로그인 페이지로 리다이렉트
+  console.log('[AUTH CALLBACK] No code found, redirecting to login.');
   return NextResponse.redirect(`${origin}/auth/login?error=no_code`);
 } 

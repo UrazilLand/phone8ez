@@ -120,9 +120,21 @@ const Header = () => {
             
             {user ? (
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  {user.user_metadata?.email || user.email}
-                </span>
+                <button
+                  onClick={() => window.location.href = '/profile/edit'}
+                  className="focus:outline-none"
+                  title="내 정보 수정"
+                >
+                  <img
+                    src={
+                      user.user_metadata?.avatar_url ||
+                      user.user_metadata?.picture ||
+                      '/favicon.png'
+                    }
+                    alt="프로필 이미지"
+                    className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
+                  />
+                </button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -172,10 +184,25 @@ const Header = () => {
                   <hr className="my-3 border-border" />
                   
                   {user ? (
-                    <div className="space-y-2">
-                      <div className="text-sm text-gray-700 dark:text-gray-300 px-3 py-2">
-                        {user.user_metadata?.email || user.email}
-                      </div>
+                    <div className="space-y-2 flex items-center">
+                      <button
+                        onClick={() => {
+                          window.location.href = '/profile/edit';
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="focus:outline-none"
+                        title="내 정보 수정"
+                      >
+                        <img
+                          src={
+                            user.user_metadata?.avatar_url ||
+                            user.user_metadata?.picture ||
+                            '/favicon.png'
+                          }
+                          alt="프로필 이미지"
+                          className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
+                        />
+                      </button>
                       <Button
                         variant="outline"
                         className="w-full justify-center"
