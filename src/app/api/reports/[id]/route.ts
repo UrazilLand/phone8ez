@@ -10,10 +10,10 @@ const updateReportSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
     // 신고 상세 조회
     const reportResult = await db.execute({
@@ -125,10 +125,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
 
     // 신고 존재 여부 확인
     const existingReport = await db.execute({
@@ -142,6 +142,10 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    // ★ 추가: 요청 body 파싱 및 검증
+    const body = await request.json();
+    const validatedData = updateReportSchema.parse(body);
 
     // 신고 상태 업데이트
     await db.execute({
