@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-// RouteContext 타입 직접 선언
-type RouteContext<P extends Record<string, string> = {}> = { params: P };
-import { db } from '@/lib/db';
+import { supabase } from '@/lib/supabaseClient';
 import { getUserByEmail, hasPermission, canModerate } from '@/lib/auth-server';
 import { z } from 'zod';
 
@@ -28,33 +26,39 @@ export async function GET(
     }
 
     // 조회수 증가
-    await db.execute({
-      sql: 'UPDATE posts SET views = views + 1 WHERE id = ?',
-      args: [postId.toString()]
-    });
+    const { data: currentPost, error: currentError } = await supabase
+      .from('posts')
+      .select('views')
+      .eq('id', postId)
+      .single();
+
+    if (!currentError && currentPost) {
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ views: (currentPost.views || 0) + 1 })
+        .eq('id', postId);
+
+      if (updateError) {
+        console.error('조회수 증가 오류:', updateError);
+      }
+    }
 
     // 게시글 조회
-    const result = await db.execute({
-      sql: `
-        SELECT 
-          p.*,
-          u.email,
-          u.nickname
-        FROM posts p
-        LEFT JOIN users u ON p.user_id = u.id
-        WHERE p.id = ?
-      `,
-      args: [postId.toString()]
-    });
+    const { data: post, error: fetchError } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', postId)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (fetchError || !post) {
       return NextResponse.json(
         { error: '게시글을 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
-
-    const post = result.rows[0];
     
     return NextResponse.json({
       id: post.id,
@@ -69,11 +73,11 @@ export async function GET(
       is_notice: post.is_notice,
       created_at: post.created_at,
       updated_at: post.updated_at,
-      user: post.user_id && post.email ? {
+      user: {
         id: post.user_id,
-        email: String(post.email),
-        nickname: post.nickname ?? ''
-      } : undefined
+        email: post.users.email,
+        nickname: post.users.nickname
+      }
     });
   } catch (error) {
     console.error('게시글 조회 오류:', error);
@@ -102,33 +106,30 @@ export async function PUT(
     const validatedData = updatePostSchema.parse(body);
 
     // 게시글 존재 여부 및 권한 확인
-    const postResult = await db.execute({
-      sql: `
-        SELECT p.*, u.email 
-        FROM posts p
-        LEFT JOIN users u ON p.user_id = u.id
-        WHERE p.id = ?
-      `,
-      args: [postId.toString()]
-    });
+    const { data: postData, error: postError } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        users!inner(email)
+      `)
+      .eq('id', postId)
+      .single();
 
-    if (postResult.rows.length === 0) {
+    if (postError || !postData) {
       return NextResponse.json(
         { error: '게시글을 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
 
-    const post = postResult.rows[0];
-    
     // 사용자 정보 조회
-    if (!post.email) {
+    if (!postData.users.email) {
       return NextResponse.json(
         { error: '사용자 정보를 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
-    const user = await getUserByEmail(String(post.email));
+    const user = await getUserByEmail(postData.users.email);
     if (!user) {
       return NextResponse.json(
         { error: '사용자 정보를 찾을 수 없습니다.' },
@@ -137,7 +138,7 @@ export async function PUT(
     }
 
     // 권한 확인: 본인 게시글이거나 관리자/모더레이터
-    const isOwnPost = post.email === post.email;
+    const isOwnPost = postData.users.email === postData.users.email;
     const canEdit = hasPermission(user.role, 'posts', 'update', isOwnPost);
     
     if (!canEdit) {
@@ -148,61 +149,47 @@ export async function PUT(
     }
 
     // 업데이트할 필드 구성
-    const updateFields: string[] = [];
-    const updateArgs: string[] = [];
+    const updateData: any = { updated_at: new Date().toISOString() };
 
     if (validatedData.title !== undefined) {
-      updateFields.push('title = ?');
-      updateArgs.push(validatedData.title);
+      updateData.title = validatedData.title;
     }
     if (validatedData.content !== undefined) {
-      updateFields.push('content = ?');
-      updateArgs.push(validatedData.content);
+      updateData.content = validatedData.content;
     }
     if (validatedData.board_type !== undefined) {
-      updateFields.push('board_type = ?');
-      updateArgs.push(validatedData.board_type);
+      updateData.board_type = validatedData.board_type;
     }
     if (validatedData.image_url !== undefined) {
-      updateFields.push('image_url = ?');
-      updateArgs.push(validatedData.image_url || '');
+      updateData.image_url = validatedData.image_url || '';
     }
     if (validatedData.video_url !== undefined) {
-      updateFields.push('video_url = ?');
-      updateArgs.push(validatedData.video_url || '');
+      updateData.video_url = validatedData.video_url || '';
     }
-
-    if (updateFields.length === 0) {
-      return NextResponse.json(
-        { error: '수정할 내용이 없습니다.' },
-        { status: 400 }
-      );
-    }
-
-    updateFields.push('updated_at = CURRENT_TIMESTAMP');
-    updateArgs.push(postId.toString());
 
     // 게시글 수정
-    await db.execute({
-      sql: `UPDATE posts SET ${updateFields.join(', ')} WHERE id = ?`,
-      args: updateArgs
-    });
+    const { error: updateError } = await supabase
+      .from('posts')
+      .update(updateData)
+      .eq('id', postId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     // 수정된 게시글 조회
-    const updatedResult = await db.execute({
-      sql: `
-        SELECT 
-          p.*,
-          u.email,
-          u.nickname
-        FROM posts p
-        LEFT JOIN users u ON p.user_id = u.id
-        WHERE p.id = ?
-      `,
-      args: [postId.toString()]
-    });
+    const { data: updatedPost, error: fetchError } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', postId)
+      .single();
 
-    const updatedPost = updatedResult.rows[0];
+    if (fetchError || !updatedPost) {
+      throw fetchError;
+    }
     
     return NextResponse.json({
       id: updatedPost.id,
@@ -217,11 +204,11 @@ export async function PUT(
       is_notice: updatedPost.is_notice,
       created_at: updatedPost.created_at,
       updated_at: updatedPost.updated_at,
-      user: updatedPost.user_id && updatedPost.email ? {
+      user: {
         id: updatedPost.user_id,
-        email: String(updatedPost.email),
-        nickname: updatedPost.nickname ?? ''
-      } : undefined
+        email: updatedPost.users.email,
+        nickname: updatedPost.users.nickname
+      }
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -254,33 +241,30 @@ export async function DELETE(
     }
 
     // 게시글 존재 여부 및 권한 확인
-    const postResult = await db.execute({
-      sql: `
-        SELECT p.*, u.email 
-        FROM posts p
-        LEFT JOIN users u ON p.user_id = u.id
-        WHERE p.id = ?
-      `,
-      args: [postId.toString()]
-    });
+    const { data: postData, error: postError } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        users!inner(email)
+      `)
+      .eq('id', postId)
+      .single();
 
-    if (postResult.rows.length === 0) {
+    if (postError || !postData) {
       return NextResponse.json(
         { error: '게시글을 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
 
-    const post = postResult.rows[0];
-    
     // 사용자 정보 조회
-    if (!post.email) {
+    if (!postData.users.email) {
       return NextResponse.json(
         { error: '사용자 정보를 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
-    const user = await getUserByEmail(String(post.email));
+    const user = await getUserByEmail(postData.users.email);
     if (!user) {
       return NextResponse.json(
         { error: '사용자 정보를 찾을 수 없습니다.' },
@@ -289,7 +273,7 @@ export async function DELETE(
     }
 
     // 권한 확인: 본인 게시글이거나 관리자/모더레이터
-    const isOwnPost = post.email === post.email;
+    const isOwnPost = postData.users.email === postData.users.email;
     const canDelete = hasPermission(user.role, 'posts', 'delete', isOwnPost);
     
     if (!canDelete) {
@@ -300,15 +284,23 @@ export async function DELETE(
     }
 
     // 게시글과 관련 댓글 모두 삭제
-    await db.execute({
-      sql: 'DELETE FROM comments WHERE post_id = ?',
-      args: [postId.toString()]
-    });
+    const { error: deleteCommentsError } = await supabase
+      .from('comments')
+      .delete()
+      .eq('post_id', postId);
+
+    if (deleteCommentsError) {
+      console.error('댓글 삭제 오류:', deleteCommentsError);
+    }
     
-    await db.execute({
-      sql: 'DELETE FROM posts WHERE id = ?',
-      args: [postId.toString()]
-    });
+    const { error: deletePostError } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+
+    if (deletePostError) {
+      throw deletePostError;
+    }
 
     return NextResponse.json({ message: '게시글이 삭제되었습니다.' });
   } catch (error) {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { getUserByEmail, canModerate } from '@/lib/auth-server';
 import { supabase } from '@/lib/supabaseClient';
+import { getUserByEmail, canModerate } from '@/lib/auth-server';
 import { z } from 'zod';
 
 const createReportSchema = z.object({
@@ -45,65 +44,53 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     
     // 전체 신고 수 조회
-    let countQuery = `
-      SELECT COUNT(*) as total 
-      FROM reports r
-      LEFT JOIN users u ON r.user_id = u.id
-    `;
-    let countParams: string[] = [];
+    let countQuery = supabase
+      .from('reports')
+      .select('*', { count: 'exact', head: true });
     
     if (status) {
-      countQuery += ' WHERE r.status = ?';
-      countParams.push(status);
+      countQuery = countQuery.eq('status', status);
     }
     
-    const countResult = await db.execute({
-      sql: countQuery,
-      args: countParams
-    });
-    const total = countResult.rows[0]?.total as number;
+    const { count: total } = await countQuery;
     
     // 신고 목록 조회
-    let reportsQuery = `
-      SELECT 
-        r.*,
-        u.email,
-        u.nickname
-      FROM reports r
-      LEFT JOIN users u ON r.user_id = u.id
-    `;
-    let reportsParams: string[] = [];
+    let reportsQuery = supabase
+      .from('reports')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `);
     
     if (status) {
-      reportsQuery += ' WHERE r.status = ?';
-      reportsParams.push(status);
+      reportsQuery = reportsQuery.eq('status', status);
     }
     
-    reportsQuery += ' ORDER BY r.created_at DESC LIMIT ? OFFSET ?';
-    reportsParams.push(limit.toString(), offset.toString());
+    const { data: reportsData, error: reportsError } = await reportsQuery
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (reportsError) {
+      throw reportsError;
+    }
     
-    const reportsResult = await db.execute({
-      sql: reportsQuery,
-      args: reportsParams
-    });
-    
-    const reports = reportsResult.rows.map(row => ({
+    const reports = reportsData?.map(row => ({
       id: row.id,
       target_type: row.target_type,
       target_id: row.target_id,
       reason: row.reason,
       status: row.status,
       created_at: row.created_at,
-      user: row.user_id && row.email ? {
+      user: {
         id: row.user_id,
-        email: String(row.email),
-        nickname: row.nickname ?? ''
-      } : undefined
-    }));
+        email: row.users.email,
+        nickname: row.users.nickname
+      }
+    })) || [];
     
     return NextResponse.json({
       reports,
-      total,
+      total: total || 0,
       page,
       limit
     });
@@ -141,17 +128,19 @@ export async function POST(request: NextRequest) {
     // 대상 존재 여부 확인
     let targetExists = false;
     if (validatedData.target_type === 'post') {
-      const postResult = await db.execute({
-        sql: 'SELECT id FROM posts WHERE id = ?',
-        args: [validatedData.target_id.toString()]
-      });
-      targetExists = postResult.rows.length > 0;
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('id', validatedData.target_id)
+        .single();
+      targetExists = !postError && !!post;
     } else if (validatedData.target_type === 'comment') {
-      const commentResult = await db.execute({
-        sql: 'SELECT id FROM comments WHERE id = ?',
-        args: [validatedData.target_id.toString()]
-      });
-      targetExists = commentResult.rows.length > 0;
+      const { data: comment, error: commentError } = await supabase
+        .from('comments')
+        .select('id')
+        .eq('id', validatedData.target_id)
+        .single();
+      targetExists = !commentError && !!comment;
     }
     
     if (!targetExists) {
@@ -162,15 +151,15 @@ export async function POST(request: NextRequest) {
     }
     
     // 중복 신고 확인 (같은 사용자가 같은 대상을 신고한 경우)
-    const existingReport = await db.execute({
-      sql: `
-        SELECT id FROM reports 
-        WHERE user_id = ? AND target_type = ? AND target_id = ?
-      `,
-      args: [userInfo.id.toString(), validatedData.target_type, validatedData.target_id.toString()]
-    });
+    const { data: existingReport, error: checkError } = await supabase
+      .from('reports')
+      .select('id')
+      .eq('user_id', userInfo.id)
+      .eq('target_type', validatedData.target_type)
+      .eq('target_id', validatedData.target_id)
+      .single();
     
-    if (existingReport.rows.length > 0) {
+    if (!checkError && existingReport) {
       return NextResponse.json(
         { error: '이미 신고한 대상입니다.' },
         { status: 400 }
@@ -178,36 +167,35 @@ export async function POST(request: NextRequest) {
     }
     
     // 신고 생성
-    const result = await db.execute({
-      sql: `
-        INSERT INTO reports (target_type, target_id, reason, user_id, status)
-        VALUES (?, ?, ?, ?, 'pending')
-      `,
-      args: [
-        validatedData.target_type,
-        validatedData.target_id.toString(),
-        validatedData.reason,
-        userInfo.id.toString()
-      ]
-    });
-    
-    const reportId = result.lastInsertRowid;
+    const { data: reportData, error: insertError } = await supabase
+      .from('reports')
+      .insert({
+        target_type: validatedData.target_type,
+        target_id: validatedData.target_id,
+        reason: validatedData.reason,
+        user_id: userInfo.id,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
     
     // 생성된 신고 조회
-    const reportResult = await db.execute({
-      sql: `
-        SELECT 
-          r.*,
-          u.email,
-          u.nickname
-        FROM reports r
-        LEFT JOIN users u ON r.user_id = u.id
-        WHERE r.id = ?
-      `,
-      args: [reportId?.toString() || '0']
-    });
-    
-    const report = reportResult.rows[0];
+    const { data: report, error: fetchError } = await supabase
+      .from('reports')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', reportData.id)
+      .single();
+
+    if (fetchError || !report) {
+      throw fetchError;
+    }
     
     return NextResponse.json({
       id: report.id,
@@ -217,11 +205,11 @@ export async function POST(request: NextRequest) {
       status: report.status,
       created_at: report.created_at,
       updated_at: report.updated_at,
-      user: report.user_id && report.email ? {
+      user: {
         id: report.user_id,
-        email: String(report.email),
-        nickname: report.nickname ?? ''
-      } : undefined
+        email: report.users.email,
+        nickname: report.users.nickname
+      }
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

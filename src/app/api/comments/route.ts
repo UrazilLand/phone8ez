@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
 
 const createCommentSchema = z.object({
@@ -25,35 +25,30 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     
     // 전체 댓글 수 조회 (대댓글 제외)
-    const countResult = await db.execute({
-      sql: `
-        SELECT COUNT(*) as total 
-        FROM comments c
-        LEFT JOIN users u ON c.user_id = u.id 
-        WHERE c.post_id = ? AND c.parent_id IS NULL
-      `,
-      args: [postId]
-    });
-    const total = countResult.rows[0]?.total as number;
+    const { count: total } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId)
+      .is('parent_id', null);
     
     // 댓글 목록 조회 (대댓글 제외)
-    const commentsResult = await db.execute({
-      sql: `
-        SELECT 
-          c.*,
-          u.email,
-          u.nickname,
-          (SELECT COUNT(*) FROM comments WHERE parent_id = c.id) as reply_count
-        FROM comments c
-        LEFT JOIN users u ON c.user_id = u.id
-        WHERE c.post_id = ? AND c.parent_id IS NULL
-        ORDER BY c.created_at ASC
-        LIMIT ? OFFSET ?
-      `,
-      args: [postId, limit.toString(), offset.toString()]
-    });
+    const { data: commentsData, error: commentsError } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        users!inner(email, nickname),
+        replies:comments!parent_id(count)
+      `)
+      .eq('post_id', postId)
+      .is('parent_id', null)
+      .order('created_at', { ascending: true })
+      .range(offset, offset + limit - 1);
+
+    if (commentsError) {
+      throw commentsError;
+    }
     
-    const comments = commentsResult.rows.map(row => ({
+    const comments = commentsData?.map(row => ({
       id: row.id,
       post_id: row.post_id,
       user_id: row.user_id,
@@ -61,49 +56,46 @@ export async function GET(request: NextRequest) {
       parent_id: row.parent_id,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      user: row.user_id && row.email ? {
+      user: {
         id: row.user_id,
-        email: String(row.email),
-        nickname: row.nickname ?? ''
-      } : undefined,
-      reply_count: row.reply_count
-    }));
+        email: row.users.email,
+        nickname: row.users.nickname
+      },
+      reply_count: row.replies?.[0]?.count || 0
+    })) || [];
     
     // 각 댓글의 대댓글 조회
     for (const comment of comments) {
-      const repliesResult = await db.execute({
-        sql: `
-          SELECT 
-            c.*,
-            u.email,
-            u.nickname
-          FROM comments c
-          LEFT JOIN users u ON c.user_id = u.id
-          WHERE c.parent_id = ?
-          ORDER BY c.created_at ASC
-        `,
-        args: [comment.id?.toString() || '0']
-      });
-      
-      (comment as any).replies = repliesResult.rows.map(row => ({
-        id: row.id,
-        post_id: row.post_id,
-        user_id: row.user_id,
-        content: row.content,
-        parent_id: row.parent_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-        user: row.user_id && row.email ? {
-          id: row.user_id,
-          email: String(row.email),
-          nickname: row.nickname ?? ''
-        } : undefined
-      }));
+      const { data: repliesData, error: repliesError } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          users!inner(email, nickname)
+        `)
+        .eq('parent_id', comment.id)
+        .order('created_at', { ascending: true });
+
+      if (!repliesError && repliesData) {
+        (comment as any).replies = repliesData.map(row => ({
+          id: row.id,
+          post_id: row.post_id,
+          user_id: row.user_id,
+          content: row.content,
+          parent_id: row.parent_id,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          user: {
+            id: row.user_id,
+            email: row.users.email,
+            nickname: row.users.nickname
+          }
+        }));
+      }
     }
     
     return NextResponse.json({
       comments,
-      total,
+      total: total || 0,
       page,
       limit
     });
@@ -123,36 +115,34 @@ export async function POST(request: NextRequest) {
     const validatedData = createCommentSchema.parse(body);
     
     // 댓글 생성
-    const result = await db.execute({
-      sql: `
-        INSERT INTO comments (post_id, user_id, content, parent_id)
-        VALUES (?, ?, ?, ?)
-      `,
-      args: [
-        body.post_id.toString(),
-        body.user_id?.toString() || '0',
-        validatedData.content,
-        validatedData.parent_id?.toString() || null
-      ]
-    });
-    
-    const commentId = result.lastInsertRowid;
+    const { data: commentData, error: insertError } = await supabase
+      .from('comments')
+      .insert({
+        post_id: body.post_id,
+        user_id: body.user_id,
+        content: validatedData.content,
+        parent_id: validatedData.parent_id || null
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
     
     // 생성된 댓글 조회
-    const commentResult = await db.execute({
-      sql: `
-        SELECT 
-          c.*,
-          u.email,
-          u.nickname
-        FROM comments c
-        LEFT JOIN users u ON c.user_id = u.id
-        WHERE c.id = ?
-      `,
-      args: [commentId?.toString() || '0']
-    });
-    
-    const comment = commentResult.rows[0];
+    const { data: comment, error: fetchError } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', commentData.id)
+      .single();
+
+    if (fetchError || !comment) {
+      throw fetchError;
+    }
     
     return NextResponse.json({
       id: comment.id,
@@ -162,11 +152,11 @@ export async function POST(request: NextRequest) {
       parent_id: comment.parent_id,
       created_at: comment.created_at,
       updated_at: comment.updated_at,
-      user: comment.user_id && comment.email ? {
+      user: {
         id: comment.user_id,
-        email: String(comment.email),
-        nickname: comment.nickname ?? ''
-      } : undefined
+        email: comment.users.email,
+        nickname: comment.users.nickname
+      }
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

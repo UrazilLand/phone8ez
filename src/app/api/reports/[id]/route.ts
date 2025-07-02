@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { supabase } from '@/lib/supabaseClient';
 import { getUserByEmail, canModerate } from '@/lib/auth-server';
 import { z } from 'zod';
 
@@ -16,84 +16,68 @@ export async function GET(
   
   try {
     // 신고 상세 조회
-    const reportResult = await db.execute({
-      sql: `
-        SELECT 
-          r.*,
-          u.email,
-          u.nickname
-        FROM reports r
-        LEFT JOIN users u ON r.user_id = u.id
-        WHERE r.id = ?
-      `,
-      args: [id]
-    });
+    const { data: report, error: reportError } = await supabase
+      .from('reports')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', id)
+      .single();
 
-    if (reportResult.rows.length === 0) {
+    if (reportError || !report) {
       return NextResponse.json(
         { error: '신고를 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
-
-    const report = reportResult.rows[0];
     
     // 신고 대상 정보 조회
     let targetInfo = null;
     if (report.target_type === 'post' && report.target_id) {
-      const postResult = await db.execute({
-        sql: `
-          SELECT 
-            p.*,
-            u.email,
-            u.nickname
-          FROM posts p
-          LEFT JOIN users u ON p.user_id = u.id
-          WHERE p.id = ?
-        `,
-        args: [report.target_id.toString()]
-      });
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          users!inner(email, nickname)
+        `)
+        .eq('id', report.target_id)
+        .single();
       
-      if (postResult.rows.length > 0) {
-        const post = postResult.rows[0];
+      if (!postError && post) {
         targetInfo = {
           id: post.id,
           title: post.title,
           content: post.content,
           category: post.category,
           created_at: post.created_at,
-          user: post.user_id && post.email ? {
+          user: {
             id: post.user_id,
-            email: String(post.email),
-            nickname: post.nickname ?? ''
-          } : undefined
+            email: post.users.email,
+            nickname: post.users.nickname
+          }
         };
       }
     } else if (report.target_type === 'comment' && report.target_id) {
-      const commentResult = await db.execute({
-        sql: `
-          SELECT 
-            c.*,
-            u.email,
-            u.nickname
-          FROM comments c
-          LEFT JOIN users u ON c.user_id = u.id
-          WHERE c.id = ?
-        `,
-        args: [report.target_id.toString()]
-      });
+      const { data: comment, error: commentError } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          users!inner(email, nickname)
+        `)
+        .eq('id', report.target_id)
+        .single();
       
-      if (commentResult.rows.length > 0) {
-        const comment = commentResult.rows[0];
+      if (!commentError && comment) {
         targetInfo = {
           id: comment.id,
           content: comment.content,
           created_at: comment.created_at,
-          user: comment.user_id && comment.email ? {
+          user: {
             id: comment.user_id,
-            email: String(comment.email),
-            nickname: comment.nickname ?? ''
-          } : undefined
+            email: comment.users.email,
+            nickname: comment.users.nickname
+          }
         };
       }
     }
@@ -107,11 +91,11 @@ export async function GET(
       moderator_note: report.moderator_note,
       created_at: report.created_at,
       updated_at: report.updated_at,
-      user: report.user_id && report.email ? {
+      user: {
         id: report.user_id,
-        email: String(report.email),
-        nickname: report.nickname ?? ''
-      } : undefined,
+        email: report.users.email,
+        nickname: report.users.nickname
+      },
       target_info: targetInfo
     });
   } catch (error) {
@@ -131,12 +115,13 @@ export async function PUT(
 
   try {
     // 신고 존재 여부 확인
-    const existingReport = await db.execute({
-      sql: 'SELECT id, status FROM reports WHERE id = ?',
-      args: [id]
-    });
+    const { data: existingReport, error: checkError } = await supabase
+      .from('reports')
+      .select('id, status')
+      .eq('id', id)
+      .single();
 
-    if (existingReport.rows.length === 0) {
+    if (checkError || !existingReport) {
       return NextResponse.json(
         { error: '신고를 찾을 수 없습니다.' },
         { status: 404 }
@@ -148,34 +133,32 @@ export async function PUT(
     const validatedData = updateReportSchema.parse(body);
 
     // 신고 상태 업데이트
-    await db.execute({
-      sql: `
-        UPDATE reports 
-        SET status = ?, moderator_note = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `,
-      args: [
-        validatedData.status,
-        validatedData.moderator_note || null,
-        id
-      ]
-    });
+    const { error: updateError } = await supabase
+      .from('reports')
+      .update({
+        status: validatedData.status,
+        moderator_note: validatedData.moderator_note || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     // 업데이트된 신고 조회
-    const updatedReportResult = await db.execute({
-      sql: `
-        SELECT 
-          r.*,
-          u.email,
-          u.nickname
-        FROM reports r
-        LEFT JOIN users u ON r.user_id = u.id
-        WHERE r.id = ?
-      `,
-      args: [id]
-    });
+    const { data: updatedReport, error: fetchError } = await supabase
+      .from('reports')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', id)
+      .single();
 
-    const updatedReport = updatedReportResult.rows[0];
+    if (fetchError || !updatedReport) {
+      throw fetchError;
+    }
 
     return NextResponse.json({
       message: '신고가 성공적으로 처리되었습니다.',
@@ -188,11 +171,11 @@ export async function PUT(
         moderator_note: updatedReport.moderator_note,
         created_at: updatedReport.created_at,
         updated_at: updatedReport.updated_at,
-        user: updatedReport.user_id && updatedReport.email ? {
+        user: {
           id: updatedReport.user_id,
-          email: String(updatedReport.email),
-          nickname: updatedReport.nickname ?? ''
-        } : undefined
+          email: updatedReport.users.email,
+          nickname: updatedReport.users.nickname
+        }
       }
     });
   } catch (error) {

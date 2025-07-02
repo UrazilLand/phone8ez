@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { getUserByEmail, hasPermission } from '@/lib/auth-server';
 import { supabase } from '@/lib/supabaseClient';
+import { getUserByEmail, hasPermission } from '@/lib/auth-server';
 import { z } from 'zod';
 
 const updateCommentSchema = z.object({
@@ -34,25 +33,22 @@ export async function PUT(
     const validatedData = updateCommentSchema.parse(body);
 
     // 댓글 존재 여부 및 권한 확인
-    const commentResult = await db.execute({
-      sql: `
-        SELECT c.*, u.email 
-        FROM comments c
-        LEFT JOIN users u ON c.user_id = u.id
-        WHERE c.id = ?
-      `,
-      args: [commentId.toString()]
-    });
+    const { data: commentData, error: commentError } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        users!inner(email)
+      `)
+      .eq('id', commentId)
+      .single();
 
-    if (commentResult.rows.length === 0) {
+    if (commentError || !commentData) {
       return NextResponse.json(
         { error: '댓글을 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
 
-    const comment = commentResult.rows[0];
-    
     // 사용자 정보 조회
     const dbUser = await getUserByEmail(authUser.email);
     if (!dbUser) {
@@ -63,7 +59,7 @@ export async function PUT(
     }
 
     // 권한 확인: 본인 댓글이거나 관리자/모더레이터
-    const isOwnComment = comment.email === authUser.email;
+    const isOwnComment = commentData.users.email === authUser.email;
     const canEdit = hasPermission(dbUser.role, 'comments', 'update', isOwnComment);
     
     if (!canEdit) {
@@ -74,30 +70,31 @@ export async function PUT(
     }
 
     // 댓글 수정
-    await db.execute({
-      sql: `
-        UPDATE comments 
-        SET content = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-      `,
-      args: [validatedData.content, commentId.toString()]
-    });
+    const { error: updateError } = await supabase
+      .from('comments')
+      .update({ 
+        content: validatedData.content,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', commentId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     // 수정된 댓글 조회
-    const updatedResult = await db.execute({
-      sql: `
-        SELECT 
-          c.*,
-          u.email,
-          u.nickname
-        FROM comments c
-        LEFT JOIN users u ON c.user_id = u.id
-        WHERE c.id = ?
-      `,
-      args: [commentId.toString()]
-    });
+    const { data: updatedComment, error: fetchError } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', commentId)
+      .single();
 
-    const updatedComment = updatedResult.rows[0];
+    if (fetchError || !updatedComment) {
+      throw fetchError;
+    }
     
     return NextResponse.json({
       id: updatedComment.id,
@@ -107,11 +104,11 @@ export async function PUT(
       parent_id: updatedComment.parent_id,
       created_at: updatedComment.created_at,
       updated_at: updatedComment.updated_at,
-      user: updatedComment.user_id && updatedComment.email ? {
+      user: {
         id: updatedComment.user_id,
-        email: String(updatedComment.email),
-        nickname: updatedComment.nickname ?? ''
-      } : undefined
+        email: updatedComment.users.email,
+        nickname: updatedComment.users.nickname
+      }
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -152,25 +149,22 @@ export async function DELETE(
     }
 
     // 댓글 존재 여부 및 권한 확인
-    const commentResult = await db.execute({
-      sql: `
-        SELECT c.*, u.email 
-        FROM comments c
-        LEFT JOIN users u ON c.user_id = u.id
-        WHERE c.id = ?
-      `,
-      args: [commentId.toString()]
-    });
+    const { data: commentData, error: commentError } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        users!inner(email)
+      `)
+      .eq('id', commentId)
+      .single();
 
-    if (commentResult.rows.length === 0) {
+    if (commentError || !commentData) {
       return NextResponse.json(
         { error: '댓글을 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
 
-    const comment = commentResult.rows[0];
-    
     // 사용자 정보 조회
     const dbUser = await getUserByEmail(authUser.email);
     if (!dbUser) {
@@ -181,7 +175,7 @@ export async function DELETE(
     }
 
     // 권한 확인: 본인 댓글이거나 관리자/모더레이터
-    const isOwnComment = comment.email === authUser.email;
+    const isOwnComment = commentData.users.email === authUser.email;
     const canDelete = hasPermission(dbUser.role, 'comments', 'delete', isOwnComment);
     
     if (!canDelete) {
@@ -192,10 +186,14 @@ export async function DELETE(
     }
 
     // 댓글과 대댓글 모두 삭제
-    await db.execute({
-      sql: 'DELETE FROM comments WHERE id = ? OR parent_id = ?',
-      args: [commentId.toString(), commentId.toString()]
-    });
+    const { error: deleteError } = await supabase
+      .from('comments')
+      .delete()
+      .or(`id.eq.${commentId},parent_id.eq.${commentId}`);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json({ message: '댓글이 삭제되었습니다.' });
   } catch (error) {

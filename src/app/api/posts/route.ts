@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { createUserIfNotExists } from '@/lib/auth-server';
 import { supabase } from '@/lib/supabaseClient';
+import { createUserIfNotExists } from '@/lib/auth-server';
 import { z } from 'zod';
 
 const createPostSchema = z.object({
@@ -23,52 +22,41 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     
     // 전체 게시글 수 조회
-    let countQuery = `
-      SELECT COUNT(*) as total 
-      FROM posts p 
-      LEFT JOIN users u ON p.user_id = u.id 
-      WHERE p.board_type = ?
-    `;
-    let countParams = [board_type];
+    let countQuery = supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('board_type', board_type);
     
     if (search) {
-      countQuery += ` AND (p.title LIKE ? OR p.content LIKE ?)`;
-      countParams.push(`%${search}%`, `%${search}%`);
+      countQuery = countQuery.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
     }
     
-    const countResult = await db.execute({
-      sql: countQuery,
-      args: countParams
-    });
-    const total = countResult.rows[0]?.total as number;
+    const { count: total } = await countQuery;
     
     // 게시글 목록 조회
-    let postsQuery = `
-      SELECT 
-        p.*,
-        u.email,
-        u.nickname,
-        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
-      FROM posts p
-      LEFT JOIN users u ON p.user_id = u.id
-      WHERE p.board_type = ?
-    `;
-    let postsParams = [board_type];
+    let postsQuery = supabase
+      .from('posts')
+      .select(`
+        *,
+        users!inner(email, nickname),
+        comments(count)
+      `)
+      .eq('board_type', board_type);
     
     if (search) {
-      postsQuery += ` AND (p.title LIKE ? OR p.content LIKE ?)`;
-      postsParams.push(`%${search}%`, `%${search}%`);
+      postsQuery = postsQuery.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
     }
     
-    postsQuery += ` ORDER BY p.is_notice DESC, p.created_at DESC LIMIT ? OFFSET ?`;
-    postsParams.push(limit.toString(), offset.toString());
+    const { data: postsData, error: postsError } = await postsQuery
+      .order('is_notice', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (postsError) {
+      throw postsError;
+    }
     
-    const postsResult = await db.execute({
-      sql: postsQuery,
-      args: postsParams
-    });
-    
-    const posts = postsResult.rows.map(row => ({
+    const posts = postsData?.map(row => ({
       id: row.id,
       title: row.title,
       content: row.content,
@@ -81,17 +69,17 @@ export async function GET(request: NextRequest) {
       is_notice: row.is_notice,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      user: row.user_id && row.email ? {
+      user: {
         id: row.user_id,
-        email: String(row.email),
-        nickname: row.nickname ?? ''
-      } : undefined,
-      comment_count: row.comment_count
-    }));
+        email: row.users.email,
+        nickname: row.users.nickname
+      },
+      comment_count: row.comments?.[0]?.count || 0
+    })) || [];
     
     return NextResponse.json({
       posts,
-      total,
+      total: total || 0,
       page,
       limit
     });
@@ -127,38 +115,36 @@ export async function POST(request: NextRequest) {
     const validatedData = createPostSchema.parse(body);
     
     // 게시글 생성
-    const result = await db.execute({
-      sql: `
-        INSERT INTO posts (title, content, board_type, image_urls, video_url, user_id)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `,
-      args: [
-        validatedData.title,
-        validatedData.content,
-        validatedData.board_type,
-        validatedData.image_urls || '[]',
-        validatedData.video_url || null,
-        dbUser.id
-      ]
-    });
-    
-    const postId = result.lastInsertRowid;
+    const { data: postData, error: insertError } = await supabase
+      .from('posts')
+      .insert({
+        title: validatedData.title,
+        content: validatedData.content,
+        board_type: validatedData.board_type,
+        image_urls: validatedData.image_urls || '[]',
+        video_url: validatedData.video_url || null,
+        user_id: dbUser.id
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
     
     // 생성된 게시글 조회
-    const postResult = await db.execute({
-      sql: `
-        SELECT 
-          p.*,
-          u.email,
-          u.nickname
-        FROM posts p
-        LEFT JOIN users u ON p.user_id = u.id
-        WHERE p.id = ?
-      `,
-      args: [postId?.toString() || '0']
-    });
-    
-    const post = postResult.rows[0];
+    const { data: post, error: fetchError } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        users!inner(email, nickname)
+      `)
+      .eq('id', postData.id)
+      .single();
+
+    if (fetchError || !post) {
+      throw fetchError;
+    }
     
     return NextResponse.json({
       id: post.id,
@@ -173,11 +159,11 @@ export async function POST(request: NextRequest) {
       is_notice: post.is_notice,
       created_at: post.created_at,
       updated_at: post.updated_at,
-      user: post.user_id && post.email ? {
+      user: {
         id: post.user_id,
-        email: String(post.email),
-        nickname: post.nickname ?? ''
-      } : undefined
+        email: post.users.email,
+        nickname: post.users.nickname
+      }
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
