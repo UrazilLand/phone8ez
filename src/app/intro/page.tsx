@@ -1,6 +1,38 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-react';
+import MainVisualSlider from '@/components/home/MainVisualSlider';
+
+const plans = [
+  {
+    name: '기본 플랜',
+    desc: '기본 시트 데이터 통합 기능',
+    price: '무료',
+    period: '',
+    features: [
+      '데이터 입력 및 통합',
+      '공시 지원금 자동 적용',
+      '이메일 문의',
+    ],
+    button: '시작하기',
+    buttonType: 'outline',
+  },
+  {
+    name: '프로페셔널',
+    desc: '전문적인 데이터 분석과 고급 기능',
+    price: '월/19,900원',
+    period: '',
+    features: [
+      '기본 통합 기능',
+      '모델별 데이터 상세보기',
+      '로컬 및 Cloud 저장',
+      '다크 모드 지원',
+      '우선 고객 지원',
+    ],
+    button: '7일 무료체험 등록',
+    buttonType: 'primary',
+  },
+];
 
 export default function IntroPage() {
   return (
@@ -72,6 +104,59 @@ export default function IntroPage() {
                         언제나 현장의 목소리를 먼저 듣고, 거기서부터 시작합니다.</p>
               </div>
           </div>
+      </section>
+
+      {/* 구독 플랜(가격 정책) 카드 */}
+      <section className="py-20 bg-transparent">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-600 dark:text-blue-500">구독 플랜 및 가격 정책</h2>
+        <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 max-w-4xl mx-auto">
+          {plans.map((plan, idx) => (
+            <div
+              key={plan.name}
+              className="flex-1 bg-card rounded-2xl shadow-lg p-8 flex flex-col items-center transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl border min-w-[260px] max-w-[350px]"
+              style={{ minHeight: 440 }}
+            >
+              <div className="text-2xl font-bold mb-1 text-blue-600 dark:text-blue-500">{plan.name}</div>
+              <div className="text-sm text-muted-foreground mb-4">{plan.desc}</div>
+              <div className="text-3xl font-extrabold mb-1 text-foreground">
+                {plan.name === '프로페셔널' && plan.price.startsWith('월/') ? (
+                  <>
+                    <span className="align-baseline text-base mr-1">월/</span>
+                    {plan.price.replace('월/', '')}
+                  </>
+                ) : plan.price}
+              </div>
+              <div className="text-base text-muted-foreground/80 mb-4">{plan.period}</div>
+              <ul className="mb-8 space-y-2 w-full text-left flex-1">
+                {plan.features.map((f, i) => (
+                  <li key={i} className="flex items-center text-foreground font-medium">
+                    <span className="mr-2 text-blue-600 dark:text-blue-500 font-bold">✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+              <button
+                className={
+                  (plan.buttonType === 'primary'
+                    ? 'w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors'
+                    : 'w-full py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-600/10 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-500/10 transition-colors') +
+                  ' mt-auto'
+                }
+              >
+                {plan.button}
+              </button>
+            </div>
+          ))}
+        </div>
+        {/* 결제/환불/취소 정책 안내 */}
+        <div className="mt-12 max-w-2xl mx-auto bg-blue-50 dark:bg-blue-950/30 rounded-xl p-6 text-blue-900 dark:text-blue-100 shadow">
+          <h3 className="text-xl font-bold mb-2 text-blue-700 dark:text-blue-300">결제/환불/취소 정책 안내</h3>
+          <ul className="list-disc pl-5 space-y-1 text-base">
+            <li>결제 완료 후 7일 이내에는 전액 환불이 가능합니다.</li>
+            <li>서비스 이용 시작(데이터 다운로드, 구독 혜택 사용 등) 이후에는 환불이 불가합니다.</li>
+            <li>환불 요청은 고객센터(이메일/전화)로 접수해 주시기 바랍니다.</li>
+            <li>결제 취소 및 환불은 영업일 기준 3일 이내 처리됩니다.</li>
+          </ul>
+        </div>
       </section>
 
     </div>

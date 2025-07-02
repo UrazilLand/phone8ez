@@ -1,13 +1,13 @@
 import Image from 'next/image';
 import UserBadge from '@/components/user/UserBadge';
 import PostVideoEmbed from './PostVideoEmbed';
-import CommentList, { type Comment } from '@/components/comment/CommentList';
-import CommentForm from '@/components/comment/CommentForm';
-import { type Post } from '@/components/board/BoardList'; // Re-use Post type
+import CommentList, { type Comment } from '@/app/comment/components/CommentList';
+import CommentForm from '@/app/comment/components/CommentForm';
+import { type Post } from '@/app/board/components/BoardList'; // Re-use Post type
 import { Badge } from '@/components/ui/badge';
 import { Eye, ThumbsUp, CalendarDays, Edit, Trash2 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 interface PostDetailViewProps {
   post: Post & { content: string; image_url?: string; video_url?: string; }; // Extend Post with more details
