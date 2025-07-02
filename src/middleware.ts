@@ -61,7 +61,7 @@ export default async function middleware(req: NextRequest) {
   } = await supabase.auth.getSession();
 
   // 보호된 라우트 정의
-  const protectedRoutes = ['/dashboard', '/admin', '/profile'];
+  const protectedRoutes = ['/dashboard', '/admin'];
   const isProtectedRoute = protectedRoutes.some(route => 
     req.nextUrl.pathname.startsWith(route)
   );
