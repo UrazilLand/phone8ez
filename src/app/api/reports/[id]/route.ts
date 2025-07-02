@@ -10,7 +10,7 @@ const updateReportSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  context
+  context: any
 ) {
   const { id } = context.params;
   
@@ -125,7 +125,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context
+  context: any
 ) {
   const { id } = context.params;
 
