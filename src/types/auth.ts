@@ -110,6 +110,8 @@ export interface AuthState {
 export interface AuthContextType extends AuthState {
   signIn: (credentials: LoginCredentials) => Promise<void>;
   signUp: (credentials: SignUpCredentials) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithKakao: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 } 

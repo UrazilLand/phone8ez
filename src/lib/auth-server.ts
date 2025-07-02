@@ -12,13 +12,46 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     if (error || !data) return null;
     
     return {
-      id: data.id,
+      id: data.id.toString(),
       email: data.email,
-      supabase_id: data.supabase_id,
       nickname: data.nickname,
+      avatar_url: data.avatar_url,
+      provider: data.provider,
       role: data.role as UserRole,
       plan: data.plan as UserPlan,
       is_verified: Boolean(data.is_verified),
+      post_count: data.post_count || 0,
+      comment_count: data.comment_count || 0,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+  } catch (error) {
+    console.error('사용자 조회 오류:', error);
+    return null;
+  }
+}
+
+export async function getUserBySupabaseId(supabaseId: string): Promise<User | null> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('supabase_id', supabaseId)
+      .single();
+    
+    if (error || !data) return null;
+    
+    return {
+      id: data.id.toString(),
+      email: data.email,
+      nickname: data.nickname,
+      avatar_url: data.avatar_url,
+      provider: data.provider,
+      role: data.role as UserRole,
+      plan: data.plan as UserPlan,
+      is_verified: Boolean(data.is_verified),
+      post_count: data.post_count || 0,
+      comment_count: data.comment_count || 0,
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -42,9 +75,12 @@ export async function createUserIfNotExists(email: string | null, nickname?: str
       .insert({
         email: email || '',
         nickname: nickname || '익명',
+        provider: 'email',
         role: 'user',
         plan: 'free',
-        is_verified: false
+        is_verified: false,
+        post_count: 0,
+        comment_count: 0
       })
       .select()
       .single();
@@ -52,13 +88,16 @@ export async function createUserIfNotExists(email: string | null, nickname?: str
     if (error) throw error;
     
     return {
-      id: data.id,
+      id: data.id.toString(),
       email: data.email,
-      supabase_id: data.supabase_id,
       nickname: data.nickname,
+      avatar_url: data.avatar_url,
+      provider: data.provider,
       role: data.role as UserRole,
       plan: data.plan as UserPlan,
       is_verified: Boolean(data.is_verified),
+      post_count: data.post_count || 0,
+      comment_count: data.comment_count || 0,
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -100,12 +139,12 @@ export function canManageUsers(userRole: UserRole): boolean {
   return userRole === 'admin';
 }
 
-export async function updateUserRole(userId: number, newRole: UserRole): Promise<boolean> {
+export async function updateUserRole(userId: string, newRole: UserRole): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('users')
       .update({ role: newRole, updated_at: new Date().toISOString() })
-      .eq('id', userId);
+      .eq('id', parseInt(userId));
     
     if (error) throw error;
     return true;
@@ -115,7 +154,7 @@ export async function updateUserRole(userId: number, newRole: UserRole): Promise
   }
 }
 
-export async function getUserStats(userId: number): Promise<{
+export async function getUserStats(userId: string): Promise<{
   post_count: number;
   comment_count: number;
 }> {
@@ -123,12 +162,12 @@ export async function getUserStats(userId: number): Promise<{
     const { count: post_count } = await supabase
       .from('posts')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
+      .eq('user_id', parseInt(userId));
     
     const { count: comment_count } = await supabase
       .from('comments')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
+      .eq('user_id', parseInt(userId));
 
     return {
       post_count: post_count || 0,

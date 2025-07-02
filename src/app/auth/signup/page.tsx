@@ -1,17 +1,27 @@
 'use client';
 
-import { supabase } from '../../../lib/supabaseClient';
-
-const handleOAuthLogin = async (provider: 'google' | 'kakao') => {
-  await supabase.auth.signInWithOAuth({
-    provider,
-    options: { 
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
-};
+import { useAuth } from '../../../lib/auth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function SignUpPage() {
+  const { signInWithGoogle, signInWithKakao, loading, error } = useAuth();
+
+  const handleGoogleSignup = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Google 회원가입 오류:', error);
+    }
+  };
+
+  const handleKakaoSignup = async () => {
+    try {
+      await signInWithKakao();
+    } catch (error) {
+      console.error('Kakao 회원가입 오류:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-4">
       <div className="w-full max-w-md">
@@ -30,12 +40,20 @@ export default function SignUpPage() {
             <p className="text-gray-600 dark:text-gray-400">소셜 계정으로 간편하게 가입하세요</p>
           </div>
 
+          {/* 에러 메시지 */}
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           {/* 소셜 로그인 버튼들 */}
           <div className="space-y-4">
             {/* Google 회원가입 */}
             <button 
-              onClick={() => handleOAuthLogin('google')} 
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500 rounded-xl transition-all duration-200 hover:shadow-lg group"
+              onClick={handleGoogleSignup}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500 rounded-xl transition-all duration-200 hover:shadow-lg group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -44,20 +62,21 @@ export default function SignUpPage() {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               <span className="text-gray-700 dark:text-gray-200 font-medium group-hover:text-gray-900 dark:group-hover:text-white">
-                Google로 시작하기
+                {loading ? '가입 중...' : 'Google로 시작하기'}
               </span>
             </button>
 
             {/* Kakao 회원가입 */}
             <button 
-              onClick={() => handleOAuthLogin('kakao')} 
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-yellow-400 hover:bg-yellow-500 dark:bg-yellow-500 dark:hover:bg-yellow-600 rounded-xl transition-all duration-200 hover:shadow-lg group"
+              onClick={handleKakaoSignup}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-yellow-400 hover:bg-yellow-500 dark:bg-yellow-500 dark:hover:bg-yellow-600 rounded-xl transition-all duration-200 hover:shadow-lg group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z"/>
               </svg>
               <span className="text-gray-800 font-medium group-hover:text-gray-900">
-                카카오로 시작하기
+                {loading ? '가입 중...' : '카카오로 시작하기'}
               </span>
             </button>
           </div>

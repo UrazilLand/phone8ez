@@ -17,13 +17,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (!user?.email) {
+      const userEmail = user?.user_metadata?.email || user?.email;
+      if (!userEmail) {
         router.push('/auth/login');
         return;
       }
 
       try {
-        const dbUser = await getUserByEmail(user.email);
+        const dbUser = await getUserByEmail(userEmail);
         if (!dbUser) {
           router.push('/auth/login');
           return;

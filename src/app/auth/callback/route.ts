@@ -11,40 +11,52 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    
-    if (!error && data.user) {
-      // 사용자 정보를 users 테이블에 저장
-      try {
-        const { error: insertError } = await supabase
-          .from('users')
-          .upsert({
-            id: data.user.id,
-            email: data.user.email,
-            nickname: data.user.user_metadata?.full_name || 
-                     data.user.user_metadata?.name || 
-                     data.user.user_metadata?.nickname ||
-                     data.user.email?.split('@')[0] || '사용자',
-            avatar_url: data.user.user_metadata?.avatar_url || null,
-            provider: data.user.app_metadata?.provider || 'email',
-            is_verified: data.user.email_confirmed_at ? true : false,
-            created_at: data.user.created_at,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
-
-        if (insertError) {
-          console.error('사용자 정보 저장 오류:', insertError);
-        }
-      } catch (error) {
-        console.error('사용자 정보 저장 중 오류:', error);
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (error) {
+        console.error('Auth callback error:', error);
+        return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_error`);
       }
-    }
 
-    if (!error) {
+      if (data.user) {
+        // 사용자 정보를 users 테이블에 저장 (실패해도 인증은 성공)
+        try {
+          const { error: insertError } = await supabase
+            .from('users')
+            .upsert({
+              supabase_id: data.user.id,
+              email: data.user.email,
+              nickname: data.user.user_metadata?.full_name || 
+                       data.user.user_metadata?.name || 
+                       data.user.user_metadata?.nickname ||
+                       data.user.email?.split('@')[0] || '사용자',
+              avatar_url: data.user.user_metadata?.avatar_url || null,
+              provider: data.user.app_metadata?.provider || 'email',
+              role: 'user',
+              plan: 'free',
+              is_verified: data.user.email_confirmed_at ? true : false,
+              post_count: 0,
+              comment_count: 0,
+              created_at: data.user.created_at,
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'supabase_id',
+              ignoreDuplicates: false
+            });
+
+          if (insertError) {
+            console.error('사용자 정보 저장 오류:', insertError);
+            // 사용자 정보 저장 실패해도 인증은 성공으로 처리
+          }
+        } catch (dbError) {
+          console.error('사용자 정보 저장 중 오류:', dbError);
+          // 데이터베이스 오류가 있어도 인증은 성공으로 처리
+        }
+      }
+
+      // 인증 성공 시 리다이렉트
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
       
@@ -55,9 +67,12 @@ export async function GET(request: Request) {
       } else {
         return NextResponse.redirect(`${origin}${next}`);
       }
+    } catch (error) {
+      console.error('Auth callback 처리 중 오류:', error);
+      return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_error`);
     }
   }
 
-  // 에러 발생 시 로그인 페이지로 리다이렉트
-  return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_error`);
+  // 코드가 없으면 로그인 페이지로 리다이렉트
+  return NextResponse.redirect(`${origin}/auth/login?error=no_code`);
 } 

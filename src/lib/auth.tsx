@@ -45,31 +45,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // 임시: Supabase 연결 비활성화
-      console.log('로그인 시도:', credentials);
-      
-      // 더미 성공 응답
-      setTimeout(() => {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: null,
-        }));
-      }, 1000);
-      
-      // 실제 Supabase 연결은 주석 처리
-      /*
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        throw new Error('Supabase 설정이 완료되지 않았습니다. 환경 변수를 확인해주세요.');
-      }
-
       const { error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
       });
 
       if (error) throw error;
-      */
     } catch (error: any) {
       setState(prev => ({
         ...prev,
@@ -84,24 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // 임시: Supabase 연결 비활성화
-      console.log('회원가입 시도:', credentials);
-      
-      // 더미 성공 응답
-      setTimeout(() => {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: null,
-        }));
-      }, 1000);
-      
-      // 실제 Supabase 연결은 주석 처리
-      /*
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        throw new Error('Supabase 설정이 완료되지 않았습니다. 환경 변수를 확인해주세요.');
-      }
-
       const { error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -113,11 +76,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) throw error;
-      */
     } catch (error: any) {
       setState(prev => ({
         ...prev,
         error: error.message || '회원가입에 실패했습니다.',
+        loading: false,
+      }));
+      throw error;
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      setState(prev => ({
+        ...prev,
+        error: error.message || 'Google 로그인에 실패했습니다.',
+        loading: false,
+      }));
+      throw error;
+    }
+  };
+
+  const signInWithKakao = async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      setState(prev => ({
+        ...prev,
+        error: error.message || 'Kakao 로그인에 실패했습니다.',
         loading: false,
       }));
       throw error;
@@ -163,6 +167,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...state,
     signIn,
     signUp,
+    signInWithGoogle,
+    signInWithKakao,
     signOut,
     resetPassword,
   };
