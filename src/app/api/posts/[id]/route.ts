@@ -122,7 +122,13 @@ export async function PUT(
     const post = postResult.rows[0];
     
     // 사용자 정보 조회
-    const user = await getUserByEmail(post.email);
+    if (!post.email) {
+      return NextResponse.json(
+        { error: '사용자 정보를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+    const user = await getUserByEmail(String(post.email));
     if (!user) {
       return NextResponse.json(
         { error: '사용자 정보를 찾을 수 없습니다.' },
@@ -268,7 +274,13 @@ export async function DELETE(
     const post = postResult.rows[0];
     
     // 사용자 정보 조회
-    const user = await getUserByEmail(post.email);
+    if (!post.email) {
+      return NextResponse.json(
+        { error: '사용자 정보를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+    const user = await getUserByEmail(String(post.email));
     if (!user) {
       return NextResponse.json(
         { error: '사용자 정보를 찾을 수 없습니다.' },
