@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+// RouteContext 타입 직접 선언
+type RouteContext<P extends Record<string, string> = {}> = { params: P };
 import { db } from '@/lib/db';
 import { getUserByEmail, hasPermission, canModerate } from '@/lib/auth-server';
 import { z } from 'zod';
@@ -13,7 +15,7 @@ const updatePostSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext<{ id: string }>
 ) {
   try {
     const { id } = context.params;
@@ -84,7 +86,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext<{ id: string }>
 ) {
   try {
     const { id } = context.params;
@@ -233,7 +235,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext<{ id: string }>
 ) {
   try {
     const { id } = context.params;
