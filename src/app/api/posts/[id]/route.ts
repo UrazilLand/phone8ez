@@ -15,7 +15,7 @@ const updatePostSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  context
+  context: any
 ) {
   const { id } = context.params;
   try {
@@ -86,7 +86,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context
+  context: any
 ) {
   const { id } = context.params;
   try {
@@ -235,7 +235,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context
+  context: any
 ) {
   const { id } = context.params;
   try {
