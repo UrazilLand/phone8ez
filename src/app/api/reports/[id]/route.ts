@@ -62,11 +62,11 @@ export async function GET(
           content: post.content,
           category: post.category,
           created_at: post.created_at,
-          user: {
+          user: post.user_id && post.email ? {
             id: post.user_id,
-            email: post.email,
-            nickname: post.nickname
-          }
+            email: String(post.email),
+            nickname: post.nickname ?? ''
+          } : undefined
         };
       }
     } else if (report.target_type === 'comment' && report.target_id) {
@@ -89,11 +89,11 @@ export async function GET(
           id: comment.id,
           content: comment.content,
           created_at: comment.created_at,
-          user: {
+          user: comment.user_id && comment.email ? {
             id: comment.user_id,
-            email: comment.email,
-            nickname: comment.nickname
-          }
+            email: String(comment.email),
+            nickname: comment.nickname ?? ''
+          } : undefined
         };
       }
     }
@@ -107,10 +107,10 @@ export async function GET(
       moderator_note: report.moderator_note,
       created_at: report.created_at,
       updated_at: report.updated_at,
-      user: report.user_id ? {
+      user: report.user_id && report.email ? {
         id: report.user_id,
-        email: report.email,
-        nickname: report.nickname
+        email: String(report.email),
+        nickname: report.nickname ?? ''
       } : undefined,
       target_info: targetInfo
     });
@@ -143,7 +143,7 @@ export async function PUT(
       );
     }
 
-    // ★ 추가: 요청 body 파싱 및 검증
+    // 요청 body 파싱 및 검증
     const body = await request.json();
     const validatedData = updateReportSchema.parse(body);
 
@@ -188,10 +188,10 @@ export async function PUT(
         moderator_note: updatedReport.moderator_note,
         created_at: updatedReport.created_at,
         updated_at: updatedReport.updated_at,
-        user: updatedReport.user_id ? {
+        user: updatedReport.user_id && updatedReport.email ? {
           id: updatedReport.user_id,
-          email: updatedReport.email,
-          nickname: updatedReport.nickname
+          email: String(updatedReport.email),
+          nickname: updatedReport.nickname ?? ''
         } : undefined
       }
     });
@@ -205,7 +205,7 @@ export async function PUT(
 
     console.error('신고 처리 오류:', error);
     return NextResponse.json(
-      { error: '신고 처리에 실패했습니다.' },
+      { error: '신고를 처리하는데 실패했습니다.' },
       { status: 500 }
     );
   }

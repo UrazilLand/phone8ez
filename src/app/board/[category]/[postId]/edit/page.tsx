@@ -12,6 +12,7 @@ import { ArrowLeft, Save, X } from 'lucide-react';
 import { Post, BOARD_CATEGORIES } from '@/types/board';
 import { useToast } from '@/hooks/use-toast';
 import { use } from 'react';
+import { useAuth } from '@/lib/auth';
 
 interface EditPageProps {
   params: Promise<{
@@ -23,6 +24,7 @@ interface EditPageProps {
 export default function EditPage({ params }: EditPageProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const { category, postId } = use(params);
   
@@ -181,7 +183,7 @@ export default function EditPage({ params }: EditPageProps) {
   }
 
   // 권한 확인
-  if (userId !== post.user?.email) {
+  if (user?.email !== post.user?.email) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">

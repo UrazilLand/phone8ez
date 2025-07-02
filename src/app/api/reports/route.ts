@@ -12,8 +12,8 @@ const createReportSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
         { status: 401 }
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 현재 사용자 정보 조회
-    const currentUser = await getUserByEmail(userId);
+    const currentUser = await getUserByEmail(user.email);
     if (!currentUser) {
       return NextResponse.json(
         { error: '사용자 정보를 찾을 수 없습니다.' },
@@ -94,10 +94,10 @@ export async function GET(request: NextRequest) {
       reason: row.reason,
       status: row.status,
       created_at: row.created_at,
-      user: row.user_id ? {
+      user: row.user_id && row.email ? {
         id: row.user_id,
-        email: row.email,
-        nickname: row.nickname
+        email: String(row.email),
+        nickname: row.nickname ?? ''
       } : undefined
     }));
     
@@ -216,11 +216,12 @@ export async function POST(request: NextRequest) {
       reason: report.reason,
       status: report.status,
       created_at: report.created_at,
-      user: {
+      updated_at: report.updated_at,
+      user: report.user_id && report.email ? {
         id: report.user_id,
-        email: report.email,
-        nickname: report.nickname
-      }
+        email: String(report.email),
+        nickname: report.nickname ?? ''
+      } : undefined
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

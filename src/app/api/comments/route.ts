@@ -61,10 +61,10 @@ export async function GET(request: NextRequest) {
       parent_id: row.parent_id,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      user: row.user_id ? {
+      user: row.user_id && row.email ? {
         id: row.user_id,
-        email: row.email,
-        nickname: row.nickname
+        email: String(row.email),
+        nickname: row.nickname ?? ''
       } : undefined,
       reply_count: row.reply_count
     }));
@@ -93,10 +93,10 @@ export async function GET(request: NextRequest) {
         parent_id: row.parent_id,
         created_at: row.created_at,
         updated_at: row.updated_at,
-        user: row.user_id ? {
+        user: row.user_id && row.email ? {
           id: row.user_id,
-          email: row.email,
-          nickname: row.nickname
+          email: String(row.email),
+          nickname: row.nickname ?? ''
         } : undefined
       }));
     }
@@ -162,11 +162,11 @@ export async function POST(request: NextRequest) {
       parent_id: comment.parent_id,
       created_at: comment.created_at,
       updated_at: comment.updated_at,
-      user: {
+      user: comment.user_id && comment.email ? {
         id: comment.user_id,
-        email: comment.email,
-        nickname: comment.nickname
-      }
+        email: String(comment.email),
+        nickname: comment.nickname ?? ''
+      } : undefined
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

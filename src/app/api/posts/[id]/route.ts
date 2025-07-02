@@ -69,10 +69,10 @@ export async function GET(
       is_notice: post.is_notice,
       created_at: post.created_at,
       updated_at: post.updated_at,
-      user: post.user_id ? {
+      user: post.user_id && post.email ? {
         id: post.user_id,
-        email: post.email,
-        nickname: post.nickname
+        email: String(post.email),
+        nickname: post.nickname ?? ''
       } : undefined
     });
   } catch (error) {
@@ -217,11 +217,11 @@ export async function PUT(
       is_notice: updatedPost.is_notice,
       created_at: updatedPost.created_at,
       updated_at: updatedPost.updated_at,
-      user: {
+      user: updatedPost.user_id && updatedPost.email ? {
         id: updatedPost.user_id,
-        email: updatedPost.email,
-        nickname: updatedPost.nickname
-      }
+        email: String(updatedPost.email),
+        nickname: updatedPost.nickname ?? ''
+      } : undefined
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -299,7 +299,12 @@ export async function DELETE(
       );
     }
 
-    // 게시글 삭제
+    // 게시글과 관련 댓글 모두 삭제
+    await db.execute({
+      sql: 'DELETE FROM comments WHERE post_id = ?',
+      args: [postId.toString()]
+    });
+    
     await db.execute({
       sql: 'DELETE FROM posts WHERE id = ?',
       args: [postId.toString()]

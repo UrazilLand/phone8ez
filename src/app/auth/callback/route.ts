@@ -27,7 +27,7 @@ export async function GET(request: Request) {
             .from('users')
             .upsert({
               supabase_id: data.user.id,
-              email: data.user.email,
+              email: data.user.email ?? '',
               nickname: data.user.user_metadata?.full_name || 
                        data.user.user_metadata?.name || 
                        data.user.user_metadata?.nickname ||

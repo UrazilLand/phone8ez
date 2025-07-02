@@ -81,10 +81,10 @@ export async function GET(request: NextRequest) {
       is_notice: row.is_notice,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      user: row.user_id ? {
+      user: row.user_id && row.email ? {
         id: row.user_id,
-        email: row.email,
-        nickname: row.nickname
+        email: String(row.email),
+        nickname: row.nickname ?? ''
       } : undefined,
       comment_count: row.comment_count
     }));
@@ -173,11 +173,11 @@ export async function POST(request: NextRequest) {
       is_notice: post.is_notice,
       created_at: post.created_at,
       updated_at: post.updated_at,
-      user: {
+      user: post.user_id && post.email ? {
         id: post.user_id,
-        email: post.email,
-        nickname: post.nickname
-      }
+        email: String(post.email),
+        nickname: post.nickname ?? ''
+      } : undefined
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

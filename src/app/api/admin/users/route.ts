@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
         const stats = await getUserStats(row.id as string);
         return {
           id: row.id,
-          email: row.email,
-          nickname: row.nickname,
+          email: row.email ?? '',
+          nickname: row.nickname ?? '',
           role: row.role,
           plan: row.plan,
           is_verified: Boolean(row.is_verified),

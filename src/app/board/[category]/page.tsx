@@ -1,6 +1,6 @@
 'use client'; // Required for usePathname, useState, useEffect
 
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import BoardHeader from '../components/BoardHeader';
 import BoardFilterBar from '../components/BoardFilterBar';
@@ -35,6 +35,7 @@ const generateMockPosts = (category: string, count: number): Post[] => {
 export default function BoardCategoryPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const category = params.category as string || 'free';
   
   const [allPosts, setAllPosts] = useState<Post[]>([]);
@@ -42,6 +43,7 @@ export default function BoardCategoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
     setIsLoading(true);
@@ -72,6 +74,21 @@ export default function BoardCategoryPage() {
     // router.push(`/board/${category}?page=${page}`);
   };
 
+  const handleSearchChange = (value: string) => setSearchValue(value);
+  const handleSearchClick = () => {
+    // 실제 검색 API 호출 또는 필터링 로직 구현 필요
+    // 여기서는 단순히 제목에 검색어가 포함된 게시글만 표시
+    const filtered = allPosts.filter(
+      post => post.title.includes(searchValue)
+    );
+    setDisplayedPosts(filtered);
+    setCurrentPage(1);
+    setTotalPages(Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  };
+  const handleWriteClick = () => {
+    router.push(`/board/${category}/write`);
+  };
+
   const categoryTitleMap: { [key: string]: string } = {
     free: '자유게시판',
     funny: '유머게시판',
@@ -86,7 +103,12 @@ export default function BoardCategoryPage() {
           {categoryTitleMap[category] || '커뮤니티'}
         </h1>
         <BoardHeader />
-        <BoardFilterBar />
+        <BoardFilterBar 
+          searchValue={searchValue}
+          onSearchChange={handleSearchChange}
+          onSearchClick={handleSearchClick}
+          onWriteClick={handleWriteClick}
+        />
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (

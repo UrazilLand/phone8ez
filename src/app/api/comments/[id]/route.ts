@@ -10,10 +10,10 @@ const updateCommentSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: any
 ) {
   try {
-    const resolvedParams = await params;
+    const { id } = context.params;
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser?.email) {
       return NextResponse.json(
@@ -22,7 +22,7 @@ export async function PUT(
       );
     }
 
-    const commentId = parseInt(resolvedParams.id);
+    const commentId = parseInt(id);
     if (isNaN(commentId)) {
       return NextResponse.json(
         { error: '잘못된 댓글 ID입니다.' },
@@ -107,11 +107,11 @@ export async function PUT(
       parent_id: updatedComment.parent_id,
       created_at: updatedComment.created_at,
       updated_at: updatedComment.updated_at,
-      user: {
+      user: updatedComment.user_id && updatedComment.email ? {
         id: updatedComment.user_id,
-        email: updatedComment.email,
-        nickname: updatedComment.nickname
-      }
+        email: String(updatedComment.email),
+        nickname: updatedComment.nickname ?? ''
+      } : undefined
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -131,10 +131,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: any
 ) {
   try {
-    const resolvedParams = await params;
+    const { id } = context.params;
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser?.email) {
       return NextResponse.json(
@@ -143,7 +143,7 @@ export async function DELETE(
       );
     }
 
-    const commentId = parseInt(resolvedParams.id);
+    const commentId = parseInt(id);
     if (isNaN(commentId)) {
       return NextResponse.json(
         { error: '잘못된 댓글 ID입니다.' },
