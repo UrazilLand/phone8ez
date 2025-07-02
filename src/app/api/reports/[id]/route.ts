@@ -10,11 +10,11 @@ const updateReportSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context
 ) {
+  const { id } = context.params;
+  
   try {
-    const { id } = params;
-    
     // 신고 상세 조회
     const reportResult = await db.execute({
       sql: `
@@ -125,11 +125,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context
 ) {
-  try {
-    const { id } = params;
+  const { id } = context.params;
 
+  try {
     // 신고 존재 여부 확인
     const existingReport = await db.execute({
       sql: 'SELECT id, status FROM reports WHERE id = ?',
