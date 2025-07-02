@@ -15,10 +15,10 @@ const updatePostSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  context: RouteContext<{ id: string }>
+  context
 ) {
+  const { id } = context.params;
   try {
-    const { id } = context.params;
     const postId = parseInt(id);
     if (isNaN(postId)) {
       return NextResponse.json(
@@ -86,10 +86,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: RouteContext<{ id: string }>
+  context
 ) {
+  const { id } = context.params;
   try {
-    const { id } = context.params;
     const postId = parseInt(id);
     if (isNaN(postId)) {
       return NextResponse.json(
@@ -235,10 +235,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: RouteContext<{ id: string }>
+  context
 ) {
+  const { id } = context.params;
   try {
-    const { id } = context.params;
     const postId = parseInt(id);
     if (isNaN(postId)) {
       return NextResponse.json(
