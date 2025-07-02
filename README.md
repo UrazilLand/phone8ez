@@ -8,14 +8,14 @@
 - 자동화된 Excel 데이터 분석
 - 구독 기반 대시보드
 - 다크 모드 지원
-- Clerk 기반 인증 시스템 (모달 기반)
+- Supabase 기반 인증 시스템
 
 ## 기술 스택
 
 - Frontend: Next.js (App Router), React, TypeScript, TailwindCSS
-- Backend: NeonDB (PostgreSQL), Drizzle ORM
-- Auth: Clerk (이메일/비밀번호 + 소셜 로그인, 모달 기반)
-- 기타: zod, react-hook-form, react-hot-toast, Cloudinary
+- Backend: Supabase (PostgreSQL)
+- Auth: Supabase Auth (이메일/비밀번호)
+- 기타: zod, react-hook-form, react-hot-toast
 
 ## 시작하기
 
@@ -35,18 +35,25 @@ npm run build
 `.env.local` 파일을 생성하고 다음 변수들을 설정하세요:
 
 ```env
-# Clerk 인증 시스템
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
-CLERK_SECRET_KEY=sk_test_your_secret_key_here
+# Supabase 설정
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Supabase 서비스 롤 키 (서버 사이드에서만 사용)
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
-## Clerk 설정
+## Supabase 설정
 
-Clerk 인증 시스템 설정에 대한 자세한 가이드는 [CLERK_SETUP.md](./CLERK_SETUP.md)를 참조하세요.
+1. [Supabase](https://supabase.com)에서 새 프로젝트를 생성하세요.
+2. 프로젝트 설정에서 URL과 API 키를 복사하세요.
+3. Authentication > Settings에서 이메일 템플릿을 한국어로 설정하세요.
+4. `.env.local` 파일에 환경변수를 설정하세요.
 
 ### 주요 특징:
-- ✅ 모달 기반 로그인/회원가입
-- ✅ 소셜 로그인 지원
+- ✅ 이메일/비밀번호 로그인/회원가입
+- ✅ 이메일 인증
+- ✅ 비밀번호 재설정
 - ✅ 보안된 라우트 보호
 - ✅ 한국어 UI 지원
 

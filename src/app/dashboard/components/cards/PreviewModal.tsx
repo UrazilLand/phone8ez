@@ -107,9 +107,11 @@ const PreviewModal = React.memo(({
   return (
     <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
       <DialogContent className="max-w-7xl h-[90vh] p-6 flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-        <DialogTitle className="text-blue-700 dark:text-blue-400 font-bold">
-          데이터셋 상세 정보
-        </DialogTitle>
+        <DialogHeader>
+          <DialogTitle className="text-blue-700 dark:text-blue-400 font-bold">
+            데이터셋 상세 정보
+          </DialogTitle>
+        </DialogHeader>
         {selectedDataSet && (
           <>
             <div className="flex justify-between items-center">

@@ -5,10 +5,10 @@ import { useState, useEffect } from 'react';
 import Logo from '@/components/ui/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon, User, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
-import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut, useAuth, useSignIn } from '@clerk/nextjs';
+import { useAuth } from '../../lib/auth';
 
 const MAIN_COLOR = 'text-blue-600 border-blue-600';
 
@@ -25,7 +25,7 @@ const Header = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
-  const { isSignedIn } = useAuth();
+  const { user, signOut, loading } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
@@ -36,23 +36,6 @@ const Header = () => {
       <>
         {navLinks.map((link) => {
           if (link.emphasized) {
-            if (!isSignedIn) {
-              return (
-                <SignInButton mode="modal" key={link.href}>
-                  <a
-                    href="#"
-                    className={`px-3 py-1.5 rounded-full font-bold border-4 bg-white shadow-sm transition-all duration-200 text-sm md:text-base hover:scale-110 hover:bg-blue-50 focus:scale-110 active:scale-105 flex items-center justify-center h-10 ${MAIN_COLOR} ${mobile ? 'block w-full text-center my-1' : ''}`}
-                    style={{ minWidth: 110, minHeight: 36 }}
-                    onClick={e => {
-                      e.preventDefault();
-                      if (mobile) setIsMobileMenuOpen(false);
-                    }}
-                  >
-                    {link.label}
-                  </a>
-                </SignInButton>
-              );
-            }
             return (
               <a
                 key={link.href}
@@ -77,36 +60,6 @@ const Header = () => {
             </Link>
           );
         })}
-      </>
-    );
-  };
-
-  const AuthButtons = ({ mobile = false }: { mobile?: boolean }) => {
-    return (
-      <>
-        <SignedOut>
-          <SignInButton mode="modal">
-            <Button variant="ghost" className={`text-foreground hover:text-blue-600 px-3 ${mobile ? 'w-full justify-start text-gray-900 dark:text-white' : ''}`}>
-              로그인
-            </Button>
-          </SignInButton>
-          <SignUpButton mode="modal">
-            <Button variant="default" className={`bg-blue-600 text-white hover:bg-blue-700 px-4 font-semibold shadow-none ${mobile ? 'w-full justify-start text-gray-900 dark:text-white' : ''}`}>
-              회원가입
-            </Button>
-          </SignUpButton>
-        </SignedOut>
-        <SignedIn>
-          <UserButton 
-            appearance={{
-              elements: {
-                userButtonAvatarBox: "w-8 h-8",
-                userButtonTrigger: "focus:shadow-none",
-              },
-            }}
-            afterSignOutUrl="/"
-          />
-        </SignedIn>
       </>
     );
   };
@@ -149,7 +102,7 @@ const Header = () => {
             <NavLinksContent />
           </nav>
 
-          {/* 우측: 다크모드, 로그인, 회원가입 */}
+          {/* 우측: 다크모드, 로그인/로그아웃 */}
           <div className="hidden lg:flex items-center space-x-2 min-w-[180px] justify-end">
             <Button
               variant="ghost"
@@ -164,7 +117,37 @@ const Header = () => {
               )}
               <span className="sr-only">테마 변경</span>
             </Button>
-            <AuthButtons />
+            
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {user.email}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={signOut}
+                  disabled={loading}
+                  className="flex items-center space-x-1"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>로그아웃</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link href="/auth/login">
+                  <Button variant="ghost" size="sm">
+                    로그인
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button variant="outline" size="sm">
+                    회원가입
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* 모바일 메뉴 트리거 */}
@@ -187,6 +170,41 @@ const Header = () => {
                 <nav className="flex flex-col space-y-1">
                   <NavLinksContent mobile={true} />
                   <hr className="my-3 border-border" />
+                  
+                  {user ? (
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 px-3 py-2">
+                        {user.email}
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center"
+                        onClick={() => {
+                          signOut();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        disabled={loading}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        로그아웃
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-center">
+                          로그인
+                        </Button>
+                      </Link>
+                      <Link href="/auth/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full justify-center">
+                          회원가입
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                  
+                  <hr className="my-3 border-border" />
                   <Button
                     variant="ghost"
                     className="w-full justify-center text-gray-900 dark:text-white"
@@ -204,7 +222,6 @@ const Header = () => {
                       </>
                     )}
                   </Button>
-                  <AuthButtons mobile={true} />
                 </nav>
               </SheetContent>
             </Sheet>

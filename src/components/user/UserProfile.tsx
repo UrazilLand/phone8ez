@@ -1,4 +1,3 @@
-import { UserProfile } from "@clerk/nextjs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from 'lucide-react';
 
@@ -12,18 +11,7 @@ export default function UserProfilePage() {
           <CardDescription>계정 정보를 관리하고 보안 설정을 변경하세요.</CardDescription>
         </CardHeader>
         <CardContent>
-          <UserProfile 
-            appearance={{
-              elements: {
-                formButtonPrimary: "bg-primary hover:bg-primary/90",
-                card: "shadow-none",
-                headerTitle: "hidden",
-                headerSubtitle: "hidden",
-                formFieldInput: "border border-gray-300 focus:border-primary focus:ring-primary",
-                formButtonSecondary: "bg-gray-100 hover:bg-gray-200 text-gray-900",
-              },
-            }}
-          />
+          {/* Clerk 관련 코드 삭제 */}
         </CardContent>
       </Card>
     </div>

@@ -3,8 +3,8 @@ import { Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { DarkModeProvider } from "@/lib/dark-mode";
+import { AuthProvider } from "@/lib/auth";
 import MainLayout from "@/components/layout/MainLayout";
-import ClerkAppearanceProvider from './ClerkAppearanceProvider';
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
@@ -26,43 +26,43 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkAppearanceProvider>
-      <html lang="ko" suppressHydrationWarning>
-        <body className={notoSansKr.className}>
-          <DarkModeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+    <html lang="ko" suppressHydrationWarning>
+      <body className={notoSansKr.className}>
+        <DarkModeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
             <MainLayout>
               {children}
             </MainLayout>
             <Toaster />
-          </DarkModeProvider>
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                // 메시지 채널 에러 무시
-                window.addEventListener('error', function(e) {
-                  if (e.message.includes('message channel closed')) {
-                    e.preventDefault();
-                    return false;
-                  }
-                });
-                
-                // Promise rejection 에러 무시
-                window.addEventListener('unhandledrejection', function(e) {
-                  if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
-                    e.preventDefault();
-                    return false;
-                  }
-                });
-              `,
-            }}
-          />
-        </body>
-      </html>
-    </ClerkAppearanceProvider>
+          </AuthProvider>
+        </DarkModeProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // 메시지 채널 에러 무시
+              window.addEventListener('error', function(e) {
+                if (e.message.includes('message channel closed')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+              
+              // Promise rejection 에러 무시
+              window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+            `,
+          }}
+        />
+      </body>
+    </html>
   );
 }

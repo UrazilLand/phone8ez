@@ -1,4 +1,4 @@
-import NoticeWriteForm from '@/components/admin/NoticeWriteForm';
+import NoticeWriteForm from '@/app/admin/components/NoticeWriteForm';
 // import AdminGuard from '@/components/user/AdminGuard'; // Conceptual
 
 export default function AdminNoticePage() {

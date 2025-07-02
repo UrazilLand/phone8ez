@@ -1,4 +1,4 @@
-import ReportModerationView from '@/components/admin/ReportModerationView';
+import ReportModerationView from '@/app/admin/components/ReportModerationView';
 // import AdminGuard from '@/components/user/AdminGuard'; // Conceptual
 
 export default function AdminReportsPage() {

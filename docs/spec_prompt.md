@@ -1,4 +1,4 @@
-# Phone8ez Dashboard 구현 방향 (2024.06 최신)
+# Phone8ez Dashboard 구현 방향 (2024.06 최신, Vercel + Supabase)
 
 ## 📋 개요
 Phone8ez의 대시보드는 모바일 판매 전문가를 위한 데이터 분석 및 관리 플랫폼의 핵심 기능입니다.
@@ -44,16 +44,16 @@ Phone8ez의 대시보드는 모바일 판매 전문가를 위한 데이터 분�
 - 모델별 데이터 탭: 모델 선택 → 할인/출고가/최종가 한눈에 보기
 
 ## 🛠️ 기술 및 기타 사항
-- 프론트엔드: Next.js, React, TypeScript, TailwindCSS
+- 프론트엔드: Next.js (Vercel 배포), React, TypeScript, TailwindCSS
 - 상태 관리: React Hooks
-- DB: SQLite (Cloud 데이터)
-- 데이터 저장: 로컬스토리지(로컬 데이터), DB(Cloud 데이터)
+- DB/인증/스토리지: **Supabase(Postgres, Auth, Storage)**
+- 데이터 저장: 로컬스토리지(로컬 데이터), Supabase DB(Cloud 데이터)
 - 향후 데이터 시각화/고급 분석 기능 추가 예정
 
 ## ⚠️ 주의 및 개선사항
 - 기존 '로컬 데이터 입력' → '데이터 입력'으로 명칭 변경
 - 기존 'DB 연동 데이터' → '통합 데이터'로 명칭 및 역할 변경
-- Cloud 데이터는 DB 연동 및 저장/불러오기/삭제/다운로드 지원
+- Cloud 데이터는 Supabase DB 연동 및 저장/불러오기/삭제/다운로드 지원
 - 데이터 시각화 탭은 추후 아이디어 논의 후 구현
 - 모든 데이터 세트는 이름 지정 필수, 여러 개 관리 가능
 - 데이터 불러오기/수정/저장 흐름 명확화
@@ -78,6 +78,7 @@ Phone8ez의 대시보드는 모바일 판매 전문가를 위한 데이터 분�
 - Frontend: Next.js (App Router), React, TypeScript
 - Styling: TailwindCSS
 - State Management: React Hooks
+- DB/인증/스토리지: **Supabase(Postgres, Auth, Storage)**
 - Icons: Lucide Icons
 
 ## 🎨 UI 구조
@@ -123,145 +124,65 @@ const [dataContent, setDataContent] = useState('');
 - 반응형 디자인
 - 다크모드 지원
 
-## 📦 백업 고려사항
-
-### 1. 데이터 백업
-- 상태값 (useState)
-- 테이블 데이터 구조
-- 사용자 설정값
-
-### 2. 스타일 백업
-- Tailwind CSS 클래스
-- 커스텀 스타일링
-- 반응형 설정
-
-### 3. 컴포넌트 구조
-- 테이블 구조
-- 탭 메뉴
-- 카드 컴포넌트
-
-### 4. 기능 백업
-- 엑셀 컬럼명 생성 로직
-- 테이블 스크롤 처리
-- 탭 전환 로직
-
-### 5. 환경 설정
-- 의존성 패키지
-- 환경 변수
-- API 엔드포인트
-
-### 6. 테스트 데이터
-- 샘플 데이터
-- 테스트 케이스
-- 시나리오
-
-## 💾 데이터베이스 스키마
+## 💾 Supabase(Postgres) 데이터베이스 스키마 예시
 
 ### 1. 사용자 테이블 (users)
 ```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR UNIQUE,
-    password VARCHAR,
-    nickname VARCHAR,
-    plan ENUM('free', 'pro'),
-    role ENUM('user', 'admin'),
-    is_verified BOOLEAN,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+create table if not exists users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique,
+  nickname text,
+  role text default 'user',
+  created_at timestamp with time zone default now()
 );
 ```
 
 ### 2. 게시글 테이블 (posts)
 ```sql
-CREATE TABLE posts (
-    id SERIAL PRIMARY KEY,
-    title TEXT,
-    content TEXT,
-    board_type VARCHAR,
-    image_url VARCHAR,
-    video_url VARCHAR,
-    user_id INTEGER REFERENCES users(id),
-    views INTEGER,
-    likes INTEGER,
-    is_notice BOOLEAN,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+create table if not exists posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete set null,
+  title text not null,
+  content text,
+  board_type text,
+  image_urls text[],
+  video_url text,
+  views integer default 0,
+  likes integer default 0,
+  is_notice boolean default false,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
 );
 ```
 
 ### 3. 댓글 테이블 (comments)
 ```sql
-CREATE TABLE comments (
-    id SERIAL PRIMARY KEY,
-    post_id INTEGER REFERENCES posts(id),
-    user_id INTEGER REFERENCES users(id),
-    content TEXT,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+create table if not exists comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references posts(id) on delete cascade,
+  user_id uuid references users(id) on delete set null,
+  content text not null,
+  parent_id uuid references comments(id) on delete cascade,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
 );
 ```
 
-### 4. 신고 테이블 (reports)
+### 4. 구독 테이블 (subscriptions, 옵션)
 ```sql
-CREATE TABLE reports (
-    id SERIAL PRIMARY KEY,
-    target_type VARCHAR,
-    target_id INTEGER,
-    reason TEXT,
-    user_id INTEGER REFERENCES users(id),
-    created_at TIMESTAMP
+create table if not exists subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  plan text default 'free',
+  status text default 'active',
+  started_at timestamp with time zone default now(),
+  ends_at timestamp with time zone
 );
 ```
 
-### 5. 문의 테이블 (inquiries)
-```sql
-CREATE TABLE inquiries (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    title TEXT,
-    content TEXT,
-    status ENUM('pending', 'answered', 'closed'),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
+### 5. 파일 업로드용 스토리지(버킷)는 Supabase Storage에서 별도 생성
 
-### 6. 문의 답변 테이블 (inquiry_comments)
-```sql
-CREATE TABLE inquiry_comments (
-    id SERIAL PRIMARY KEY,
-    inquiry_id INTEGER REFERENCES inquiries(id),
-    user_id INTEGER REFERENCES users(id),
-    content TEXT,
-    created_at TIMESTAMP
-);
-```
-
-### 7. 구독 테이블 (subscriptions)
-```sql
-CREATE TABLE subscriptions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    plan ENUM('free', 'pro'),
-    started_at TIMESTAMP,
-    ends_at TIMESTAMP,
-    payment_id VARCHAR,
-    provider VARCHAR,
-    status ENUM('active', 'cancelled')
-);
-```
-
-### 8. 이메일 인증 테이블 (email_verifications)
-```sql
-CREATE TABLE email_verifications (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR,
-    token VARCHAR,
-    expires_at TIMESTAMP,
-    verified BOOLEAN
-);
-```
+---
 
 ## 🔄 데이터베이스 관계도
 ```mermaid
@@ -312,121 +233,84 @@ erDiagram
 4. 브라우저 호환성
 5. 반응형 디자인 유지 
 
+## 🛡️ 인증 및 보안
+- **Supabase Auth**로 이메일/소셜 로그인, 세션 관리, 사용자 관리
+- 인증이 필요한 주요 페이지(예: 대시보드)는 반드시 로그인 상태에서만 접근 가능
+- 인증 상태에 따라 UI/기능 분기
+
+## ☁️ 파일 업로드/다운로드
+- **Supabase Storage**를 사용하여 이미지/파일 업로드 및 다운로드 지원
+- Storage 버킷은 Supabase 대시보드에서 직접 생성 및 관리
+
 ## 🛠️ 외부 서비스 및 툴
+- 인증/DB/스토리지: **Supabase**
+- 배포: **Vercel**
+- 결제: **PortOne(포트원)**
+- 모니터링: **Sentry**
+- 캐싱/메시징: **Upstash**
+- 기타: Cloudflare(옵션)
 
-### 1. 인증 및 보안
-- **Clerk**
-  - 이메일/비밀번호 인증
-  - 소셜 로그인 통합
-  - 사용자 관리
-  - 세션 관리
+## 📁 대시보드 폴더 및 연결 구조 (실제 구조 기반)
 
-### 2. 결제 시스템
-- **Stripe**
-  - 구독 결제 처리
-  - 결제 이력 관리
-  - 환불 처리
-  - 웹훅 통합
-
-### 3. 데이터베이스
-- **SQLite**
-  - 로컬 데이터 저장
-  - 트랜잭션 관리
-  - 백업 및 복구
-  - 마이그레이션
-
-### 4. 클라우드 인프라 (Cloudflare)
-- **Cloudflare Workers**
-  - 서버리스 함수
-  - 엣지 컴퓨팅
-  - API 엔드포인트
-  - 자동 스케일링
-
-- **Cloudflare R2**
-  - 이미지 저장
-  - 파일 스토리지
-  - CDN 통합
-  - 백업 저장소
-
-- **Hyperdrive**
-  - 데이터베이스 캐싱
-  - 성능 최적화
-  - 실시간 동기화
-  - 글로벌 엣지 네트워크
-
-### 5. 모니터링 및 에러 추적
-- **Sentry**
-  - 에러 추적
-  - 성능 모니터링
-  - 사용자 피드백
-  - 실시간 알림
-
-### 6. 캐싱 및 메시징
-- **Upstash**
-  - Redis 캐싱
-  - 실시간 메시징
-  - 작업 큐
-  - 이벤트 처리
-
-## 🔄 서비스 통합 흐름도
-```mermaid
-graph TD
-    A[사용자] --> B[Clerk]
-    B --> C[인증]
-    C --> D[대시보드]
-    D --> E[SQLite]
-    D --> F[Cloudflare R2]
-    D --> G[Stripe]
-    G --> H[결제 처리]
-    I[Sentry] --> D
-    J[Upstash] --> D
-    K[Cloudflare Workers] --> D
+```
+src/
+├── app/
+│   └── dashboard/
+│       ├── components/           # 대시보드 UI 컴포넌트
+│       │   ├── cards/           # 데이터 카드, 구독 카드 등
+│       │   ├── data-input/      # 데이터 입력 탭(시트, 헤더, 모달 등)
+│       │   ├── integrated/      # 통합 데이터 탭
+│       │   ├── model/           # 모델별 데이터 탭
+│       │   ├── visualization/   # 데이터 시각화 탭
+│       │   ├── common/          # 공통 UI(탭, 헤더 등)
+│       ├── hooks/               # 대시보드 전용 커스텀 훅
+│       ├── utils/               # 대시보드 전용 유틸리티
+│       │   ├── common/          # 공통 파일 처리 등
+│       │   ├── data-input/      # 데이터 입력 관련 유틸리티
+│       │   ├── integrated/      # 통합 데이터 관련 유틸리티
+│       │   ├── model/           # 모델별 데이터 관련 유틸리티
+│       └── page.tsx             # 대시보드 진입점
+│
+├── lib/                        # supabaseClient.ts, 공통 유틸리티
+├── styles/                     # 공통 스타일, Tailwind 등
+├── types/                      # 전역 타입 정의(dashboard.ts 등)
 ```
 
-## 📊 서비스별 주요 기능
+- **components/**: 대시보드 각 탭/카드/공통 UI 컴포넌트 분리
+- **hooks/**: 대시보드 상태/데이터/모달 등 커스텀 훅
+- **utils/**: 데이터 처리, 파일 처리, 통합/모델별 유틸리티 등 기능별 분리
+- **lib/**: supabase 클라이언트, 공통 함수 등
+- **types/**: 대시보드/공통 타입 정의
 
-### Clerk
-- 사용자 인증
-- 소셜 로그인
-- 세션 관리
-- 보안 정책
+## 📁 게시판(커뮤니티) 폴더 및 연결 구조
 
-### Stripe
-- 구독 관리
-- 결제 처리
-- 웹훅
-- 환불 처리
+```
+src/
+├── app/
+│   └── board/
+│       ├── components/                # 게시판 공통 UI(필터, 헤더, 리스트, 아이템 등)
+│       ├── [category]/                # 카테고리별 게시판 라우트
+│       │   ├── page.tsx               # 카테고리별 게시글 목록
+│       │   ├── write/                 # 글쓰기 페이지
+│       │   │   └── page.tsx
+│       │   └── [postId]/              # 게시글 상세/수정/댓글
+│       │       ├── page.tsx           # 게시글 상세
+│       │       ├── edit/              # 게시글 수정
+│       │       │   └── page.tsx
+│       │       └── components/        # 상세 하위(댓글 폼, 리스트, 아이템 등)
+│       │           ├── CommentForm.tsx
+│       │           ├── CommentList.tsx
+│       │           └── CommentItem.tsx
+│       ├── page.tsx                   # 전체 게시판(카테고리 선택/검색/목록)
+```
 
-### SQLite
-- 데이터 저장
-- 쿼리 처리
-- 트랜잭션
-- 백업/복구
+- **components/**: 게시판 공통 UI(필터, 헤더, 리스트, 아이템 등)
+- **[category]/**: 카테고리별 동적 라우트(자유, 유머, 정보 등)
+  - **write/**: 글쓰기
+  - **[postId]/**: 게시글 상세/수정/댓글
+    - **components/**: 댓글 폼, 리스트, 아이템 등 상세 하위 컴포넌트
+- **page.tsx**: 전체 게시판 진입점(카테고리/검색/목록)
 
-### Cloudflare
-- 엣지 컴퓨팅
-- CDN
-- 스토리지
-- 보안
-
-### Sentry
-- 에러 추적
-- 성능 모니터링
-- 사용자 피드백
-- 알림
-
-### Upstash
-- 캐싱
-- 메시징
-- 작업 큐
-- 이벤트
-
-## ⚠️ 서비스 통합 주의사항
-1. API 키 보안
-2. 서비스 제한사항 확인
-3. 비용 관리
-4. 장애 대응
-5. 백업 전략 
 
 ## 📝 진행 상황 추적
 
@@ -444,9 +328,9 @@ graph TD
 
 ### 🟡 진행 중인 사항
 1. 데이터 연동
-   - SQLite 데이터베이스 설정
-   - Clerk 인증 연동
-   - Cloudflare Workers API 구성
+   - Supabase(Postgres) 데이터베이스 설정
+   - Supabase Auth 연동
+   - Supabase Storage API 구성
 
 2. UI/UX 개선
    - 다크모드 구현
@@ -466,12 +350,12 @@ graph TD
 
 ### 📌 변경된 사항
 1. 데이터베이스
-   - Turso에서 SQLite로 변경
+   - Turso/SQLite에서 Supabase(Postgres)로 변경
    - 로컬 스토리지 전략 수정
 
 2. 인프라
-   - Cloudflare R2 스토리지 추가
-   - Hyperdrive 캐싱 도입
+   - Supabase Storage 추가
+   - Upstash/Cloudflare 등 캐싱/옵션 도입
 
 ### ⚠️ 기억해야 할 사항
 1. 보안
@@ -509,126 +393,5 @@ graph TD
 
 ---
 
-## 📁 대시보드 폴더 및 연결 구조
+이 문서는 Vercel + Supabase 기반 최신 구조를 반영합니다.
 
-```
-src/
-├── app/
-│   └── dashboard/
-│       ├── components/
-│       │   ├── cards/                # 데이터 카드, 구독 카드 등
-│       │   │   ├── DataCard.tsx
-│       │   │   └── SubscriptionCard.tsx
-│       │   ├── common/               # 공통 UI (탭, 헤더 등)
-│       │   │   └── TabContent.tsx
-│       │   ├── data-input/           # 데이터 입력 탭
-│       │   │   ├── DataInputSheet.tsx
-│       │   │   ├── DataInputHeader.tsx
-│       │   │   ├── modals/
-│       │   │   │   ├── UploadModal.tsx
-│       │   │   │   └── ImportModal.tsx
-│       │   │   └── index.tsx
-│       │   ├── integrated/           # 통합 데이터 탭
-│       │   │   ├── IntegratedSheet.tsx
-│       │   │   ├── IntegratedHeader.tsx
-│       │   │   ├── modals/
-│       │   │   │   └── MergeModal.tsx
-│       │   │   └── index.tsx
-│       │   ├── model/                # 모델별 데이터 탭
-│       │   │   ├── Sheet.tsx
-│       │   │   └── index.tsx
-│       │   ├── visualization/        # 데이터 시각화 탭
-│       │   │   ├── charts/
-│       │   │   └── index.tsx
-│       │   └── shared/               # (필요시) 공통 모달 등
-│       ├── hooks/                    # 대시보드 전용 훅
-│       ├── utils/                    # 대시보드 전용 유틸리티
-│       │   ├── data-input/
-│       │   │   └── sheetOperations.ts
-│       │   ├── integrated/
-│       │   │   └── mergeOperations.ts
-│       │   ├── model/
-│       │   ├── visualization/
-│       │   └── common/
-│       │       └── fileHandling.ts
-│       └── page.tsx                  # 대시보드 진입점
-│
-├── lib/                              # 외부 공통 라이브러리/유틸리티
-│   └── (예: dark-mode.tsx, support-amounts.ts 등)
-├── styles/                           # 공통 스타일, Tailwind, theme 등
-│   └── (예: common.ts, tailwind.config.ts 등)
-├── types/                            # 전역 타입 정의
-│   └── dashboard.ts                  # 대시보드 데이터/시트 타입 등
-│   └── (기타 공통 타입)
-```
-
-### 🔗 연결 구조
-- **components** 내부 각 탭/카드/공통 컴포넌트는 필요에 따라 `lib/`, `styles/`, `types/`의 함수, 스타일, 타입을 import하여 사용
-- **utils** 폴더는 대시보드 내부에서만 사용하는 유틸리티를 관리하며, 공통 유틸리티는 `lib/`에서 import
-- **types/dashboard.ts**는 대시보드 전용 타입을 정의하며, 각 탭/유틸리티/컴포넌트에서 import
-
----
-
-## 🛡️ Clerk 인증 연동 및 UX 정책 (2024.06)
-
-### 1. Clerk 연동 목적 및 기본 정책
-- **Clerk**는 Phone8ez의 모든 인증(이메일/비밀번호, 소셜 로그인, 세션 관리 등)을 담당합니다.
-- 회원가입/로그인/로그아웃/프로필 등 모든 인증 UI는 Clerk의 모달 컴포넌트로 제공합니다.
-- 인증이 필요한 주요 페이지(예: 대시보드)는 반드시 로그인 상태에서만 접근할 수 있습니다.
-
-### 2. 로그인/회원가입 UX
-- 헤더의 "로그인", "회원가입" 버튼은 모두 Clerk의 `<SignInButton mode="modal">`, `<SignUpButton mode="modal">`로 구현합니다.
-- 로그인/회원가입은 항상 모달(팝업) 형태로 뜨며, 별도의 페이지 이동 없이 인증이 진행됩니다.
-- 로그인 성공 시, 기존 위치에서 인증 상태가 즉시 반영됩니다.
-
-### 3. 대시보드 접근 제어
-- **로그인하지 않은 사용자가 대시보드 메뉴(DASHBOARD)를 클릭하면 페이지 이동 없이 Clerk 모달 로그인창이 뜨도록 구현**
-  - `<SignInButton mode="modal">`로 대시보드 메뉴를 감싸서 UX 일관성 유지
-  - 로그인한 경우에만 실제로 /dashboard로 이동
-- 서버/클라이언트 모두에서 인증 가드 적용 가능(추후 SSR 보호 필요시)
-
-### 4. 인증 상태 기반 UI 렌더링
-- 헤더/네비게이션 등에서 `useAuth()` 훅을 사용해 로그인 상태에 따라 메뉴/버튼을 조건부 렌더링
-- 예시: 로그인하지 않은 경우 "대시보드" 클릭 시 모달, 로그인한 경우에만 이동
-
-### 5. 인증 가드(보호 라우트) 패턴
-- 대시보드 등 보호가 필요한 페이지에서는 Clerk의 `auth()`(서버) 또는 `useAuth()`(클라이언트)로 인증 상태 확인
-- 미인증 시 리다이렉트 또는 모달 로그인 유도
-
-### 6. Clerk 연동 코드 예시
-```tsx
-// 헤더에서 대시보드 메뉴 조건부 모달
-import { SignInButton, useAuth } from '@clerk/nextjs';
-
-const { isSignedIn } = useAuth();
-return (
-  {isSignedIn ? (
-    <a href="/dashboard">대시보드</a>
-  ) : (
-    <SignInButton mode="modal">
-      <a href="#" onClick={e => e.preventDefault()}>대시보드</a>
-    </SignInButton>
-  )}
-);
-```
-
-```tsx
-// 대시보드 보호(서버 컴포넌트 예시)
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
-
-export default async function DashboardPage() {
-  const { userId } = auth();
-  if (!userId) {
-    redirect('/sign-in');
-  }
-  // ...대시보드 내용...
-}
-```
-
-### 7. 기타
-- Clerk의 appearance/localization 커스터마이징으로 한글화 및 UI 일관성 유지
-- 세션 만료/로그아웃 시 즉시 인증 상태 반영
-- 모든 인증 관련 UX는 Clerk 모달 기반으로 통일
-
----
