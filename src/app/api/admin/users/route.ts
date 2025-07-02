@@ -43,45 +43,30 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     
     // 전체 사용자 수 조회
-    let countQuery = 'SELECT COUNT(*) as total FROM users';
-    let countParams: string[] = [];
-    
+    let countQuery = supabase.from('users').select('*', { count: 'exact', head: true });
     if (search) {
-      countQuery += ' WHERE email LIKE ? OR nickname LIKE ?';
-      countParams.push(`%${search}%`, `%${search}%`);
+      countQuery = supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .or(`email.ilike.%${search}%,nickname.ilike.%${search}%`);
     }
-    
-    const countResult = await supabase.execute({
-      sql: countQuery,
-      args: countParams
-    });
-    const total = countResult.rows[0]?.total as number;
+    const { count: total } = await countQuery;
     
     // 사용자 목록 조회
-    let usersQuery = `
-      SELECT 
-        id, email, nickname, role, plan, is_verified, created_at, updated_at
-      FROM users
-    `;
-    let usersParams: string[] = [];
-    
+    let usersQuery = supabase
+      .from('users')
+      .select('id, email, nickname, role, plan, is_verified, created_at, updated_at')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
     if (search) {
-      usersQuery += ' WHERE email LIKE ? OR nickname LIKE ?';
-      usersParams.push(`%${search}%`, `%${search}%`);
+      usersQuery = usersQuery.or(`email.ilike.%${search}%,nickname.ilike.%${search}%`);
     }
-    
-    usersQuery += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-    usersParams.push(limit.toString(), offset.toString());
-    
-    const usersResult = await supabase.execute({
-      sql: usersQuery,
-      args: usersParams
-    });
+    const { data: usersData } = await usersQuery;
     
     // 각 사용자의 통계 정보 조회
     const users = await Promise.all(
-      usersResult.rows.map(async (row) => {
-        const stats = await getUserStats(row.id as number);
+      (usersData || []).map(async (row) => {
+        const stats = await getUserStats(row.id as string);
         return {
           id: row.id,
           email: row.email,
