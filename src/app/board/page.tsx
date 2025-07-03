@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BoardHeader from './components/BoardHeader';
 import BoardFilterBar from './components/BoardFilterBar';
@@ -122,39 +122,41 @@ export default function BoardPage() {
   };
 
   return (
-    <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="space-y-6">
-        <BoardHeader onCategoryChange={handleCategoryChange} currentCategory={category} />
-        <BoardFilterBar
-          searchValue={searchInput}
-          onSearchChange={setSearchInput}
-          onSearchClick={handleSearch}
-          onWriteClick={() => router.push(`/board/${category}/write`)}
-        />
-        {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2 flex-grow">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+    <Suspense>
+      <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6">
+          <BoardHeader onCategoryChange={handleCategoryChange} currentCategory={category} />
+          <BoardFilterBar
+            searchValue={searchInput}
+            onSearchChange={setSearchInput}
+            onSearchClick={handleSearch}
+            onWriteClick={() => router.push(`/board/${category}/write`)}
+          />
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-2 flex-grow">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                  <Skeleton className="h-8 w-20" />
                 </div>
-                <Skeleton className="h-8 w-20" />
-              </div>
-            ))}
-          </div>
-        ) : posts.length > 0 ? (
-          <BoardList posts={posts} category={category} />
-        ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            {search ? '검색 결과가 없습니다.' : '게시글이 없습니다.'}
-          </div>
-        )}
-        {totalPages > 1 && (
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-        )}
+              ))}
+            </div>
+          ) : posts.length > 0 ? (
+            <BoardList posts={posts} category={category} />
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              {search ? '검색 결과가 없습니다.' : '게시글이 없습니다.'}
+            </div>
+          )}
+          {totalPages > 1 && (
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          )}
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 } 
