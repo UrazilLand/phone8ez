@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { createUserIfNotExists } from '@/lib/auth-server';
 import { z } from 'zod';
 
@@ -94,6 +95,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // SSR용 Supabase 클라이언트 생성 (쿠키에서 인증 토큰 자동 파싱)
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) {
       return NextResponse.json(

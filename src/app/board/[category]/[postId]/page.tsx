@@ -52,7 +52,7 @@ export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const category = params.category as string;
-  const postId = parseInt(params.postId as string, 10);
+  const postId = params.postId as string;
 
   const [post, setPost] = useState<(Post & { content: string; image_url?: string; video_url?: string; }) | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);

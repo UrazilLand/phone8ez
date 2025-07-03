@@ -17,8 +17,8 @@ export async function GET(
 ) {
   const { id } = context.params;
   try {
-    const postId = parseInt(id);
-    if (isNaN(postId)) {
+    const postId = id as string;
+    if (!postId || typeof postId !== 'string') {
       return NextResponse.json(
         { error: '잘못된 게시글 ID입니다.' },
         { status: 400 }
@@ -94,8 +94,8 @@ export async function PUT(
 ) {
   const { id } = context.params;
   try {
-    const postId = parseInt(id);
-    if (isNaN(postId)) {
+    const postId = id as string;
+    if (!postId || typeof postId !== 'string') {
       return NextResponse.json(
         { error: '잘못된 게시글 ID입니다.' },
         { status: 400 }
@@ -232,8 +232,8 @@ export async function DELETE(
 ) {
   const { id } = context.params;
   try {
-    const postId = parseInt(id);
-    if (isNaN(postId)) {
+    const postId = id as string;
+    if (!postId || typeof postId !== 'string') {
       return NextResponse.json(
         { error: '잘못된 게시글 ID입니다.' },
         { status: 400 }
