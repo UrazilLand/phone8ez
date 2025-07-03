@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect, useState } from 'react';
 import PostEditor from '../../components/PostEditor';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
