@@ -23,7 +23,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-4">
+    <div className="min-h-screen bg-white dark:bg-[#020817] flex items-center justify-center">
       <div className="w-full max-w-md">
         {/* 로고/브랜드 영역 */}
         <div className="text-center mb-8">
