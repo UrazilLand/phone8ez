@@ -46,8 +46,9 @@ Phone8ez의 대시보드는 모바일 판매 전문가를 위한 데이터 분�
 ## 🛠️ 기술 및 기타 사항
 - 프론트엔드: Next.js, React, TypeScript, TailwindCSS
 - 상태 관리: React Hooks
-- DB: SQLite (Cloud 데이터)
-- 데이터 저장: 로컬스토리지(로컬 데이터), DB(Cloud 데이터)
+- DB: **Supabase(PostgreSQL)** (Cloud 데이터)
+- 데이터 저장: 로컬스토리지(로컬 데이터), **Supabase(PostgreSQL) DB(Cloud 데이터)**
+- 파일/이미지 업로드: **Supabase Storage**
 - 향후 데이터 시각화/고급 분석 기능 추가 예정
 
 ## ⚠️ 주의 및 개선사항
@@ -155,113 +156,27 @@ const [dataContent, setDataContent] = useState('');
 - 테스트 케이스
 - 시나리오
 
-## 💾 데이터베이스 스키마
+## �� 실제 Supabase 데이터베이스/스토리지 구조
 
-### 1. 사용자 테이블 (users)
-```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR UNIQUE,
-    password VARCHAR,
-    nickname VARCHAR,
-    plan ENUM('free', 'pro'),
-    role ENUM('user', 'admin'),
-    is_verified BOOLEAN,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
+- **DB**: Supabase(PostgreSQL)
+  - users, posts, comments, subscriptions 등 모든 데이터 테이블
+  - uuid, text[], timestamptz 등 실제 타입 사용
+  - RLS(행 수준 보안) 정책 적용
+- **스토리지**: Supabase Storage
+  - 이미지, 파일 업로드/다운로드 지원
+  - 예시: `supabase.storage.from('bucket').upload(...)`, `supabase.storage.from('bucket').getPublicUrl(...)`
 
-### 2. 게시글 테이블 (posts)
-```sql
-CREATE TABLE posts (
-    id SERIAL PRIMARY KEY,
-    title TEXT,
-    content TEXT,
-    board_type VARCHAR,
-    image_url VARCHAR,
-    video_url VARCHAR,
-    user_id INTEGER REFERENCES users(id),
-    views INTEGER,
-    likes INTEGER,
-    is_notice BOOLEAN,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
-
-### 3. 댓글 테이블 (comments)
-```sql
-CREATE TABLE comments (
-    id SERIAL PRIMARY KEY,
-    post_id INTEGER REFERENCES posts(id),
-    user_id INTEGER REFERENCES users(id),
-    content TEXT,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
-
-### 4. 신고 테이블 (reports)
-```sql
-CREATE TABLE reports (
-    id SERIAL PRIMARY KEY,
-    target_type VARCHAR,
-    target_id INTEGER,
-    reason TEXT,
-    user_id INTEGER REFERENCES users(id),
-    created_at TIMESTAMP
-);
-```
-
-### 5. 문의 테이블 (inquiries)
-```sql
-CREATE TABLE inquiries (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    title TEXT,
-    content TEXT,
-    status ENUM('pending', 'answered', 'closed'),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
-
-### 6. 문의 답변 테이블 (inquiry_comments)
-```sql
-CREATE TABLE inquiry_comments (
-    id SERIAL PRIMARY KEY,
-    inquiry_id INTEGER REFERENCES inquiries(id),
-    user_id INTEGER REFERENCES users(id),
-    content TEXT,
-    created_at TIMESTAMP
-);
-```
-
-### 7. 구독 테이블 (subscriptions)
-```sql
-CREATE TABLE subscriptions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    plan ENUM('free', 'pro'),
-    started_at TIMESTAMP,
-    ends_at TIMESTAMP,
-    payment_id VARCHAR,
-    provider VARCHAR,
-    status ENUM('active', 'cancelled')
-);
-```
-
-### 8. 이메일 인증 테이블 (email_verifications)
-```sql
-CREATE TABLE email_verifications (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR,
-    token VARCHAR,
-    expires_at TIMESTAMP,
-    verified BOOLEAN
-);
-```
+## 🧩 주요 확장(Extensions)
+- uuid-ossp: UUID 생성
+- pgcrypto: 암호화/랜덤
+- supabase_vault: 보안 비밀 저장소
+- pg_stat_statements: 쿼리 통계
+- pg_graphql: GraphQL 지원
+- vector: 벡터 데이터 타입/검색
+- postgis: 공간 데이터
+- citext: 대소문자 구분 없는 문자열
+- pgsodium: libsodium 암호화
+- 기타: tablefunc, http, unaccent, bloom 등
 
 ## 🔄 데이터베이스 관계도
 ```mermaid
@@ -315,11 +230,13 @@ erDiagram
 ## 🛠️ 외부 서비스 및 툴
 
 ### 1. 인증 및 보안
-- **Clerk**
+- **Supabase Auth (SSR 인증 지원)**
   - 이메일/비밀번호 인증
   - 소셜 로그인 통합
   - 사용자 관리
-  - 세션 관리
+  - 세션 관리(SSR 지원)
+  - Next.js API Route에서 `@supabase/auth-helpers-nextjs`의 `createRouteHandlerClient({ cookies })`로 SSR 인증 적용
+  - 프론트 fetch 요청에 `credentials: 'include'` 옵션 필수
 
 ### 2. 결제 시스템
 - **PortOne(아임포트)**
@@ -329,7 +246,7 @@ erDiagram
   - 웹훅 통합
 
 ### 3. 데이터베이스
-- **SQLite**
+- **Supabase(PostgreSQL)**
   - 로컬 데이터 저장
   - 트랜잭션 관리
   - 백업 및 복구
@@ -371,10 +288,10 @@ erDiagram
 ## 🔄 서비스 통합 흐름도
 ```mermaid
 graph TD
-    A[사용자] --> B[Clerk]
+    A[사용자] --> B[Supabase Auth]
     B --> C[인증]
     C --> D[대시보드]
-    D --> E[SQLite]
+    D --> E[Supabase(PostgreSQL)]
     D --> F[Cloudflare R2]
     D --> G[PortOne(아임포트)]
     G --> H[결제 처리]
@@ -387,7 +304,7 @@ graph TD
 
 ## 📊 서비스별 주요 기능
 
-### Clerk
+### Supabase Auth
 - 사용자 인증
 - 소셜 로그인
 - 세션 관리
@@ -399,7 +316,7 @@ graph TD
 - 웹훅
 - 환불 처리
 
-### SQLite
+### Supabase(PostgreSQL)
 - 데이터 저장
 - 쿼리 처리
 - 트랜잭션
@@ -463,8 +380,8 @@ graph TD
 
 ### 🟡 진행 중인 사항
 1. 데이터 연동
-   - SQLite 데이터베이스 설정
-   - Clerk 인증 연동
+   - Supabase(PostgreSQL) 데이터베이스 설정
+   - Supabase Auth 인증 연동
    - Cloudflare Workers API 구성
 
 2. UI/UX 개선
@@ -485,7 +402,7 @@ graph TD
 
 ### 📌 변경된 사항
 1. 데이터베이스
-   - Turso에서 SQLite로 변경
+   - Turso에서 Supabase(PostgreSQL)로 변경
    - 로컬 스토리지 전략 수정
 
 2. 인프라
@@ -588,12 +505,13 @@ src/
 
 ---
 
-## 🛡️ 전체 서비스 아키텍처 및 데이터 흐름 (Clerk + PortOne + Turso)
+## 🛡️ 전체 서비스 아키텍처 및 데이터 흐름 (Supabase Auth + PortOne + Supabase(PostgreSQL/Storage))
 
-### 1. 인증(로그인) - Clerk
-- 사용자는 Clerk를 통해 회원가입/로그인(이메일, 소셜 등)
-- 로그인 성공 시 Clerk가 사용자 세션 및 인증 토큰을 관리
-- 프론트엔드에서는 Clerk의 useAuth() 등으로 로그인 상태, 사용자 정보, userId 등을 쉽게 확인 가능
+### 1. 인증(로그인) - Supabase Auth (SSR)
+- 사용자는 Supabase Auth를 통해 회원가입/로그인(이메일, 소셜 등)
+- 로그인 성공 시 Supabase가 사용자 세션 및 인증 토큰을 관리(SSR/CSR 모두 지원)
+- 프론트엔드에서는 Supabase의 useUser(), useSession() 등으로 로그인 상태, 사용자 정보, userId 등을 확인
+- **API Route(서버)에서는 반드시 `createRouteHandlerClient({ cookies })`로 SSR 인증 세션을 읽어야 함**
 
 ### 2. 구독 결제 - PortOne(아임포트)
 - 로그인한 사용자가 구독 결제 버튼 클릭
@@ -601,44 +519,75 @@ src/
 - 결제 성공 시, PortOne에서 결제 결과(imp_uid, merchant_uid 등)를 콜백으로 전달
 - 결제 결과를 백엔드 API로 전송하여 결제 검증 및 DB 저장
 
-### 3. 데이터 저장 - Turso(DB)
+### 3. 데이터 저장 - Supabase(PostgreSQL)
 - 백엔드(Next.js API Route 또는 서버리스 함수)에서
-  1. Clerk의 인증 토큰으로 사용자 인증(userId 확인)
+  1. Supabase의 인증 토큰으로 사용자 인증(userId 확인)
   2. PortOne REST API로 결제 검증(imp_uid 등으로 실제 결제 성공 여부 확인)
-  3. 결제 정보(구독 시작/종료일, 결제 상태, userId 등)를 Turso DB에 저장
-- 이후 구독 상태, 결제 이력, 사용자 정보 등은 Turso DB에서 관리
+  3. 결제 정보(구독 시작/종료일, 결제 상태, userId 등)를 Supabase(PostgreSQL) DB에 저장
+- 이후 구독 상태, 결제 이력, 사용자 정보 등은 Supabase(PostgreSQL) DB에서 관리
 
 ### 실제 서비스 흐름 예시
 ```mermaid
 sequenceDiagram
   participant User as 사용자
   participant FE as 프론트엔드(Next.js)
-  participant Clerk as Clerk(인증)
+  participant Supabase as Supabase Auth(인증)
   participant PortOne as PortOne(아임포트)
   participant BE as 백엔드(API Route)
-  participant Turso as Turso(DB)
+  participant SupabaseDB as Supabase(PostgreSQL)
 
   User->>FE: 회원가입/로그인
-  FE->>Clerk: 인증 요청
-  Clerk-->>FE: 인증 성공(userId 등 반환)
+  FE->>Supabase: 인증 요청
+  Supabase-->>FE: 인증 성공(userId 등 반환)
   User->>FE: 구독 결제 버튼 클릭
   FE->>PortOne: 결제창 호출
   PortOne-->>FE: 결제 결과(imp_uid 등)
   FE->>BE: 결제 결과(imp_uid, userId 등) 전달
-  BE->>Clerk: 인증 토큰 검증(userId 확인)
+  BE->>Supabase: SSR 인증 세션 검증(userId 확인)
   BE->>PortOne: 결제 검증(imp_uid)
   PortOne-->>BE: 결제 검증 결과(성공/실패)
-  BE->>Turso: 결제/구독 정보 저장
-  Turso-->>BE: 저장 완료
+  BE->>SupabaseDB: 결제/구독 정보 저장
+  SupabaseDB-->>BE: 저장 완료
   BE-->>FE: 결제/구독 처리 결과 반환
   FE-->>User: 구독 완료 안내
 ```
 
-### 각 서비스별 역할 요약
-- **Clerk**: 사용자 인증/세션 관리, userId 등 사용자 정보 제공
-- **PortOne(아임포트)**: 결제창 제공, 결제 결과 콜백, 결제 검증 API 제공
-- **Turso(DB)**: 사용자, 구독, 결제 이력 등 모든 데이터 저장, 구독 상태/권한 체크 등 비즈니스 로직에 활용
+### 실제 코드 구조 예시 (SSR 인증)
+- 프론트엔드: Supabase Auth로 로그인 상태 확인, PortOne 결제창 호출, 결제 결과를 Next.js API Route로 전달
+- 백엔드(API Route): SSR 인증 세션(`createRouteHandlerClient({ cookies })`)으로 사용자 인증, PortOne 결제 검증, Supabase(PostgreSQL) DB에 결제/구독 정보 저장
 
-### 실제 코드 구조 예시
-- 프론트엔드: Clerk로 로그인 상태 확인, PortOne 결제창 호출, 결제 결과를 Next.js API Route로 전달
-- 백엔드(API Route): Clerk 인증 토큰 검증, PortOne 결제 검증, Turso DB에 결제/구독 정보 저장
+#### SSR 인증 적용 예시 (Next.js API Route)
+```typescript
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+
+export async function POST(req: Request) {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: '로그인이 필요합니다.' }), { status: 401 });
+  }
+
+  // ...비즈니스 로직...
+}
+```
+
+#### 프론트엔드 fetch 요청 예시
+```typescript
+await fetch('/api/posts', {
+  method: 'POST',
+  body: JSON.stringify({ ... }),
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include', // SSR 인증 필수 옵션
+});
+```
+
+#### SSR 인증 환경 주의사항
+- 배포 환경에서는 반드시 HTTPS, 동일 도메인/서브도메인, SameSite=Lax 또는 None, Secure 옵션 필요
+- 쿠키가 실제로 API 요청에 포함되는지 크롬 개발자도구로 확인
+
+### 각 서비스별 역할 요약
+- **Supabase Auth**: 사용자 인증/세션 관리(SSR/CSR), userId 등 사용자 정보 제공
+- **PortOne(아임포트)**: 결제창 제공, 결제 결과 콜백, 결제 검증 API 제공
+- **Supabase(PostgreSQL)**: 사용자, 구독, 결제 이력 등 모든 데이터 저장, 구독 상태/권한 체크 등 비즈니스 로직에 활용
