@@ -6,6 +6,7 @@ import Pagination from './components/Pagination';
 import SkeletonTable from './components/SkeletonTable';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 const TABS = [
   { key: 'free', label: '자유게시판' },
@@ -152,4 +153,10 @@ const CommunityPage = () => {
   );
 };
 
-export default CommunityPage; 
+export default function CommunityPageWrapper() {
+  return (
+    <Suspense>
+      <CommunityPage />
+    </Suspense>
+  );
+} 
