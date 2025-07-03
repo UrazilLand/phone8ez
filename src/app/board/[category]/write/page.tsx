@@ -109,6 +109,7 @@ export default function WritePage({ params }: WritePageProps) {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           title: title.trim(),
           content: content.trim(),
