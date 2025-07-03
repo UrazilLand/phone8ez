@@ -3,7 +3,7 @@ import React from 'react';
 const TABS = [
   { key: 'free', label: '자유게시판' },
   { key: 'humor', label: '유머게시판' },
-  { key: 'info', label: '모바일정보' },
+  { key: 'mobile', label: '모바일정보' },
   { key: 'review', label: '후기 및 건의' },
 ];
 

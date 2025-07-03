@@ -61,8 +61,16 @@ const PostDetail: React.FC<PostDetailProps> = ({
   return (
     <div className="max-w-2xl mx-auto p-4 bg-white dark:bg-blue-950 rounded shadow-md">
       {/* 게시글 정보 */}
-      <div className="mb-4 border-b border-blue-100 dark:border-blue-800 pb-2">
-        <h2 className="text-xl font-bold text-blue-700 dark:text-blue-200 mb-2">{post.title}</h2>
+      <div className="mb-4 border-b border-blue-100 dark:border-blue-800 pb-2 relative min-h-[240px]">
+        <h2 className="text-xl font-bold text-blue-700 dark:text-blue-200 mb-2 flex items-center justify-between">
+          <span>{post.title}</span>
+          <button
+            className="ml-2 px-2 py-1 border border-red-300 text-red-500 bg-transparent rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-normal"
+            onClick={onReport}
+          >
+            신고
+          </button>
+        </h2>
         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-2 mb-2">
           <span>{post.author}</span>
           <span>·</span>
@@ -70,6 +78,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
           <span>·</span>
           <span>조회 {post.views}</span>
         </div>
+        <div className="border-t border-blue-100 dark:border-blue-800 my-3" />
         {post.imageUrl && (
           <img
             src={post.imageUrl}
@@ -90,7 +99,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
         )}
         <div className="text-base text-gray-800 dark:text-gray-100 whitespace-pre-line mb-2">{post.content}</div>
         <div className="flex gap-2 mt-2">
-          <button className="px-3 py-1 rounded bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200" onClick={onReport}>신고</button>
           {(post.isMine || post.isAdmin) && (
             <>
               <button className="px-3 py-1 rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200" onClick={onEdit}>수정</button>
@@ -105,42 +113,42 @@ const PostDetail: React.FC<PostDetailProps> = ({
         {comments.length === 0 && <div className="text-gray-400 dark:text-gray-500">아직 댓글이 없습니다.</div>}
         <ul className="space-y-2">
           {comments.map((c) => (
-            <li key={c.id} className="bg-blue-50 dark:bg-blue-900 rounded p-2 flex flex-col sm:flex-row sm:items-center gap-2">
-              <div className="flex-1">
+            <li key={c.id} className="px-2 py-2 flex items-center gap-2">
+              {/* 아이디 */}
+              <span className="flex-shrink-0 w-[80px] text-xs text-gray-500 dark:text-gray-400 text-center">{c.author}</span>
+              {/* 댓글 내용 */}
+              <div className="flex-1 text-gray-800 dark:text-gray-100 break-words whitespace-pre-line text-sm min-w-0">
                 {c.isDeleted ? (
-                  <div className="italic text-gray-400 dark:text-gray-500">삭제된 댓글입니다.</div>
+                  <span className="italic text-gray-400 dark:text-gray-500">삭제된 댓글입니다.</span>
                 ) : editingCommentId === c.id ? (
-                  <>
-                    <input
-                      className="w-full px-2 py-1 rounded border border-blue-200 dark:border-blue-700 bg-white dark:bg-blue-950 text-gray-900 dark:text-gray-100"
-                      value={editingContent}
-                      onChange={e => setEditingContent(e.target.value)}
-                      maxLength={500}
-                    />
-                    <div className="flex gap-2 mt-1">
-                      <button className="px-2 py-1 bg-blue-600 text-white rounded" onClick={() => { onCommentEdit(c.id, editingContent); setEditingCommentId(null); }}>저장</button>
-                      <button className="px-2 py-1 bg-gray-200 text-gray-700 rounded" onClick={() => setEditingCommentId(null)}>취소</button>
-                    </div>
-                  </>
+                  <input
+                    className="w-full px-2 py-1 rounded border border-blue-200 dark:border-blue-700 bg-white dark:bg-blue-950 text-gray-900 dark:text-gray-100"
+                    value={editingContent}
+                    onChange={e => setEditingContent(e.target.value)}
+                    maxLength={500}
+                  />
                 ) : (
-                  <div className="text-gray-800 dark:text-gray-100 whitespace-pre-line">{c.content}</div>
+                  c.content
                 )}
               </div>
-              <div className="flex flex-col items-end sm:items-center gap-1 min-w-[80px]">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{c.author}</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</span>
-                {!c.isDeleted && (
-                  <div className="flex gap-1 mt-1">
-                    <button className="px-2 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200 text-xs" onClick={() => onCommentReport(c.id)}>신고</button>
-                    {(c.isMine || c.isAdmin) && (
-                      <>
-                        <button className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 text-xs" onClick={() => { setEditingCommentId(c.id); setEditingContent(c.content); }}>수정</button>
-                        <button className="px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 text-xs" onClick={() => onCommentDelete(c.id)}>삭제</button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* 날짜 */}
+              <span className="flex-shrink-0 w-[90px] text-xs text-gray-400 dark:text-gray-500 text-center">{new Date(c.createdAt).toLocaleDateString()}</span>
+              {/* 신고버튼 */}
+              {!c.isDeleted && (
+                <button
+                  className="px-1 py-0.5 min-w-0 border border-red-300 text-red-500 bg-transparent rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-xs font-normal transition-colors text-center"
+                  onClick={() => onCommentReport(c.id)}
+                >
+                  신고
+                </button>
+              )}
+              {/* 수정/삭제 버튼 */}
+              {(c.isMine || c.isAdmin) && !c.isDeleted && (
+                <>
+                  <button className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 text-xs rounded" onClick={() => { setEditingCommentId(c.id); setEditingContent(c.content); }}>수정</button>
+                  <button className="px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 text-xs rounded" onClick={() => onCommentDelete(c.id)}>삭제</button>
+                </>
+              )}
             </li>
           ))}
         </ul>

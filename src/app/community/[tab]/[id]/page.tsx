@@ -31,6 +31,13 @@ const PostDetailPage = () => {
         .select('*, author:users(id, nickname, role)')
         .eq('id', id)
         .single();
+      // 조회수 증가 (정상 조회 시 1회만)
+      if (postData && !ignore) {
+        await supabase
+          .from('posts')
+          .update({ views: (postData.views || 0) + 1 })
+          .eq('id', id);
+      }
       // 댓글 + 작성자 정보
       const { data: commentData } = await supabase
         .from('comments')
