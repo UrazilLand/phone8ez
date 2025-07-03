@@ -90,7 +90,10 @@ const PostDetailView: React.FC<PostDetailViewProps> = ({ post, comments }) => {
       <section>
         <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">댓글 ({comments.length})</h2>
         <CommentList comments={comments} />
-        <CommentForm />
+        <CommentForm onSubmit={async (content: string) => {
+          // TODO: 실제 댓글 작성 API 호출
+          console.log('댓글 작성:', content);
+        }} />
       </section>
     </article>
   );
