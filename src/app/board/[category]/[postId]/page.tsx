@@ -139,6 +139,7 @@ export default function PostDetailPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           post_id: postId,
           content,
@@ -181,6 +182,7 @@ export default function PostDetailPage() {
     try {
       const response = await fetch(`/api/posts/${postId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) {

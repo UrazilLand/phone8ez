@@ -47,6 +47,7 @@ export default function CommentForm({
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           content: content.trim(),
           post_id: postId,

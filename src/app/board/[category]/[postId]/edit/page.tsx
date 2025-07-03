@@ -44,7 +44,20 @@ export default function EditPage({ params }: EditPageProps) {
   const fetchPost = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/posts/${postId}`);
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: title.trim(),
+          content: content.trim(),
+          board_type: boardType,
+          image_url: imageUrl.trim() || undefined,
+          video_url: videoUrl.trim() || undefined,
+        }),
+      });
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -111,6 +124,7 @@ export default function EditPage({ params }: EditPageProps) {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           title: title.trim(),
           content: content.trim(),

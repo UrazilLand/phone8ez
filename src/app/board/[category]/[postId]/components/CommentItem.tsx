@@ -73,6 +73,7 @@ export default function CommentItem({
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           content: editContent.trim(),
         }),
@@ -112,6 +113,7 @@ export default function CommentItem({
       
       const response = await fetch(`/api/comments/${comment.id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) {
