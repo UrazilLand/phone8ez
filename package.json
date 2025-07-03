@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:posts": "tsx src/scripts/seed-posts.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

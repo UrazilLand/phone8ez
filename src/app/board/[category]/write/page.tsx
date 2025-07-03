@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { ArrowLeft, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { BOARD_CATEGORIES } from '@/types/board';
 import { useToast } from '@/hooks/use-toast';
 import { use } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 interface WritePageProps {
   params: Promise<{
@@ -40,7 +41,40 @@ export default function WritePage({ params }: WritePageProps) {
   const [videoUrl, setVideoUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 로그인 상태 확인
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setIsLoggedIn(true);
+          setUser(user);
+        } else {
+          // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+          toast({
+            title: "로그인 필요",
+            description: "게시글을 작성하려면 로그인이 필요합니다.",
+            variant: "destructive",
+          });
+          router.push('/auth/login?redirectTo=' + encodeURIComponent(window.location.pathname));
+          return;
+        }
+      } catch (error) {
+        console.error('인증 확인 오류:', error);
+        router.push('/auth/login?redirectTo=' + encodeURIComponent(window.location.pathname));
+        return;
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router, toast]);
 
   const getCategoryName = (categoryId: string) => {
     return BOARD_CATEGORIES.find(cat => cat.id === categoryId)?.name || categoryId;
@@ -120,18 +154,87 @@ export default function WritePage({ params }: WritePageProps) {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    // 실제 업로드 로직은 Cloudflare R2 연동 시 구현, 여기선 임시로 로컬 URL 사용
-    const newUrls = Array.from(files).map(file => URL.createObjectURL(file));
-    setImageUrls(prev => [...prev, ...newUrls]);
-    // 실제 업로드 후에는 newUrls 대신 업로드된 URL을 사용해야 함
+
+    // 파일 크기 및 형식 검증
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      if (file.size > maxSize) {
+        toast({
+          title: "파일 크기 초과",
+          description: `${file.name}의 크기가 5MB를 초과합니다.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "지원하지 않는 파일 형식",
+          description: `${file.name}은 지원하지 않는 파일 형식입니다.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+    }
+
+    // 이미지 개수 제한 (최대 5개)
+    if (imageUrls.length + files.length > 5) {
+      toast({
+        title: "이미지 개수 초과",
+        description: "이미지는 최대 5개까지 첨부할 수 있습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // 실제 업로드 로직은 Cloudflare R2 연동 시 구현
+      // 현재는 임시로 로컬 URL 사용
+      const newUrls = Array.from(files).map(file => URL.createObjectURL(file));
+      setImageUrls(prev => [...prev, ...newUrls]);
+      
+      toast({
+        title: "이미지 추가 완료",
+        description: `${files.length}개의 이미지가 추가되었습니다.`,
+      });
+    } catch (error) {
+      console.error('이미지 업로드 오류:', error);
+      toast({
+        title: "이미지 업로드 실패",
+        description: "이미지 업로드에 실패했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRemoveImage = (idx: number) => {
     setImageUrls(prev => prev.filter((_, i) => i !== idx));
   };
+
+  // 로딩 중이거나 로그인하지 않은 경우
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>로딩 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return null; // 리다이렉트 중이므로 아무것도 렌더링하지 않음
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -218,13 +321,22 @@ export default function WritePage({ params }: WritePageProps) {
                   onChange={(e) => setVideoUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
                 />
+                <p className="text-sm text-muted-foreground">
+                  YouTube, Vimeo 등의 동영상 URL을 입력하세요.
+                </p>
               </div>
 
               {/* 이미지 업로드 */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>이미지 첨부</Label>
-                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  <Label>이미지 첨부 (최대 5개)</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={imageUrls.length >= 5}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
                     이미지 선택
                   </Button>
                 </div>
@@ -236,20 +348,27 @@ export default function WritePage({ params }: WritePageProps) {
                   className="hidden"
                   onChange={handleImageChange}
                 />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {imageUrls.map((url, idx) => (
-                    <div key={idx} className="relative w-24 h-24 border rounded overflow-hidden">
-                      <img src={url} alt={`첨부 이미지 ${idx + 1}`} className="object-cover w-full h-full" />
-                      <button
-                        type="button"
-                        className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs"
-                        onClick={() => handleRemoveImage(idx)}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  JPG, PNG, GIF, WebP 형식, 최대 5MB까지 업로드 가능합니다.
+                </p>
+                
+                {/* 이미지 미리보기 */}
+                {imageUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {imageUrls.map((url, idx) => (
+                      <div key={idx} className="relative w-24 h-24 border rounded overflow-hidden">
+                        <img src={url} alt={`첨부 이미지 ${idx + 1}`} className="object-cover w-full h-full" />
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600"
+                          onClick={() => handleRemoveImage(idx)}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 버튼 */}

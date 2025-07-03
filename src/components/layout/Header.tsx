@@ -17,7 +17,7 @@ const navLinks = [
   { href: '/intro', label: '서비스 소개' },
   { href: '/how-to-use', label: '사용 방법' },
   { href: '/dashboard', label: 'DASHBOARD', emphasized: true },
-  { href: '/board/free', label: '게시판' },
+  { href: '/board/free', label: '커뮤니티' },
   { href: '/support', label: '고객지원' },
 ];
 

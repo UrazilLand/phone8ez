@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { createUserIfNotExists } from '@/lib/auth-server';
 import { z } from 'zod';
 
 const createCommentSchema = z.object({
+  post_id: z.number().min(1, '게시글 ID가 필요합니다'),
   content: z.string().min(1, '댓글 내용을 입력해주세요').max(1000, '댓글은 1000자 이내로 입력해주세요'),
   parent_id: z.number().optional(),
 });
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
       .from('comments')
       .select(`
         *,
-        users!inner(email, nickname),
+        users!inner(email, nickname, plan, role),
         replies:comments!parent_id(count)
       `)
       .eq('post_id', postId)
@@ -59,7 +61,9 @@ export async function GET(request: NextRequest) {
       user: {
         id: row.user_id,
         email: row.users.email,
-        nickname: row.users.nickname
+        nickname: row.users.nickname,
+        plan: row.users.plan,
+        role: row.users.role
       },
       reply_count: row.replies?.[0]?.count || 0
     })) || [];
@@ -70,7 +74,7 @@ export async function GET(request: NextRequest) {
         .from('comments')
         .select(`
           *,
-          users!inner(email, nickname)
+          users!inner(email, nickname, plan, role)
         `)
         .eq('parent_id', comment.id)
         .order('created_at', { ascending: true });
@@ -87,7 +91,9 @@ export async function GET(request: NextRequest) {
           user: {
             id: row.user_id,
             email: row.users.email,
-            nickname: row.users.nickname
+            nickname: row.users.nickname,
+            plan: row.users.plan,
+            role: row.users.role
           }
         }));
       }
@@ -111,6 +117,23 @@ export async function GET(request: NextRequest) {
 // 댓글 작성 (POST)
 export async function POST(request: NextRequest) {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+    
+    // 사용자 정보 조회 또는 생성
+    const dbUser = await createUserIfNotExists(user.email, user.user_metadata?.name);
+    if (!dbUser || !dbUser.id) {
+      return NextResponse.json(
+        { error: '유저 정보를 찾을 수 없습니다.' },
+        { status: 500 }
+      );
+    }
+    
     const body = await request.json();
     const validatedData = createCommentSchema.parse(body);
     
@@ -118,8 +141,8 @@ export async function POST(request: NextRequest) {
     const { data: commentData, error: insertError } = await supabase
       .from('comments')
       .insert({
-        post_id: body.post_id,
-        user_id: body.user_id,
+        post_id: validatedData.post_id,
+        user_id: dbUser.id,
         content: validatedData.content,
         parent_id: validatedData.parent_id || null
       })
@@ -135,7 +158,7 @@ export async function POST(request: NextRequest) {
       .from('comments')
       .select(`
         *,
-        users!inner(email, nickname)
+        users!inner(email, nickname, plan, role)
       `)
       .eq('id', commentData.id)
       .single();
@@ -155,7 +178,9 @@ export async function POST(request: NextRequest) {
       user: {
         id: comment.user_id,
         email: comment.users.email,
-        nickname: comment.users.nickname
+        nickname: comment.users.nickname,
+        plan: comment.users.plan,
+        role: comment.users.role
       }
     }, { status: 201 });
   } catch (error) {

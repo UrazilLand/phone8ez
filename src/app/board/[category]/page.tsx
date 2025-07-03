@@ -7,29 +7,25 @@ import BoardFilterBar from '../components/BoardFilterBar';
 import BoardList, { type Post } from '../components/BoardList';
 import Pagination from '../components/Pagination';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 20;
 
-// Mock data generation
-const generateMockPosts = (category: string, count: number): Post[] => {
-  const posts: Post[] = [];
-  for (let i = 1; i <= count; i++) {
-    const isNotice = category === 'free' && i <= 2; // Make first 2 posts in 'free' notices
-    posts.push({
-      id: i,
-      title: `${isNotice ? '중요 공지사항' : category} 게시판 글 제목 ${i}`,
-      author_nickname: `사용자${i % 10 + 1}`,
-      author_plan: i % 3 === 0 ? 'pro' : 'free',
-      author_role: i % 10 === 0 ? 'admin' : 'user',
-      created_at: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-      views: Math.floor(Math.random() * 1000),
-      likes: Math.floor(Math.random() * 200),
-      comment_count: Math.floor(Math.random() * 50),
-      is_notice: isNotice,
-      category: category,
-    });
-  }
-  return posts.sort((a,b) => (b.is_notice ? 1 : 0) - (a.is_notice ? 1 : 0) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+// API에서 받은 데이터를 Post 타입으로 변환하는 함수
+const transformApiDataToPost = (apiPost: any): Post => {
+  return {
+    id: apiPost.id,
+    title: apiPost.title,
+    author_nickname: apiPost.user?.nickname || '익명',
+    author_plan: apiPost.user?.plan || 'free',
+    author_role: apiPost.user?.role || 'user',
+    created_at: apiPost.created_at,
+    views: apiPost.views || 0,
+    likes: apiPost.likes || 0,
+    comment_count: apiPost.comment_count || 0,
+    is_notice: apiPost.is_notice || false,
+    category: apiPost.board_type || 'free',
+  };
 };
 
 export default function BoardCategoryPage() {
@@ -38,53 +34,85 @@ export default function BoardCategoryPage() {
   const router = useRouter();
   const category = params.category as string || 'free';
   
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
-  const [displayedPosts, setDisplayedPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
+  const [currentSearch, setCurrentSearch] = useState('');
 
-  useEffect(() => {
+  // 게시글 목록 가져오기
+  const fetchPosts = async (page: number, search: string = '') => {
     setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
+        board_type: category,
+        ...(search && { search })
+      });
+
+      const response = await fetch(`/api/posts?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('게시글을 불러오는데 실패했습니다.');
+      }
+
+      const data = await response.json();
+      
+      // API 데이터를 Post 타입으로 변환
+      const transformedPosts = data.posts.map(transformApiDataToPost);
+      
+      setPosts(transformedPosts);
+      setTotalPosts(data.total || 0);
+      setTotalPages(Math.ceil((data.total || 0) / ITEMS_PER_PAGE));
+    } catch (error) {
+      console.error('게시글 목록 조회 오류:', error);
+      toast({
+        title: "오류",
+        description: "게시글을 불러오는데 실패했습니다.",
+        variant: "destructive",
+      });
+      setPosts([]);
+      setTotalPages(1);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 페이지 변경 시 게시글 다시 가져오기
+  useEffect(() => {
     const pageQueryParam = searchParams.get('page');
     const page = parseInt(pageQueryParam || '1', 10);
     setCurrentPage(page);
-
-    // Simulate API call
-    setTimeout(() => {
-      const mockPostsForCategory = generateMockPosts(category, 55); // Generate 55 posts for testing pagination
-      setAllPosts(mockPostsForCategory);
-      setTotalPages(Math.ceil(mockPostsForCategory.length / ITEMS_PER_PAGE));
-      setIsLoading(false);
-    }, 500);
-  }, [category, searchParams]);
-
-  useEffect(() => {
-    if (allPosts.length > 0) {
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      setDisplayedPosts(allPosts.slice(startIndex, endIndex));
-    }
-  }, [allPosts, currentPage]);
+    fetchPosts(page, currentSearch);
+  }, [category, searchParams, currentSearch]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // In a real app, you'd update the URL query parameter here
-    // router.push(`/board/${category}?page=${page}`);
+    // URL 쿼리 파라미터 업데이트
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('page', page.toString());
+    router.push(newUrl.pathname + newUrl.search);
   };
 
   const handleSearchChange = (value: string) => setSearchValue(value);
+  
   const handleSearchClick = () => {
-    // 실제 검색 API 호출 또는 필터링 로직 구현 필요
-    // 여기서는 단순히 제목에 검색어가 포함된 게시글만 표시
-    const filtered = allPosts.filter(
-      post => post.title.includes(searchValue)
-    );
-    setDisplayedPosts(filtered);
+    setCurrentSearch(searchValue);
     setCurrentPage(1);
-    setTotalPages(Math.ceil(filtered.length / ITEMS_PER_PAGE));
+    // URL 쿼리 파라미터 업데이트
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('page', '1');
+    if (searchValue) {
+      newUrl.searchParams.set('search', searchValue);
+    } else {
+      newUrl.searchParams.delete('search');
+    }
+    router.push(newUrl.pathname + newUrl.search);
   };
+
   const handleWriteClick = () => {
     router.push(`/board/${category}/write`);
   };
@@ -122,10 +150,16 @@ export default function BoardCategoryPage() {
               </div>
             ))}
           </div>
+        ) : posts.length > 0 ? (
+          <BoardList posts={posts} category={category} />
         ) : (
-          <BoardList posts={displayedPosts} category={category} />
+          <div className="text-center py-12 text-muted-foreground">
+            {currentSearch ? '검색 결과가 없습니다.' : '게시글이 없습니다.'}
+          </div>
         )}
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        {totalPages > 1 && (
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
       </div>
     </div>
   );
