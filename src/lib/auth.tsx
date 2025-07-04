@@ -76,6 +76,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) throw error;
+
+      // 회원가입 성공 후 users 테이블에 insert/upsert
+      // (이메일 인증 전이라도 user 정보는 있음)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('users').upsert({
+          supabase_id: user.id,
+          email: user.email ?? '',
+          nickname: credentials.name || user.email?.split('@')[0] || '사용자',
+          avatar_url: user.user_metadata?.avatar_url || null,
+          provider: user.app_metadata?.provider || 'email',
+          role: 'user',
+          plan: 'free',
+          is_verified: false,
+          post_count: 0,
+          comment_count: 0,
+          created_at: user.created_at,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'supabase_id', ignoreDuplicates: false });
+      }
     } catch (error: any) {
       setState(prev => ({
         ...prev,

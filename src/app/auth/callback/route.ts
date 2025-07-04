@@ -32,7 +32,7 @@ export async function GET(request: Request) {
           const { error: insertError } = await supabase
             .from('users')
             .upsert({
-              supabase_id: data.user.id,
+              id: data.user.id,
               email: data.user.email ?? '',
               nickname: data.user.user_metadata?.full_name || 
                        data.user.user_metadata?.name || 
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
               created_at: data.user.created_at,
               updated_at: new Date().toISOString()
             }, {
-              onConflict: 'supabase_id',
+              onConflict: 'id',
               ignoreDuplicates: false
             });
 
