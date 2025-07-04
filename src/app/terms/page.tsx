@@ -9,7 +9,7 @@ export default function TermsPage() {
         </CardHeader>
         <CardContent className="prose prose-sm sm:prose-base max-w-none text-foreground/90 space-y-4">
           <h2 className="font-semibold text-xl text-primary">제1조 (목적)</h2>
-          <p>본 약관은 ProMobile Edge (이하 "회사")가 제공하는 Phone8ez 서비스 (이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+          <p>본 약관은 세컨드라이프 (이하 "회사")가 제공하는 Phone8ez 서비스 (이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
 
           <h2 className="font-semibold text-xl text-primary">제2조 (용어의 정의)</h2>
           <p>본 약관에서 사용하는 용어의 정의는 다음과 같습니다.</p>
