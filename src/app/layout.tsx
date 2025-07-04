@@ -48,7 +48,7 @@ export default function RootLayout({
       <body className={notoSansKr.className}>
         <DarkModeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange={false}
           storageKey="phone8ez-theme"
