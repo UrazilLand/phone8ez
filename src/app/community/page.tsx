@@ -29,6 +29,7 @@ const CommunityPage = () => {
   const [notices, setNotices] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [searchInput, setSearchInput] = useState(search);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -90,6 +91,10 @@ const CommunityPage = () => {
     return () => { ignore = true; };
   }, [tab, page, search]);
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+  }, []);
+
   // 탭 변경 시 URL 갱신
   const handleTabChange = (newTab: string) => {
     router.push(`/community?tab=${newTab}&page=1${search ? `&search=${encodeURIComponent(search)}` : ''}`);
@@ -123,21 +128,33 @@ const CommunityPage = () => {
             pageSize={PAGE_SIZE}
             onRowClick={handleRowClick}
           />
-          {/* 검색 입력창 */}
-          <form onSubmit={handleSearch} className="flex gap-2 my-4 justify-end">
-            <input
-              className="border border-blue-200 dark:border-blue-700 rounded px-3 py-2 w-48 text-sm bg-white dark:bg-blue-950 text-gray-900 dark:text-gray-100"
-              placeholder="제목 또는 내용을 입력하세요"
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 rounded bg-blue-600 text-white font-semibold text-sm"
-            >
-              검색
-            </button>
-          </form>
+          {/* 글쓰기 버튼 + 검색 입력창 */}
+          <div className="flex gap-2 my-4 justify-end">
+            <div className="flex-1 flex justify-start">
+              {user && (
+                <button
+                  className="px-4 py-2 rounded bg-blue-600 text-white font-semibold text-sm mr-2"
+                  onClick={() => router.push(`/community/${tab}/write`)}
+                >
+                  글쓰기
+                </button>
+              )}
+            </div>
+            <form onSubmit={handleSearch} className="flex gap-2 flex-1 justify-end">
+              <input
+                className="border border-blue-200 dark:border-blue-700 rounded px-3 py-2 w-48 text-sm bg-white dark:bg-blue-950 text-gray-900 dark:text-gray-100"
+                placeholder="제목 또는 내용을 입력하세요"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold text-sm"
+              >
+                검색
+              </button>
+            </form>
+          </div>
           <Pagination
             page={page}
             totalPages={Math.ceil(total / PAGE_SIZE)}
