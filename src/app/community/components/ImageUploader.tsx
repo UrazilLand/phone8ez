@@ -28,13 +28,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload }) => {
     }
     setLoading(true);
     try {
+      const BUCKET = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'post-img';
       const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { data, error: uploadError } = await supabase.storage.from('post-images').upload(fileName, file, {
+      const { data, error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, file, {
         cacheControl: '3600',
         upsert: false,
       });
       if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('post-images').getPublicUrl(fileName);
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
       if (!urlData?.publicUrl) throw new Error('URL 생성 실패');
       onUpload(urlData.publicUrl);
     } catch (e: any) {
