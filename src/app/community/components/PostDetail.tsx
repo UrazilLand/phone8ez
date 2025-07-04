@@ -14,6 +14,7 @@ interface PostDetailProps {
     isAdmin: boolean;
     reportCount?: number;
     isDeleted?: boolean;
+    image_urls?: string;
   };
   comments: Array<{
     id: string;
@@ -50,6 +51,14 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
   const isDeleted = post.reportCount && post.reportCount >= 100 || post.isDeleted;
 
+  // 이미지 배열 파싱
+  let imageUrls: string[] = [];
+  try {
+    imageUrls = post.image_urls ? JSON.parse(post.image_urls) : [];
+  } catch {
+    imageUrls = [];
+  }
+
   if (isDeleted) {
     return (
       <div className="max-w-2xl mx-auto p-8 bg-gray-100 dark:bg-blue-950 rounded shadow-md flex items-center justify-center min-h-[300px]">
@@ -79,13 +88,18 @@ const PostDetail: React.FC<PostDetailProps> = ({
           <span>조회 {post.views}</span>
         </div>
         <div className="border-t border-blue-100 dark:border-blue-800 my-3" />
-        {post.imageUrl && (
-          <img
-            src={post.imageUrl}
-            alt="첨부 이미지"
-            className="w-full max-h-80 object-contain rounded mb-2 border border-blue-100 dark:border-blue-800"
-            loading="lazy"
-          />
+        {imageUrls.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {imageUrls.map((url, idx) => (
+              <img
+                key={idx}
+                src={url}
+                alt={`첨부 이미지 ${idx + 1}`}
+                className="w-full max-h-80 object-contain rounded border border-blue-100 dark:border-blue-800"
+                loading="lazy"
+              />
+            ))}
+          </div>
         )}
         {post.videoUrl && (
           <div className="mb-2">

@@ -43,7 +43,13 @@ const WritePage = () => {
       }
     } else {
       // 등록
-      const { data: newPost, error } = await supabase.from('posts').insert({ ...data, tab, user_id: user.id }).select('id').single();
+      const { imageUrl, ...rest } = data;
+      const { data: newPost, error } = await supabase.from('posts').insert({
+        ...rest,
+        image_urls: imageUrl ? JSON.stringify([imageUrl]) : '[]',
+        board_type: tab,
+        user_id: user.id
+      }).select('id').single();
       setLoading(false);
       if (!error && newPost) {
         alert('게시글이 등록되었습니다!');
