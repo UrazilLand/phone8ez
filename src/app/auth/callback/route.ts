@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       if (data.user) {
         // 사용자 정보를 users 테이블에 저장 (실패해도 인증은 성공)
         try {
+          console.log('[AUTH CALLBACK] users upsert 시도:', data.user.id, data.user.email);
           const { error: insertError } = await supabase
             .from('users')
             .upsert({
@@ -51,15 +52,13 @@ export async function GET(request: Request) {
               onConflict: 'id',
               ignoreDuplicates: false
             });
-
-          console.log('[AUTH CALLBACK] users upsert error:', insertError);
-
+          console.log('[AUTH CALLBACK] users upsert 결과:', insertError);
           if (insertError) {
             console.error('사용자 정보 저장 오류:', insertError);
             // 사용자 정보 저장 실패해도 인증은 성공으로 처리
           }
         } catch (dbError) {
-          console.error('사용자 정보 저장 중 오류:', dbError);
+          console.error('[AUTH CALLBACK] upsert try-catch 에러:', dbError);
           // 데이터베이스 오류가 있어도 인증은 성공으로 처리
         }
       }
