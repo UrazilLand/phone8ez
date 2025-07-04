@@ -127,7 +127,8 @@ export async function POST(request: NextRequest) {
         board_type: validatedData.board_type,
         image_urls: validatedData.image_urls || '[]',
         video_url: validatedData.video_url || null,
-        user_id: dbUser.id
+        user_id: dbUser.id,
+        nickname: dbUser.nickname
       })
       .select()
       .single();

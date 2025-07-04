@@ -41,7 +41,7 @@ const PostDetailPage = () => {
       // 댓글 + 작성자 정보
       const { data: commentData } = await supabase
         .from('comments')
-        .select('*, author:users(id, nickname, role)')
+        .select('*')
         .eq('post_id', id)
         .order('created_at', { ascending: true });
       if (!ignore) {
@@ -67,14 +67,14 @@ const PostDetailPage = () => {
   // 권한 계산
   const isMine = post && user && post.user_id === user.id;
   const isAdmin = user && (user.role === 'admin' || post?.author?.role === 'admin');
-  const authorName = post?.author?.role === 'admin' ? '관리자' : (post?.author?.nickname || '익명');
+  const authorName = post?.nickname || '익명';
 
   // 댓글 권한/작성자
   const commentsWithAuth = comments.map(c => ({
     ...c,
     isMine: user && c.user_id === user.id,
-    isAdmin: c.author?.role === 'admin',
-    author: c.author?.role === 'admin' ? '관리자' : (c.author?.nickname || '익명'),
+    isAdmin: false, // 관리자 여부는 별도 처리 필요시 확장
+    author: c.nickname || '익명',
   }));
 
   // 신고 100회 이상이면 삭제 처리
@@ -87,10 +87,11 @@ const PostDetailPage = () => {
   // 댓글 등록
   const handleCommentAdd = async (content: string) => {
     if (!user) return;
+    // user.nickname을 comments.nickname에 저장해야 함
     const { data, error: err } = await supabase
       .from('comments')
-      .insert({ post_id: id, content, user_id: user.id })
-      .select('*, author:users(id, nickname, role)')
+      .insert({ post_id: id, content, user_id: user.id, nickname: user.user_metadata?.nickname || '익명' })
+      .select('*')
       .single();
     if (!err && data) setComments([...comments, data]);
   };
@@ -100,7 +101,7 @@ const PostDetailPage = () => {
       .from('comments')
       .update({ content })
       .eq('id', cid)
-      .select('*, author:users(id, nickname, role)')
+      .select('*')
       .single();
     if (!err && data) setComments(comments.map(c => c.id === cid ? data : c));
   };

@@ -4,12 +4,8 @@ dotenv.config({ path: '.env' });
 console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
 console.log('SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY);
 console.log('SUPABASE_STORAGE_BUCKET:', process.env.SUPABASE_STORAGE_BUCKET);
+
 // 실제 게시글 크롤링 및 업로드 자동화 스크립트
-// 1. 가상 유저 10명 생성 및 Supabase users 테이블에 삽입
-// 2. 자유게시판/사용후기: faker로 랜덤 게시글 생성
-// 3. 모바일 정보: BBC 기사 크롤링
-// 4. 유머 게시판: 이토랜드 유머글 크롤링, 이미지 1장 다운로드→Storage 업로드→URL 저장
-// 5. 모든 게시글 posts 테이블에 삽입
 
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
@@ -30,15 +26,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 interface FakeUser {
   id: string;
-  email: string;
   nickname: string;
-  role: 'user' | 'admin';
-  created_at: string;
 }
 
 interface FakePost {
   id: string;
   user_id: string;
+  nickname: string;
   title: string;
   content: string;
   board_type: string;
@@ -429,16 +423,10 @@ async function createAndInsertFakeUsers(count: number): Promise<FakeUser[]> {
   const users: FakeUser[] = [];
   for (let i = 0; i < count; i++) {
     const id = uuidv4();
-    const email = faker.internet.email();
     const nickname = faker.internet.username();
-    const role = faker.helpers.arrayElement(['user', 'admin']) as 'user' | 'admin';
-    const now = new Date().toISOString();
     users.push({
       id,
-      email,
       nickname,
-      role,
-      created_at: now,
     });
   }
   // Supabase users 테이블에 일괄 삽입
@@ -473,18 +461,17 @@ function getRandomDateBetween(startDate: string, endDate: string): string {
   return date.toISOString();
 }
 
-// 자유게시판 댓글 생성 함수 개선 (글의 comments 배열에서 랜덤 2~3개 선택)
-async function createAndInsertRandomComments(postId: string, users: { id: string }[], comments: string[], postCreatedAt: string) {
-  const commentCount = Math.floor(Math.random() * 2) + 2; // 2~3개
-  const shuffled = comments.sort(() => 0.5 - Math.random());
-  const selected = shuffled.slice(0, commentCount);
+// 자유게시판 댓글 생성 함수: 각 글의 comments 배열을 순서대로 모두 입력, 랜덤/섞기 없이 일관성 보장
+async function createAndInsertConsistentComments(postId: string, users: { id: string, nickname: string }[], comments: string[], postCreatedAt: string) {
   const now = new Date().toISOString();
-  const commentObjs = selected.map(content => {
+  const commentObjs = comments.map(content => {
+    const user = users[Math.floor(Math.random() * users.length)];
     const created_at = getRandomDateBetween(postCreatedAt, now);
     return {
       id: uuidv4(),
       post_id: postId,
-      user_id: getRandomUserId(users),
+      user_id: user.id,
+      nickname: user.nickname, // 닉네임 복사 저장
       content,
       created_at,
       updated_at: created_at,
@@ -655,7 +642,7 @@ const mobileInfoBoardSamples = [
 ];
 
 // 게시글 생성 함수 개선 (유머/모바일 정보 게시판도 샘플 활용)
-async function createAndInsertRandomPosts(users: { id: string }[], boardType: string, count: number) {
+async function createAndInsertRandomPosts(users: { id: string, nickname: string }[], boardType: string, count: number) {
   const posts: FakePost[] = [];
   let samples: { title: string; content: string; comments?: string[]; type?: string; image_urls?: string[] }[];
   if (boardType === 'free') {
@@ -669,7 +656,7 @@ async function createAndInsertRandomPosts(users: { id: string }[], boardType: st
   }
   for (let i = 0; i < count; i++) {
     const id = uuidv4();
-    const user_id = getRandomUserId(users);
+    const user = users[Math.floor(Math.random() * users.length)];
     let title = '', content = '', comments: string[] = [], image_urls: string[] = [];
     let created_at = getDistributedDate(i, count);
     if (boardType === 'free') {
@@ -699,7 +686,8 @@ async function createAndInsertRandomPosts(users: { id: string }[], boardType: st
     const is_notice = false;
     posts.push({
       id,
-      user_id,
+      user_id: user.id,
+      nickname: user.nickname,
       title,
       content,
       board_type: boardType,
@@ -718,21 +706,21 @@ async function createAndInsertRandomPosts(users: { id: string }[], boardType: st
   }
   console.log(`${boardType} 게시글 ${count}개 생성 및 삽입 완료`);
 
-  // 자유게시판만 댓글 생성
+  // 자유게시판만 댓글 생성 (일관성 있게)
   if (boardType === 'free') {
     const insertedPosts = (data && typeof data === 'object' && 'length' in data && Array.isArray(data)) ? data : posts;
     for (let i = 0; i < insertedPosts.length; i++) {
       const post = insertedPosts[i];
       const sample = freeBoardSamples[i % freeBoardSamples.length];
-      await createAndInsertRandomComments(post.id, users, sample.comments || [], post.created_at);
+      await createAndInsertConsistentComments(post.id, users, sample.comments || [], post.created_at);
     }
     console.log('자유게시판 댓글 자동 생성 완료');
   }
 }
 
 async function main() {
-  // 1. users 테이블에서 email이 yahoo를 포함하는 유저만 불러오기
-  const { data: users, error } = await supabase.from('users').select('id, email').ilike('email', '%yahoo%');
+  // 1. users 테이블에서 email이 yahoo를 포함하는 유저만 불러오기 (id, nickname만)
+  const { data: users, error } = await supabase.from('users').select('id, nickname').ilike('email', '%yahoo%');
   if (error || !users || users.length === 0) {
     throw new Error('Yahoo 이메일을 가진 유저가 없습니다. 먼저 유저를 생성해 주세요.');
   }

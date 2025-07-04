@@ -46,9 +46,7 @@ const CommunityPage = () => {
           views,
           is_notice,
           comments(count),
-          users (
-            nickname
-          )
+          nickname
         `)
         .eq('is_notice', true)
         .order('number', { ascending: false });
@@ -64,9 +62,7 @@ const CommunityPage = () => {
           views,
           is_notice,
           comments(count),
-          users (
-            nickname
-          )
+          nickname
         `, { count: 'exact' })
         .eq('board_type', tab)
         .eq('is_notice', false);
@@ -80,7 +76,7 @@ const CommunityPage = () => {
       const mapPost = (arr: any[] = []) => arr.map(post => ({
         ...post,
         commentCount: post.comments?.[0]?.count ?? 0,
-        author: post.users?.nickname || '알 수 없음',
+        author: post.nickname || '알 수 없음',
         createdAt: post.created_at,
         comments: post.comments?.map?.((c: any) => ({ ...c, createdAt: c.created_at })) ?? [],
       }));
