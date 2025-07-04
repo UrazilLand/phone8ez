@@ -43,10 +43,11 @@ const WritePage = () => {
       }
     } else {
       // 등록
-      const { imageUrl, ...rest } = data;
+      const { imageUrl, videoUrl, ...rest } = data;
       const { data: newPost, error } = await supabase.from('posts').insert({
         ...rest,
         image_urls: imageUrl ? JSON.stringify([imageUrl]) : '[]',
+        video_url: videoUrl || '',
         board_type: tab,
         user_id: user.id
       }).select('id').single();

@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
         {/* 사업자 정보 */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs text-muted-foreground/80">
           <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 text-center md:text-left">
-            <span>상호명: ProMobile Edge</span>
+            <span>상호명: 세컨드라이프</span>
             <span>대표자: 하형진</span>
             <span>사업자등록번호: 272-97-01638</span>
           </div>
@@ -37,6 +37,12 @@ const Footer: React.FC = () => {
         {/* 저작권 */}
         <div className="pt-2 text-center text-xs text-muted-foreground/60">
           &copy; {new Date().getFullYear()} Phone8ez. 모든 권리 보유.
+        </div>
+
+        {/* 포트원 인증용 사업자 정보 */}
+        <div className="pt-2 text-center text-xs text-muted-foreground/60">
+          상호명: 세컨드라이프 | 대표: 하형진 | 사업자등록번호: 272-97-01638 | 간이과세자<br />
+          주소: 전남 광양시 공영로10 | 대표전화: 010-5857-9410 | 이메일: easypower@kakao.com
         </div>
       </div>
     </footer>
