@@ -38,12 +38,6 @@ const Footer: React.FC = () => {
         <div className="pt-2 text-center text-xs text-muted-foreground/60">
           &copy; {new Date().getFullYear()} Phone8ez. 모든 권리 보유.
         </div>
-
-        {/* 포트원 인증용 사업자 정보 */}
-        <div className="pt-2 text-center text-xs text-muted-foreground/60">
-          상호명: 세컨드라이프 | 대표: 하형진 | 사업자등록번호: 272-97-01638 | 간이과세자<br />
-          주소: 전남 광양시 공영로10 | 대표전화: 010-5857-9410 | 이메일: easypower@kakao.com
-        </div>
       </div>
     </footer>
   );
