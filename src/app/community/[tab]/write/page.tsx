@@ -62,7 +62,7 @@ const WritePage = () => {
   if (!init) return <div className="max-w-2xl mx-auto px-2 sm:px-0 py-8 text-center text-blue-700 dark:text-blue-200">로딩 중...</div>;
 
   return (
-    <div className="min-h-[100vh] bg-[#101624] dark:bg-[#101624] flex flex-col justify-center items-center py-12 px-2">
+    <div className="min-h-[100vh] bg-gray-100 dark:bg-[#101624] flex flex-col justify-center items-center py-12 px-2">
       <AuthGuard isLoggedIn={!!user} onLoginClick={() => router.push('/auth/login')}>
         <PostEditor initialData={initialData || undefined} onSubmit={handleSubmit} loading={loading} isEdit={!!id} />
       </AuthGuard>
