@@ -6,18 +6,24 @@ interface DataCardActionsProps {
   isCloudMode: boolean;
   onDownload: () => void;
   onUpload: () => void;
+  onCloudSave: () => void;
+  onCloudLoad: () => void;
+  isPro: boolean;
 }
 
 const DataCardActions = React.memo(({
   isCloudMode,
   onDownload,
-  onUpload
+  onUpload,
+  onCloudSave,
+  onCloudLoad,
+  isPro
 }: DataCardActionsProps) => {
   return (
     <div className="flex gap-2 mt-auto pt-4">
       <Button
-        onClick={onDownload}
-        disabled={isCloudMode}
+        onClick={isCloudMode ? onCloudSave : onDownload}
+        disabled={!isPro}
         variant="outline"
         className="h-10 flex-1 flex items-center justify-center gap-2 min-w-[140px]"
       >
@@ -25,8 +31,8 @@ const DataCardActions = React.memo(({
         {isCloudMode ? 'Cloud 저장하기' : '파일 다운로드'}
       </Button>
       <Button
-        onClick={onUpload}
-        disabled={isCloudMode}
+        onClick={isCloudMode ? onCloudLoad : onUpload}
+        disabled={!isPro}
         variant="outline"
         className="h-10 flex-1 flex items-center justify-center gap-2 min-w-[140px]"
       >
