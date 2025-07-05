@@ -43,7 +43,15 @@ const config: Config = {
     extend: {
       fontFamily: {
         suit: ['SUIT', 'sans-serif'],
-        pretendard: ['Pretendard', 'sans-serif'],
+        pretendard: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Apple SD Gothic Neo',
+          'Malgun Gothic',
+          'sans-serif',
+        ],
         headline: ['Noto Sans KR', 'sans-serif'],
         sans: ['var(--font-noto-sans-kr)', 'system-ui', 'sans-serif'],
         body: ['Noto Sans KR', 'sans-serif'],
