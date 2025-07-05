@@ -7,6 +7,7 @@ import { BUTTON_THEME } from '@/components/ui/colors';
 import { SHEET_HEADER_LABELS, DEFAULT_ROW_COUNT, DEFAULT_COLUMN_COUNT } from '@/styles/common';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Undo2Icon, Redo2Icon } from "lucide-react";
+import { useAuth } from '@/lib/auth';
 
 interface IntegratedHeaderProps {
   dataSets: DataSet[];
@@ -35,6 +36,8 @@ export default function IntegratedHeader({
   onOpenFilterModal,
   onOpenAdditionalServiceModal,
 }: IntegratedHeaderProps) {
+  const { user } = useAuth();
+
   return (
     <div className="flex items-center justify-between px-1 py-2">
       <div className="flex items-center gap-2">
@@ -88,22 +91,26 @@ export default function IntegratedHeader({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button 
-          variant="outline"
-          size="sm"
-          onClick={onOpenAdditionalServiceModal}
-        >
-          <Plus className="w-4 h-4" />
-          <span className="max-md:hidden text-sm font-bold">부가서비스</span>
-        </Button>
-        <Button 
-          variant="outline"
-          size="sm"
-          onClick={onOpenFilterModal}
-        >
-          <Filter className="w-4 h-4" />
-          <span className="max-md:hidden text-sm font-bold">데이터 선택</span>
-        </Button>
+        {user && (
+          <>
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={onOpenAdditionalServiceModal}
+            >
+              <Plus className="w-4 h-4" />
+              <span className="max-md:hidden text-sm font-bold">부가서비스</span>
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={onOpenFilterModal}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="max-md:hidden text-sm font-bold">데이터 선택</span>
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

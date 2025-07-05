@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useState, useRef } from 'react';
 import DataInputModal from './DataInputModal';
 import SaveDataModal from './SaveDataModal';
+import { useAuth } from '@/lib/auth';
 
 interface DataInputHeaderProps {
   dataSets: DataSet[];
@@ -35,6 +36,7 @@ export default function DataInputHeader({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const modalRef = useRef<any>(null);
+  const { user } = useAuth();
 
   const handleDataInputClick = () => {
     setIsModalOpen(true);
@@ -109,14 +111,16 @@ export default function DataInputHeader({
           </div>
         </div>
         <div className="flex items-center">
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handleDataInputClick}
-          >
-            <Database className="w-4 h-4" />
-            <span className="max-md:hidden text-sm font-bold">데이터 입력</span>
-          </Button>
+          {user && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleDataInputClick}
+            >
+              <Database className="w-4 h-4" />
+              <span className="max-md:hidden text-sm font-bold">데이터 입력</span>
+            </Button>
+          )}
         </div>
       </div>
 
