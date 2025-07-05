@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
+import Link from 'next/link';
 
 const plans = [
   {
@@ -215,11 +216,13 @@ export default function IntroPage() {
                 )
               )}
               {plan.name !== '프로페셔널' && (
-                <button
-                  className="w-full py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-600/10 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-500/10 transition-colors mt-auto"
-                >
-                  시작하기
-                </button>
+                <Link href="/auth/signup" className="w-full">
+                  <button
+                    className="w-full py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-600/10 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-500/10 transition-colors mt-auto"
+                  >
+                    시작하기
+                  </button>
+                </Link>
               )}
             </div>
           ))}
