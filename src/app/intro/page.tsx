@@ -148,7 +148,7 @@ export default function IntroPage() {
           ))}
         </div>
         {/* 결제/환불/취소 정책 안내 */}
-        <div className="mt-12 max-w-2xl mx-auto bg-blue-50 dark:bg-blue-950/30 rounded-xl p-6 text-blue-900 dark:text-blue-100 shadow">
+        <div id="plans-end" className="mt-12 max-w-2xl mx-auto bg-blue-50 dark:bg-blue-950/30 rounded-xl p-6 text-blue-900 dark:text-blue-100 shadow">
           <h3 className="text-xl font-bold mb-2 text-blue-700 dark:text-blue-300">결제/환불/취소 정책 안내</h3>
           <ul className="list-disc pl-5 space-y-1 text-base">
             <li>결제 완료 후 7일 이내에는 전액 환불이 가능합니다.</li>

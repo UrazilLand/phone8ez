@@ -35,14 +35,14 @@ export default function SubscriptionCard() {
       <div className="text-xs text-muted-foreground">구독 만료일 없음</div>
       {hasSubscription === false && (
         <Button asChild className="w-full mt-auto">
-          <Link href="/intro#plans">
+          <Link href="/intro#plans-end">
             7일 무료체험 등록
           </Link>
         </Button>
       )}
       {hasSubscription === true && (
         <Button asChild className="w-full mt-auto">
-          <Link href="/intro#plans">
+          <Link href="/intro#plans-end">
             구독하기
           </Link>
         </Button>
