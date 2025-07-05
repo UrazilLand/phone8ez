@@ -42,7 +42,15 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        suit: ['SUIT', 'sans-serif'],
+        suit: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Apple SD Gothic Neo',
+          'Malgun Gothic',
+          'sans-serif',
+        ],
         pretendard: [
           '-apple-system',
           'BlinkMacSystemFont',
