@@ -63,48 +63,14 @@ export async function GET(request: Request) {
         }
       }
 
-      // 인증 성공 시 리다이렉트 및 쿠키 저장
-      if (data.session) {
-        let redirectUrl = `${origin}${next}`;
-        const forwardedHost = request.headers.get('x-forwarded-host');
-        const isLocalEnv = process.env.NODE_ENV === 'development';
-        if (!isLocalEnv && forwardedHost) {
-          redirectUrl = `https://${forwardedHost}${next}`;
-        }
-        const response = NextResponse.redirect(redirectUrl);
-        response.cookies.set('sb-access-token', data.session.access_token, {
-          path: '/',
-          httpOnly: true,
-          secure: true,
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7, // 7일
-        });
-        response.cookies.set('sb-refresh-token', data.session.refresh_token, {
-          path: '/',
-          httpOnly: true,
-          secure: true,
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 30, // 30일
-        });
-        return response;
-      }
-
       // 인증 성공 시 리다이렉트
+      let redirectUrl = `${origin}${next}`;
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
-      console.log('[AUTH CALLBACK] isLocalEnv:', isLocalEnv);
-      console.log('[AUTH CALLBACK] forwardedHost:', forwardedHost);
-      
-      if (isLocalEnv) {
-        console.log('[AUTH CALLBACK] Redirecting to:', `${origin}${next}`);
-        return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
-        console.log('[AUTH CALLBACK] Redirecting to:', `https://${forwardedHost}${next}`);
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
-      } else {
-        console.log('[AUTH CALLBACK] Redirecting to:', `${origin}${next}`);
-        return NextResponse.redirect(`${origin}${next}`);
+      if (!isLocalEnv && forwardedHost) {
+        redirectUrl = `https://${forwardedHost}${next}`;
       }
+      return NextResponse.redirect(redirectUrl);
     } catch (error) {
       console.error('Auth callback 처리 중 오류:', error);
       return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_error`);
