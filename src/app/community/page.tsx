@@ -92,7 +92,11 @@ const CommunityPage = () => {
   }, [tab, page, search]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+    let ignore = false;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!ignore) setUser(data?.user || null);
+    });
+    return () => { ignore = true; };
   }, []);
 
   // 탭 변경 시 URL 갱신

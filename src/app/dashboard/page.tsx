@@ -9,6 +9,13 @@ import TabContent from './components/common/TabContent';
 import SubscriptionCard from './components/cards/SubscriptionCard';
 import DataCardContainer from './components/cards/DataCardContainer';
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Dashboard() {
   const {
@@ -31,6 +38,8 @@ export default function Dashboard() {
     handleLoadData,
   } = useDataOperations();
 
+  const router = useRouter();
+
   // publicData 로드
   useEffect(() => {
     const data = loadPublicDataFromStorage();
@@ -45,6 +54,15 @@ export default function Dashboard() {
       console.log('publicData 로드됨:', publicData);
     }
   }, [publicData]);
+
+  // 로그인 체크
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.replace('/auth/login?redirectTo=/dashboard');
+      }
+    });
+  }, [router]);
 
   const memoizedDataSets = useMemo(() => dataSets, [dataSets]);
   const memoizedPublicData = useMemo(() => publicData, [publicData]);
