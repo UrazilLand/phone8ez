@@ -63,6 +63,26 @@ export async function GET(request: Request) {
         }
       }
 
+      // access_token, refresh_token을 쿠키에 저장
+      if (data.session) {
+        const response = NextResponse.redirect(`${origin}${next}`);
+        response.cookies.set('sb-access-token', data.session.access_token, {
+          path: '/',
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7, // 7일
+        });
+        response.cookies.set('sb-refresh-token', data.session.refresh_token, {
+          path: '/',
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 30, // 30일
+        });
+        return response;
+      }
+
       // 인증 성공 시 리다이렉트
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
