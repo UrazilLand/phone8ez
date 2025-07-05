@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { DataSet, TabType } from '@/types/dashboard';
 import { getAvailableDates, getSupportAmountsByDate } from '../../utils/support-amounts';
 import { savePublicDataToStorage } from '../../utils/dashboardUtils';
@@ -11,6 +11,9 @@ import DataCardBody from './DataCardBody';
 import SupportDataModal from './SupportDataModal';
 import PreviewModal from './PreviewModal';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/lib/auth';
+import dayjs from 'dayjs';
 
 interface DataCardProps {
   dataSets: DataSet[];
@@ -23,6 +26,11 @@ interface DataCardProps {
 
 export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated, onOpenAdditionalServiceModal }: DataCardProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [subscription, setSubscription] = React.useState<{
+    plan: string;
+    ends_at: string | null;
+  } | null>(null);
 
   // 커스텀 훅 사용
   const dragScroll = useDragScroll();
@@ -36,6 +44,37 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
       if (raw) modalState.setSupportData(JSON.parse(raw));
     }
   }, [modalState.supportModalOpen, modalState.setSupportData]);
+
+  React.useEffect(() => {
+    if (!user?.id) {
+      setSubscription(null);
+      return;
+    }
+    let ignore = false;
+    (async () => {
+      console.log('[DataCardContainer] user.id:', user.id);
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('plan, ends_at')
+        .eq('user_id', user.id)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      console.log('[DataCardContainer] subscriptions select result:', data, error);
+      if (!ignore) setSubscription(data ?? null);
+    })();
+    return () => { ignore = true; };
+  }, [user?.id]);
+
+  // 구독자 여부 판별
+  let isPro = false;
+  if (subscription && subscription.plan === 'pro' && subscription.ends_at) {
+    const now = dayjs();
+    const ends = dayjs(subscription.ends_at);
+    if (ends.isAfter(now)) {
+      isPro = true;
+    }
+  }
 
   const handleLoadDataSet = useCallback((dataSet: DataSet) => {
     try {
@@ -126,6 +165,42 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
     }
   }, [modalState]);
 
+  // 클라우드 저장
+  const onCloudSave = useCallback(async () => {
+    if (!user?.id) {
+      toast({ title: '로그인이 필요합니다.' });
+      return;
+    }
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({ cloud_data: dataSets })
+      .eq('user_id', user.id);
+    if (!error) {
+      toast({ title: '클라우드에 저장되었습니다.' });
+    } else {
+      toast({ title: '저장 실패', description: error.message });
+    }
+  }, [user, dataSets, toast]);
+
+  // 클라우드 불러오기
+  const onCloudLoad = useCallback(async () => {
+    if (!user?.id) {
+      toast({ title: '로그인이 필요합니다.' });
+      return;
+    }
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('cloud_data')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (!error && data?.cloud_data) {
+      setDataSets(data.cloud_data);
+      toast({ title: '클라우드에서 불러왔습니다.' });
+    } else {
+      toast({ title: '불러오기 실패', description: error?.message || '저장된 데이터가 없습니다.' });
+    }
+  }, [user, setDataSets, toast]);
+
   return (
     <>
       <DataCardBody
@@ -144,6 +219,9 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         onMouseMove={dragScroll.handleMouseMove}
         onMouseUp={dragScroll.handleMouseUp}
         onMouseLeave={dragScroll.handleMouseLeave}
+        onCloudSave={onCloudSave}
+        onCloudLoad={onCloudLoad}
+        isPro={isPro}
       />
 
       {/* 숨겨진 파일 입력 */}
