@@ -40,14 +40,14 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
 
   return (
     <form
-      className="max-w-lg w-full mx-auto mt-8 bg-[#181f2a] dark:bg-[#181f2a] rounded-xl shadow-2xl p-8 flex flex-col gap-6 border border-blue-900"
+      className="max-w-2xl w-full mx-auto mt-8 bg-[#181f2a] dark:bg-[#181f2a] rounded-xl shadow-2xl p-10 flex flex-col gap-8 border border-blue-900"
       onSubmit={handleSubmit}
     >
       <div className="text-2xl font-bold text-blue-400 mb-2 text-center border-b border-blue-800 pb-2">
         {isEdit ? '게시글 수정' : '게시글 작성'}
       </div>
       <input
-        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-4 py-3 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2"
+        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-5 py-4 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2 text-lg"
         placeholder="제목을 입력하세요"
         value={title}
         onChange={e => setTitle(e.target.value)}
@@ -55,7 +55,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
         disabled={loading}
       />
       <textarea
-        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-4 py-3 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition min-h-[140px] mb-2"
+        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-5 py-4 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition min-h-[180px] mb-2 text-base"
         placeholder="본문을 입력하세요"
         value={content}
         onChange={e => setContent(e.target.value)}
@@ -64,7 +64,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
       />
       <ImageUploader value={imageUrl} onUpload={setImageUrl} />
       <input
-        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-4 py-3 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2"
+        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-5 py-4 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2 text-base"
         placeholder="동영상 URL (선택)"
         value={videoUrl}
         onChange={e => setVideoUrl(e.target.value)}
@@ -74,7 +74,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
       {error && <div className="text-red-400 text-sm text-center">{error}</div>}
       <button
         type="submit"
-        className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 rounded-md w-full shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+        className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 rounded-md w-full shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg"
         disabled={loading}
       >
         {isEdit ? '수정' : '등록'}
