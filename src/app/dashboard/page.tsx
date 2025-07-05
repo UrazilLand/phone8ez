@@ -14,6 +14,7 @@ import { createClient, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/auth';
 import dayjs from 'dayjs';
+import { useToast } from '@/hooks/use-toast';
 
 const supabaseClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<{ plan: string; ends_at: string | null } | null>(null);
+  const { toast } = useToast();
 
   // publicData 로드
   useEffect(() => {
@@ -87,6 +89,20 @@ export default function Dashboard() {
       isPro = true;
     }
   }
+
+  useEffect(() => {
+    if (isPro && subscription?.ends_at) {
+      const now = dayjs();
+      const ends = dayjs(subscription.ends_at);
+      const daysLeft = ends.startOf('day').diff(now.startOf('day'), 'day');
+      if (daysLeft >= 0 && daysLeft <= 3) {
+        toast({
+          title: `프로 플랜 만료까지 ${daysLeft}일 남았습니다.`,
+          description: `만료일: ${ends.format('YYYY-MM-DD 00:00')}`,
+        });
+      }
+    }
+  }, [isPro, subscription, toast]);
 
   if (publicData === undefined) {
     return <div>로딩 중...</div>;
