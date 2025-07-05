@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import ImageUploader from './ImageUploader';
 
-const FORBIDDEN = ['광고', '불법', '도박', '성인', '마약', '홍보', '카톡', '카카오톡', '텔레그램', '성매매', '야동', '섹스', 'sex', 'porn', '카지노', '바카라', '토토', '먹튀', '사기', '대출', '주식', '투자', '무료', '수익', '클릭'];
-
 interface PostEditorProps {
   initialData?: {
     title: string;
@@ -22,16 +20,10 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
   const [videoUrl, setVideoUrl] = useState(initialData?.videoUrl || '');
   const [error, setError] = useState('');
 
-  const checkForbidden = (text: string) => FORBIDDEN.some(word => text.includes(word));
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
       setError('제목과 본문을 입력하세요.');
-      return;
-    }
-    if (checkForbidden(title) || checkForbidden(content)) {
-      setError('불법/광고성 내용이 포함되어 있습니다.');
       return;
     }
     setError('');

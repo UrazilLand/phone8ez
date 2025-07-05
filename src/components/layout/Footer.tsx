@@ -5,7 +5,7 @@ import type React from 'react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-muted/50 backdrop-blur-md pt-10 pb-6 text-muted-foreground border-t border-border/60 mt-12">
+    <footer className="bg-muted/50 backdrop-blur-md pt-10 pb-6 text-muted-foreground border-t border-border/60">
       <div className="container mx-auto px-4 flex flex-col gap-6">
         {/* 서비스명 및 간단 소개 */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
