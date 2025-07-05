@@ -10,7 +10,7 @@ import SubscriptionCard from './components/cards/SubscriptionCard';
 import DataCardContainer from './components/cards/DataCardContainer';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, User } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,6 +39,7 @@ export default function Dashboard() {
   } = useDataOperations();
 
   const router = useRouter();
+  const [user, setUser] = useState<User | null | undefined>(undefined); // undefined: 체크 중, null: 비로그인, object: 로그인
 
   // publicData 로드
   useEffect(() => {
@@ -57,12 +58,29 @@ export default function Dashboard() {
 
   // 로그인 체크
   useEffect(() => {
+    let ignore = false;
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.replace('/auth/login?redirectTo=/dashboard');
-      }
+      if (!ignore) setUser(data.user ?? null);
     });
-  }, [router]);
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => {
+      ignore = true;
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user === null) {
+      router.replace('/auth/login?redirectTo=/dashboard');
+    }
+    // user가 undefined(아직 체크 중)일 때는 아무것도 하지 않음
+  }, [user, router]);
+
+  if (user === undefined) {
+    return <div>로딩 중...</div>;
+  }
 
   const memoizedDataSets = useMemo(() => dataSets, [dataSets]);
   const memoizedPublicData = useMemo(() => publicData, [publicData]);
