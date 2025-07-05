@@ -20,6 +20,9 @@ interface DataCardBodyProps {
   onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void;
   onMouseUp: () => void;
   onMouseLeave: () => void;
+  onCloudSave: () => void;
+  onCloudLoad: () => void;
+  isPro: boolean;
 }
 
 const DataCardBody = React.memo(({
@@ -38,6 +41,9 @@ const DataCardBody = React.memo(({
   onMouseMove,
   onMouseUp,
   onMouseLeave,
+  onCloudSave,
+  onCloudLoad,
+  isPro,
 }: DataCardBodyProps) => {
   // 데이터셋 필터링을 useMemo로 최적화
   const { integratedDataSet, additionalDataSet, otherDataSets } = useMemo(() => {
@@ -73,6 +79,9 @@ const DataCardBody = React.memo(({
         isCloudMode={isCloudMode}
         onDownload={onDownload}
         onUpload={onUpload}
+        onCloudSave={onCloudSave}
+        onCloudLoad={onCloudLoad}
+        isPro={isPro}
       />
     </div>
   );
