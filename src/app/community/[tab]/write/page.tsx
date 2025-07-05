@@ -62,8 +62,9 @@ const WritePage = () => {
   if (!init) return <div className="max-w-2xl mx-auto px-2 sm:px-0 py-8 text-center text-blue-700 dark:text-blue-200">로딩 중...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto px-2 sm:px-0 py-8">
-      <h2 className="text-xl font-bold text-blue-700 dark:text-blue-200 mb-4">{id ? '게시글 수정' : '게시글 작성'}</h2>
+    <div className="min-h-[100vh] bg-[#101624] dark:bg-[#101624] flex flex-col justify-center items-center py-12 px-2">
+      {/* 타이틀 */}
+      <div className="text-3xl font-extrabold text-blue-300 mb-8 drop-shadow text-center tracking-tight">{id ? '게시글 수정' : '게시글 작성'}</div>
       <AuthGuard isLoggedIn={!!user} onLoginClick={() => router.push('/auth/login')}>
         <PostEditor initialData={initialData || undefined} onSubmit={handleSubmit} loading={loading} isEdit={!!id} />
       </AuthGuard>

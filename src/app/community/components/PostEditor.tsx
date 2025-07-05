@@ -39,17 +39,23 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
   };
 
   return (
-    <form className="max-w-2xl mx-auto p-4 bg-white dark:bg-blue-950 rounded shadow-md flex flex-col gap-4" onSubmit={handleSubmit}>
+    <form
+      className="max-w-lg w-full mx-auto mt-8 bg-[#181f2a] dark:bg-[#181f2a] rounded-xl shadow-2xl p-8 flex flex-col gap-6 border border-blue-900"
+      onSubmit={handleSubmit}
+    >
+      <div className="text-2xl font-bold text-blue-400 mb-2 text-center border-b border-blue-800 pb-2">
+        {isEdit ? '게시글 수정' : '게시글 작성'}
+      </div>
       <input
-        className="px-3 py-2 rounded border border-blue-200 dark:border-blue-700 bg-white dark:bg-blue-950 text-gray-900 dark:text-gray-100"
-        placeholder="제목"
+        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-4 py-3 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2"
+        placeholder="제목을 입력하세요"
         value={title}
         onChange={e => setTitle(e.target.value)}
         maxLength={100}
         disabled={loading}
       />
       <textarea
-        className="px-3 py-2 rounded border border-blue-200 dark:border-blue-700 bg-white dark:bg-blue-950 text-gray-900 dark:text-gray-100 min-h-[120px]"
+        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-4 py-3 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition min-h-[140px] mb-2"
         placeholder="본문을 입력하세요"
         value={content}
         onChange={e => setContent(e.target.value)}
@@ -58,17 +64,17 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
       />
       <ImageUploader value={imageUrl} onUpload={setImageUrl} />
       <input
-        className="px-3 py-2 rounded border border-blue-200 dark:border-blue-700 bg-white dark:bg-blue-950 text-gray-900 dark:text-gray-100"
+        className="bg-[#232b3b] dark:bg-[#232b3b] border border-blue-900 rounded-md px-4 py-3 text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2"
         placeholder="동영상 URL (선택)"
         value={videoUrl}
         onChange={e => setVideoUrl(e.target.value)}
         maxLength={300}
         disabled={loading}
       />
-      {error && <div className="text-red-500 text-sm">{error}</div>}
+      {error && <div className="text-red-400 text-sm text-center">{error}</div>}
       <button
         type="submit"
-        className="px-4 py-2 rounded bg-blue-600 text-white font-semibold disabled:opacity-50"
+        className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 rounded-md w-full shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
         disabled={loading}
       >
         {isEdit ? '수정' : '등록'}
