@@ -64,7 +64,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
       />
       <ImageUploader value={imageUrl} onUpload={setImageUrl} />
       <input
-        className="bg-white dark:bg-[#232b3b] border border-blue-500 dark:border-blue-900 rounded-md px-5 py-4 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2 text-base"
+        className="bg-white dark:bg-[#232b3b] border border-blue-500 dark:border-blue-900 rounded-md px-5 py-3 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2 text-base"
         placeholder="동영상 URL (선택)"
         value={videoUrl}
         onChange={e => setVideoUrl(e.target.value)}

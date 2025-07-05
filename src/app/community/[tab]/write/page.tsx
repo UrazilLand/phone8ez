@@ -35,7 +35,11 @@ const WritePage = () => {
     setLoading(true);
     if (id) {
       // 수정
-      const { error } = await supabase.from('posts').update({ ...data }).eq('id', id);
+      const { error } = await supabase.from('posts').update({
+        ...data,
+        video_url: data.videoUrl || '',
+        image_urls: data.imageUrl ? JSON.stringify([data.imageUrl]) : '[]',
+      }).eq('id', id);
       setLoading(false);
       if (!error) {
         alert('수정되었습니다!');
@@ -44,6 +48,11 @@ const WritePage = () => {
     } else {
       // 등록
       const { imageUrl, videoUrl, ...rest } = data;
+      if (!user?.id) {
+        alert('로그인 정보가 없습니다.');
+        setLoading(false);
+        return;
+      }
       const { data: newPost, error } = await supabase.from('posts').insert({
         ...rest,
         image_urls: imageUrl ? JSON.stringify([imageUrl]) : '[]',
