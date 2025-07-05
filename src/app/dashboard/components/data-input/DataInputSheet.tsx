@@ -12,6 +12,8 @@ import {
 import { getDynamicCellStyle } from '@/components/ui/colors';
 import { useState, useCallback, useRef, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/lib/auth';
 
 interface DataInputSheetProps {
   dataSets: DataSet[];
@@ -41,6 +43,8 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     canUndo,
     canRedo
   ] = useUndo<string[][]>(sheetData);
+
+  const { user } = useAuth();
 
   // 테이블의 전체 너비를 동적으로 계산
   const tableWidth = useMemo(() => {
@@ -209,7 +213,34 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     }
   }));
 
-  const handleSave = (dataName?: string) => {
+  const handleSave = async (dataName?: string) => {
+    // 1. 사용자의 구독 플랜 확인
+    let isPro = false;
+    if (user?.id) {
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('plan, ends_at')
+        .eq('user_id', user.id)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data && data.plan === 'pro' && data.ends_at) {
+        const now = new Date();
+        const ends = new Date(data.ends_at);
+        if (ends > now) {
+          isPro = true;
+        }
+      }
+    }
+    // 2. 무료 플랜이고 normal 데이터셋이 3개 이상이면 제한
+    const normalCount = dataSets.filter(ds => ds.type === 'normal').length;
+    if (!isPro && normalCount >= 3) {
+      toast({
+        title: '데이터셋 개수 제한',
+        description: '무료 플랜은 3개 이상의 데이터셋을 입력할 수 없습니다.\n더 많은 데이터 입력을 원하신다면 프로 플랜으로 구독해 주세요.',
+      });
+      return;
+    }
     // 시트 데이터를 DataSet 형식으로 변환하여 저장
     const newSheetData: SheetData = {
       sheetData: currentSheetData,

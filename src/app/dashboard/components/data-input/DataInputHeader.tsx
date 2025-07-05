@@ -9,6 +9,8 @@ import { useState, useRef } from 'react';
 import DataInputModal from './DataInputModal';
 import SaveDataModal from './SaveDataModal';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface DataInputHeaderProps {
   dataSets: DataSet[];
@@ -36,13 +38,41 @@ export default function DataInputHeader({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const modalRef = useRef<any>(null);
+  const { toast } = useToast();
   const { user } = useAuth();
 
   const handleDataInputClick = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
+    // 1. 사용자의 구독 플랜 확인
+    let isPro = false;
+    if (user?.id) {
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('plan, ends_at')
+        .eq('user_id', user.id)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data && data.plan === 'pro' && data.ends_at) {
+        const now = new Date();
+        const ends = new Date(data.ends_at);
+        if (ends > now) {
+          isPro = true;
+        }
+      }
+    }
+    // 2. 무료 플랜이고 normal 데이터셋이 3개 이상이면 제한
+    const normalCount = dataSets.filter(ds => ds.type === 'normal').length;
+    if (!isPro && normalCount >= 3) {
+      toast({
+        title: '데이터셋 개수 제한',
+        description: '무료 플랜은 3개 이상의 데이터셋을 입력할 수 없습니다.\n더 많은 데이터 입력을 원하신다면 프로 플랜으로 구독해 주세요.',
+      });
+      return;
+    }
     setIsSaveModalOpen(true);
   };
 
