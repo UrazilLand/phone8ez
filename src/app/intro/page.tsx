@@ -2,6 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import MainVisualSlider from '@/components/home/MainVisualSlider';
+import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
+import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 
 const plans = [
   {
@@ -35,6 +39,55 @@ const plans = [
 ];
 
 export default function IntroPage() {
+  const { user } = useAuth();
+  const [hasSubscription, setHasSubscription] = useState<boolean|null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setHasSubscription(null);
+      return;
+    }
+    let ignore = false;
+    (async () => {
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!ignore) setHasSubscription(!!data?.id);
+    })();
+    return () => { ignore = true; };
+  }, [user?.id]);
+
+  const handleTrial = async () => {
+    if (!user?.id) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    setLoading(true);
+    const now = dayjs();
+    const ends = now.add(7, 'day');
+    const { error } = await supabase.from('subscriptions').insert({
+      user_id: user.id,
+      plan: 'trial',
+      status: 'active',
+      started_at: now.toISOString(),
+      ends_at: ends.toISOString(),
+    });
+    setLoading(false);
+    if (!error) {
+      setHasSubscription(true);
+      alert('7일 무료체험이 시작되었습니다!');
+    } else {
+      alert('무료체험 등록에 실패했습니다.');
+    }
+  };
+
+  const handleSubscribe = () => {
+    alert('포트원 결제 연동 예정!');
+  };
+
   return (
     <div className="space-y-12">
       <section className="text-center py-12 bg-card rounded-lg shadow-md">
@@ -134,16 +187,38 @@ export default function IntroPage() {
                   </li>
                 ))}
               </ul>
-              <button
-                className={
-                  (plan.buttonType === 'primary'
-                    ? 'w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors'
-                    : 'w-full py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-600/10 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-500/10 transition-colors') +
-                  ' mt-auto'
-                }
-              >
-                {plan.button}
-              </button>
+              {plan.name === '프로페셔널' && (
+                hasSubscription === false ? (
+                  <button
+                    className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
+                    onClick={handleTrial}
+                    disabled={loading}
+                  >
+                    7일 무료체험 등록
+                  </button>
+                ) : hasSubscription === true ? (
+                  <button
+                    className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
+                    onClick={handleSubscribe}
+                  >
+                    구독하기
+                  </button>
+                ) : (
+                  <button
+                    className="w-full py-2 rounded-lg bg-blue-400 text-white font-bold opacity-60 cursor-not-allowed mt-auto"
+                    disabled
+                  >
+                    로딩 중...
+                  </button>
+                )
+              )}
+              {plan.name !== '프로페셔널' && (
+                <button
+                  className="w-full py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-bold hover:bg-blue-600/10 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-500/10 transition-colors mt-auto"
+                >
+                  시작하기
+                </button>
+              )}
             </div>
           ))}
         </div>
