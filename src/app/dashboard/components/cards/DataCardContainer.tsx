@@ -22,9 +22,10 @@ interface DataCardProps {
   onTabChange?: (tab: TabType) => void;
   onReloadIntegrated?: () => void;
   onOpenAdditionalServiceModal?: () => void;
+  isPro?: boolean;
 }
 
-export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated, onOpenAdditionalServiceModal }: DataCardProps) {
+export default function DataCardContainer({ dataSets, setDataSets, onLoadData, onTabChange, onReloadIntegrated, onOpenAdditionalServiceModal, isPro }: DataCardProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [subscription, setSubscription] = React.useState<{
@@ -65,16 +66,6 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
     })();
     return () => { ignore = true; };
   }, [user?.id]);
-
-  // 구독자 여부 판별
-  let isPro = false;
-  if (subscription && subscription.plan === 'pro' && subscription.ends_at) {
-    const now = dayjs();
-    const ends = dayjs(subscription.ends_at);
-    if (ends.isAfter(now)) {
-      isPro = true;
-    }
-  }
 
   const handleLoadDataSet = useCallback((dataSet: DataSet) => {
     try {
@@ -221,7 +212,7 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         onMouseLeave={dragScroll.handleMouseLeave}
         onCloudSave={onCloudSave}
         onCloudLoad={onCloudLoad}
-        isPro={isPro}
+        isPro={isPro ?? false}
       />
 
       {/* 숨겨진 파일 입력 */}

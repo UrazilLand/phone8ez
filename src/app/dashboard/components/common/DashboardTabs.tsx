@@ -4,13 +4,14 @@ import { DASHBOARD_TABS } from '../../utils/dashboardUtils';
 interface DashboardTabsProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  isPro?: boolean;
 }
 
-export default function DashboardTabs({ activeTab, onTabChange }: DashboardTabsProps) {
+export default function DashboardTabs({ activeTab, onTabChange, isPro }: DashboardTabsProps) {
   return (
     <div className="max-w-[61rem] mx-auto px-4">
       <div className="flex space-x-2 border-b border-border">
-        {DASHBOARD_TABS.map((tab) => (
+        {DASHBOARD_TABS.filter(tab => isPro !== false || tab.id !== 'model').map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
