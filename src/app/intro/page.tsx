@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
+import { toast } from '@/hooks/use-toast';
 
 const plans = [
   {
@@ -65,15 +66,18 @@ export default function IntroPage() {
 
   const handleTrial = async () => {
     if (!user?.id) {
-      alert('로그인이 필요합니다.');
+      toast({
+        title: '로그인이 필요합니다.',
+        description: '무료체험을 이용하려면 먼저 로그인해 주세요.',
+      });
       return;
     }
     setLoading(true);
     const now = dayjs();
-    const ends = now.add(7, 'day');
+    const ends = now.add(7, 'day').add(1, 'day').startOf('day');
     const { error } = await supabase.from('subscriptions').insert({
       user_id: user.id,
-      plan: 'trial',
+      plan: 'pro',
       status: 'active',
       started_at: now.toISOString(),
       ends_at: ends.toISOString(),
@@ -81,9 +85,15 @@ export default function IntroPage() {
     setLoading(false);
     if (!error) {
       setHasSubscription(true);
-      alert('7일 무료체험이 시작되었습니다!');
+      toast({
+        title: '7일 무료체험이 시작되었습니다!',
+        description: `오늘부터 7일간 모든 프로 기능을 사용할 수 있습니다.\n만료일: ${ends.format('YYYY-MM-DD 00:00')}까지`,
+      });
     } else {
-      alert('무료체험 등록에 실패했습니다.');
+      toast({
+        title: '무료체험 등록에 실패했습니다.',
+        description: '이미 무료체험을 사용하셨거나, 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+      });
     }
   };
 
