@@ -18,32 +18,22 @@ const DataInputTab = forwardRef<DataInputTabRef, DataInputTabProps>(({ dataSets,
 
   useImperativeHandle(ref, () => ({
     loadData: (data: any) => {
-      console.log('DataInputTab loadData called with:', data);
       if (sheetRef.current) {
         // DataInputSheet의 loadData 메서드를 사용하여 저장된 데이터 로드
         sheetRef.current.loadData(data);
-      } else {
-        console.error('sheetRef not available');
       }
     },
     loadAllData: (data: any[]) => {
-      console.log('DataInputTab loadAllData called with:', data);
       if (data.length > 0 && sheetRef.current) {
         // 첫 번째 데이터만 로드 (여러 데이터셋이 있는 경우)
         sheetRef.current.loadData(data[0]);
-      } else {
-        console.error('No data available or sheetRef not available');
       }
     }
   }));
 
   const handleApplyData = (modalData: any) => {
-    console.log('handleApplyData called with:', modalData);
-    
     if (sheetRef.current) {
       sheetRef.current.fillAllData(modalData);
-    } else {
-      console.log('sheetRef not available');
     }
   };
 

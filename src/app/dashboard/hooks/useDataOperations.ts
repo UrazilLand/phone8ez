@@ -5,52 +5,23 @@ export function useDataOperations() {
   const dataInputTabRef = useRef<any>(null);
 
   const handleLocalDownload = useCallback(() => {
-    try {
-      console.log('로컬 데이터 다운로드');
-    } catch (error) {
-      console.error('로컬 데이터 다운로드 실패:', error);
-    }
+    // ... existing code ...
   }, []);
 
   const handleLocalUpload = useCallback(() => {
-    try {
-      console.log('로컬 데이터 업로드');
-    } catch (error) {
-      console.error('로컬 데이터 업로드 실패:', error);
-    }
+    // ... existing code ...
   }, []);
 
   const handleCloudDownload = useCallback(() => {
-    try {
-      console.log('Cloud 데이터 다운로드');
-    } catch (error) {
-      console.error('Cloud 데이터 다운로드 실패:', error);
-    }
+    // ... existing code ...
   }, []);
 
   const handleCloudUpload = useCallback(() => {
-    try {
-      console.log('Cloud 데이터 업로드');
-    } catch (error) {
-      console.error('Cloud 데이터 업로드 실패:', error);
-    }
+    // ... existing code ...
   }, []);
 
   const handleLoadData = useCallback((data: DataSet['data'] | DataSet['data'][]) => {
-    try {
-      if ('filters' in data) {
-        return;
-      }
-      if (dataInputTabRef.current) {
-        if (Array.isArray(data)) {
-          dataInputTabRef.current.loadAllData(data);
-        } else {
-          dataInputTabRef.current.loadData(data);
-        }
-      }
-    } catch (error) {
-      console.error('데이터 로드 실패:', error);
-    }
+    // ... existing code ...
   }, []);
 
   return {

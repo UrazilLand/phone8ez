@@ -240,10 +240,6 @@ const DataInputModal = forwardRef(function DataInputModal({
       companySubInputs,
     };
 
-    console.log('Modal data being sent:', modalData);
-    console.log('Support items:', supportItems);
-    console.log('Join items:', joinItems);
-
     if (onApplyData) {
       onApplyData(modalData);
     }

@@ -53,7 +53,6 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
     }
     let ignore = false;
     (async () => {
-      console.log('[DataCardContainer] user.id:', user.id);
       const { data, error } = await supabase
         .from('subscriptions')
         .select('plan, ends_at')
@@ -61,7 +60,6 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
         .order('started_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      console.log('[DataCardContainer] subscriptions select result:', data, error);
       if (!ignore) setSubscription(data ?? null);
     })();
     return () => { ignore = true; };
@@ -87,7 +85,6 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
       modalState.clearError();
       modalState.closePreviewModal();
     } catch (error) {
-      console.error('데이터 로드 실패:', error);
       modalState.setError('데이터를 불러오는데 실패했습니다.');
     }
   }, [onTabChange, onReloadIntegrated, onOpenAdditionalServiceModal, onLoadData, modalState]);
@@ -146,7 +143,6 @@ export default function DataCardContainer({ dataSets, setDataSets, onLoadData, o
       modalState.setSupportData(data);
       savePublicDataToStorage(data);
     } catch (error) {
-      console.error('공시 데이터 로드 실패:', error);
       modalState.setError(error instanceof Error ? error.message : '공시 데이터를 불러오는데 실패했습니다.');
     } finally {
       // 약간의 지연을 두어 상태 변경을 안정화

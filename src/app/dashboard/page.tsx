@@ -55,13 +55,6 @@ export default function Dashboard() {
     }
   }, [reloadKey, setPublicData]);
 
-  // 개발 모드에서 로그
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('publicData 로드됨:', publicData);
-    }
-  }, [publicData]);
-
   useEffect(() => {
     if (!user?.id) {
       setSubscription(null);

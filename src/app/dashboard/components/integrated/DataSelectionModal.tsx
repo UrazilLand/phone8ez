@@ -71,9 +71,6 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
   // 모달 열릴 때 모든 데이터를 한 번에 추출
   useEffect(() => {
     if (isOpen) {
-      console.log('publicData:', publicData);
-      console.log('publicData.carrier_monthly_fees:', publicData?.carrier_monthly_fees);
-      
       const carriers: ('SK' | 'KT' | 'LG')[] = ['SK', 'KT', 'LG'];
       const newExtractedData: Record<string, ExtractedDataByCarrier> = {
         SK: { companies: [], plansByCompany: {}, monthlyFees5G: [], monthlyFeesLTE: [] },
@@ -97,9 +94,6 @@ export default function DataSelectionModal({ isOpen, onClose, onApply, dataSets,
         // 월 요금제 추출
         const monthlyFees5G = extractMonthlyFeesByCarrier(publicData, carrier, '5G');
         const monthlyFeesLTE = extractMonthlyFeesByCarrier(publicData, carrier, 'LTE');
-
-        console.log(`${carrier} 5G fees:`, monthlyFees5G);
-        console.log(`${carrier} LTE fees:`, monthlyFeesLTE);
 
         newExtractedData[carrier] = {
           companies,

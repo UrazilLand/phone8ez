@@ -21,7 +21,6 @@ export default function SubscriptionCard() {
     }
     let ignore = false;
     (async () => {
-      console.log('[SubscriptionCard] user.id:', user.id);
       const { data, error } = await supabase
         .from('subscriptions')
         .select('plan, ends_at')
@@ -29,7 +28,6 @@ export default function SubscriptionCard() {
         .order('started_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      console.log('[SubscriptionCard] subscriptions select result:', data, error);
       setLoading(false);
       if (!ignore) setSubscription(data ?? null);
     })();
