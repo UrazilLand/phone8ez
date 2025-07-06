@@ -76,6 +76,7 @@ export default function SupportPage() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<{ plan: string; ends_at: string | null } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState<{ plan: string; email: string; nickname: string } | null>(null);
 
   // supabase client 생성
   const supabaseClient = createClient(
@@ -83,25 +84,40 @@ export default function SupportPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // 구독 정보 로드
+  // 구독 정보 및 사용자 정보 로드
   useEffect(() => {
     if (!user?.id) {
+      setUserInfo(null);
       setSubscription(null);
       return;
     }
     let ignore = false;
     (async () => {
+      // subscriptions에서 plan, email, nickname 조회
       const { data } = await supabaseClient
         .from('subscriptions')
-        .select('plan, ends_at')
+        .select('plan, email, nickname, ends_at')
         .eq('user_id', user.id)
         .order('started_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (!ignore) setSubscription(data ?? null);
+      if (!ignore) {
+        setUserInfo(data ? { plan: data.plan, email: data.email, nickname: data.nickname } : null);
+        setSubscription(data ? { plan: data.plan, ends_at: data.ends_at } : null);
+      }
     })();
     return () => { ignore = true; };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (userInfo) {
+      setFormData(prev => ({
+        ...prev,
+        email: userInfo.email ?? '',
+        name: userInfo.nickname ?? '',
+      }));
+    }
+  }, [userInfo]);
 
   let isPro = false;
   if (subscription && subscription.plan === 'pro' && subscription.ends_at) {
@@ -117,10 +133,14 @@ export default function SupportPage() {
     if (loading) return;
     setLoading(true);
     try {
+      let subject = formData.subject;
+      if (userInfo?.plan) {
+        subject = `[${userInfo.plan}] ${subject}`;
+      }
       const res = await fetch('/api/send-support-mail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, subject }),
       });
       if (res.ok) {
         alert('문의가 정상적으로 접수되었습니다.');
@@ -210,6 +230,7 @@ export default function SupportPage() {
                     onChange={handleChange}
                     className="border-blue-100 dark:border-gray-600 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     required
+                    readOnly={!!userInfo?.nickname}
                   />
                 </div>
                 <div className="space-y-2">
@@ -222,6 +243,7 @@ export default function SupportPage() {
                     onChange={handleChange}
                     className="border-blue-100 dark:border-gray-600 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     required
+                    readOnly={!!userInfo?.email}
                   />
                 </div>
                 <div className="space-y-2">
