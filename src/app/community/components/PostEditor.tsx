@@ -37,12 +37,12 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
   const BOARD_TYPE_OPTIONS = [
     { value: 'free', label: '자유게시판' },
     { value: 'humor', label: '유머게시판' },
-    { value: 'mobile', label: '휴대폰 정보' },
-    { value: 'review', label: '사용기/리뷰' },
+    { value: 'mobile', label: '모바일 정보' },
+    { value: 'review', label: '후기 및 건의' },
   ];
 
   return (
-    <div className="max-w-2xl mx-auto my-12 px-2">
+    <div className="max-w-4xl mx-auto my-12 px-2">
       <div className="bg-white dark:bg-[#181f2a] rounded-2xl shadow-xl border border-blue-200 dark:border-blue-800 p-0 overflow-hidden">
         {/* 상단 헤더 */}
         <div className="bg-gradient-to-r from-blue-100 to-blue-50 dark:from-[#232b3b] dark:to-[#181f2a] px-8 py-6 border-b border-blue-200 dark:border-blue-800 flex items-center gap-4">
