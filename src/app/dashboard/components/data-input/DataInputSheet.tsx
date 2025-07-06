@@ -527,12 +527,12 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
       </div>
       <div 
         ref={tableRef}
-        className="bg-card rounded-lg shadow-md mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]"
+        className="bg-card rounded-lg shadow-md mx-4 sm:mx-8 lg:mx-16 mb-4"
         onPaste={handlePaste}
         onKeyDown={handleCombinedKeyDown}
         tabIndex={-1}
       >
-        <div className="overflow-auto h-full w-full">
+        <div className="w-full">
           <div className="relative">
             <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
               <colgroup>
