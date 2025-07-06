@@ -38,7 +38,7 @@ const WritePage = () => {
       const { error } = await supabase.from('posts').update({
         ...data,
         video_url: data.videoUrl || '',
-        image_urls: data.imageUrl ? JSON.stringify([data.imageUrl]) : '[]',
+        image_urls: data.imageUrl ? [data.imageUrl] : [],
         board_type: data.boardType,
       }).eq('id', id);
       setLoading(false);
@@ -56,7 +56,7 @@ const WritePage = () => {
       }
       const { data: newPost, error } = await supabase.from('posts').insert({
         ...rest,
-        image_urls: imageUrl ? JSON.stringify([imageUrl]) : '[]',
+        image_urls: imageUrl ? [imageUrl] : [],
         video_url: videoUrl || '',
         board_type: boardType,
         user_id: user.id
