@@ -127,7 +127,7 @@ const PostDetailPage = () => {
   const handlePostDelete = async () => {
     await supabase.from('posts').delete().eq('id', id);
     alert('삭제되었습니다.');
-    router.push(`/community/${tab}`);
+    router.replace('/community');
   };
   // 게시글 수정(페이지 이동)
   const handlePostEdit = () => {
