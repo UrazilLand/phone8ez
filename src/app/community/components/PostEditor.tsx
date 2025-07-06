@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ImageUploader from './ImageUploader';
+import { PencilIcon } from '@heroicons/react/24/solid';
 
 interface PostEditorProps {
   initialData?: {
@@ -41,16 +42,14 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
   ];
 
   return (
-    <form
-      className="max-w-4xl w-full mx-auto mt-12 bg-white dark:bg-[#181f2a] rounded-2xl shadow-2xl p-0 flex flex-col md:flex-row gap-0 border border-blue-500 dark:border-blue-900 overflow-hidden"
-      onSubmit={handleSubmit}
-    >
-      {/* 좌측: 게시판, 제목, 이미지 */}
-      <div className="flex-1 flex flex-col gap-6 p-10 bg-blue-50 dark:bg-[#232b3b] border-r border-blue-200 dark:border-blue-800 min-w-[320px]">
-        <div>
-          <label className="font-semibold text-blue-600 dark:text-blue-400 text-base mb-2 block">게시판 선택</label>
+    <div className="max-w-2xl mx-auto my-12 px-2">
+      <div className="bg-white dark:bg-[#181f2a] rounded-2xl shadow-xl border border-blue-200 dark:border-blue-800 p-0 overflow-hidden">
+        {/* 상단 헤더 */}
+        <div className="bg-gradient-to-r from-blue-100 to-blue-50 dark:from-[#232b3b] dark:to-[#181f2a] px-8 py-6 border-b border-blue-200 dark:border-blue-800 flex items-center gap-4">
+          <PencilIcon className="text-blue-500 w-7 h-7" />
+          <span className="text-2xl font-bold text-blue-700 dark:text-blue-300">게시글 작성</span>
           <select
-            className="w-full bg-white dark:bg-[#232b3b] border border-blue-500 dark:border-blue-900 rounded-md px-4 py-3 text-blue-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-base"
+            className="ml-auto bg-white dark:bg-[#232b3b] border border-blue-400 dark:border-blue-700 rounded-lg px-4 py-2 text-blue-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-base shadow-sm"
             value={boardType}
             onChange={e => setBoardType(e.target.value)}
             disabled={loading}
@@ -60,56 +59,43 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
             ))}
           </select>
         </div>
-        <div>
-          <label className="font-semibold text-blue-600 dark:text-blue-400 text-base mb-2 block">제목</label>
+        <form className="p-8 flex flex-col gap-6" onSubmit={handleSubmit}>
           <input
-            className="w-full bg-white dark:bg-[#232b3b] border border-blue-500 dark:border-blue-900 rounded-md px-5 py-4 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-lg"
+            className="w-full bg-white dark:bg-[#232b3b] border border-blue-300 dark:border-blue-800 rounded-lg px-5 py-4 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-lg shadow-sm"
             placeholder="제목을 입력하세요"
             value={title}
             onChange={e => setTitle(e.target.value)}
             maxLength={100}
             disabled={loading}
           />
-        </div>
-        <div>
-          <label className="font-semibold text-blue-600 dark:text-blue-400 text-base mb-2 block">이미지 업로드</label>
           <ImageUploader value={imageUrl} onUpload={setImageUrl} />
-        </div>
-      </div>
-      {/* 우측: 본문, 동영상, 버튼 */}
-      <div className="flex-1 flex flex-col gap-6 p-10 bg-white dark:bg-[#181f2a] min-w-[320px]">
-        <div>
-          <label className="font-semibold text-blue-600 dark:text-blue-400 text-base mb-2 block">본문</label>
           <textarea
-            className="w-full bg-white dark:bg-[#232b3b] border border-blue-500 dark:border-blue-900 rounded-md px-5 py-4 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition min-h-[180px] text-base"
+            className="w-full bg-white dark:bg-[#232b3b] border border-blue-300 dark:border-blue-800 rounded-lg px-5 py-4 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition min-h-[180px] text-base shadow-sm"
             placeholder="본문을 입력하세요"
             value={content}
             onChange={e => setContent(e.target.value)}
             maxLength={2000}
             disabled={loading}
           />
-        </div>
-        <div>
-          <label className="font-semibold text-blue-600 dark:text-blue-400 text-base mb-2 block">동영상 URL (선택)</label>
           <input
-            className="w-full bg-white dark:bg-[#232b3b] border border-blue-500 dark:border-blue-900 rounded-md px-5 py-3 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-base"
+            className="w-full bg-white dark:bg-[#232b3b] border border-blue-300 dark:border-blue-800 rounded-lg px-5 py-3 text-blue-900 dark:text-white placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-base shadow-sm"
             placeholder="동영상 URL (선택)"
             value={videoUrl}
             onChange={e => setVideoUrl(e.target.value)}
             maxLength={300}
             disabled={loading}
           />
-        </div>
-        {error && <div className="text-red-400 text-sm text-center">{error}</div>}
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 rounded-md w-full shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg"
-          disabled={loading}
-        >
-          {isEdit ? '수정' : '등록'}
-        </button>
+          {error && <div className="text-red-400 text-sm text-center">{error}</div>}
+          <button
+            type="submit"
+            className="bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 active:from-blue-700 active:to-blue-600 text-white font-bold py-4 rounded-xl w-full shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg tracking-wide"
+            disabled={loading}
+          >
+            {isEdit ? '수정' : '등록'}
+          </button>
+        </form>
       </div>
-    </form>
+    </div>
   );
 };
 
