@@ -31,7 +31,7 @@ const WritePage = () => {
     })();
   }, [id]);
 
-  const handleSubmit = async (data: { title: string; content: string; imageUrl?: string; videoUrl?: string }) => {
+  const handleSubmit = async (data: { title: string; content: string; imageUrl?: string; videoUrl?: string; boardType: string }) => {
     setLoading(true);
     if (id) {
       // 수정
@@ -39,6 +39,7 @@ const WritePage = () => {
         ...data,
         video_url: data.videoUrl || '',
         image_urls: data.imageUrl ? JSON.stringify([data.imageUrl]) : '[]',
+        board_type: data.boardType,
       }).eq('id', id);
       setLoading(false);
       if (!error) {
@@ -47,7 +48,7 @@ const WritePage = () => {
       }
     } else {
       // 등록
-      const { imageUrl, videoUrl, ...rest } = data;
+      const { imageUrl, videoUrl, boardType, ...rest } = data;
       if (!user?.id) {
         alert('로그인 정보가 없습니다.');
         setLoading(false);
@@ -57,13 +58,13 @@ const WritePage = () => {
         ...rest,
         image_urls: imageUrl ? JSON.stringify([imageUrl]) : '[]',
         video_url: videoUrl || '',
-        board_type: tab,
+        board_type: boardType,
         user_id: user.id
       }).select('id').single();
       setLoading(false);
       if (!error && newPost) {
         alert('게시글이 등록되었습니다!');
-        router.push(`/community/${tab}/${newPost.id}`);
+        router.push(`/community/${boardType}/${newPost.id}`);
       }
     }
   };
@@ -73,7 +74,7 @@ const WritePage = () => {
   return (
     <div className="min-h-[100vh] bg-white dark:bg-[#101624] flex flex-col justify-center items-center py-12 px-2">
       <AuthGuard isLoggedIn={!!user} onLoginClick={() => router.push('/auth/login')}>
-        <PostEditor initialData={initialData || undefined} onSubmit={handleSubmit} loading={loading} isEdit={!!id} />
+        <PostEditor initialData={initialData || undefined} onSubmit={handleSubmit} loading={loading} isEdit={!!id} initialBoardType={tab} />
       </AuthGuard>
     </div>
   );
