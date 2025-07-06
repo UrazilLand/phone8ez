@@ -55,6 +55,7 @@ const PostDetailPage = () => {
           const mapComment = (arr: any[] = []) => arr.map(comment => ({
             ...comment,
             createdAt: comment.created_at,
+            author: comment.nickname || '익명',
           }));
           setComments(mapComment(commentData ?? []));
         }
@@ -87,13 +88,26 @@ const PostDetailPage = () => {
   // 댓글 등록
   const handleCommentAdd = async (content: string) => {
     if (!user) return;
-    // user.nickname을 comments.nickname에 저장해야 함
+    // users 테이블에서 nickname 조회
+    const { data: userInfo } = await supabase
+      .from('users')
+      .select('nickname')
+      .eq('id', user.id)
+      .maybeSingle();
+    const nickname = userInfo?.nickname || '익명';
     const { data, error: err } = await supabase
       .from('comments')
-      .insert({ post_id: id, content, user_id: user.id, nickname: user.user_metadata?.nickname || '익명' })
+      .insert({ post_id: id, content, user_id: user.id, nickname })
       .select('*')
       .single();
-    if (!err && data) setComments([...comments, data]);
+    if (!err && data) setComments([
+      ...comments,
+      {
+        ...data,
+        createdAt: data.created_at,
+        author: data.nickname || '익명',
+      }
+    ]);
   };
   // 댓글 수정
   const handleCommentEdit = async (cid: string, content: string) => {
@@ -103,7 +117,11 @@ const PostDetailPage = () => {
       .eq('id', cid)
       .select('*')
       .single();
-    if (!err && data) setComments(comments.map(c => c.id === cid ? data : c));
+    if (!err && data) setComments(comments.map(c =>
+      c.id === cid
+        ? { ...data, createdAt: data.created_at, author: data.nickname || '익명' }
+        : c
+    ));
   };
   // 댓글 삭제
   const handleCommentDelete = async (cid: string) => {
