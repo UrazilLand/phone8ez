@@ -8,6 +8,10 @@ import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-react';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const plans = [
   {
@@ -78,7 +82,7 @@ export default function IntroClientSection() {
       .select('email, nickname, provider')
       .eq('id', user.id)
       .maybeSingle();
-    const now = dayjs();
+    const now = dayjs().tz('Asia/Seoul');
     const ends = now.add(7, 'day').add(1, 'day').startOf('day');
     const { error } = await supabase.from('subscriptions').insert({
       user_id: user.id,

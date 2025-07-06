@@ -5,6 +5,11 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default function SubscriptionCard() {
   const { user } = useAuth();
@@ -28,8 +33,29 @@ export default function SubscriptionCard() {
         .order('started_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      const nowKST = dayjs().tz('Asia/Seoul');
+      if (data && data.plan === 'pro' && data.ends_at && dayjs(data.ends_at).tz('Asia/Seoul').isBefore(nowKST)) {
+        // 만료된 경우 plan을 free로 업데이트
+        await supabase
+          .from('subscriptions')
+          .update({ plan: 'free' })
+          .eq('user_id', user.id)
+          .eq('plan', 'pro')
+          .eq('ends_at', data.ends_at);
+        // 업데이트 후 다시 조회
+        const { data: updated } = await supabase
+          .from('subscriptions')
+          .select('plan, ends_at')
+          .eq('user_id', user.id)
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setSubscription(updated ?? null);
+      } else {
+        setSubscription(data ?? null);
+      }
       setLoading(false);
-      if (!ignore) setSubscription(data ?? null);
     })();
     return () => { ignore = true; };
   }, [user?.id]);
@@ -39,11 +65,11 @@ export default function SubscriptionCard() {
   let endsLabel = '구독 만료일 없음';
   let isPro = false;
   if (subscription && subscription.plan === 'pro' && subscription.ends_at) {
-    const now = dayjs();
-    const ends = dayjs(subscription.ends_at);
-    if (ends.isAfter(now)) {
+    const nowKST = dayjs().tz('Asia/Seoul');
+    const ends = dayjs(subscription.ends_at).tz('Asia/Seoul');
+    if (ends.isAfter(nowKST)) {
       planLabel = '프로 플랜';
-      endsLabel = `만료일: ${ends.format('YYYY-MM-DD 00:00')}`;
+      endsLabel = `만료일: ${ends.format('YYYY-MM-DD HH:mm')}`;
       isPro = true;
     }
   }
