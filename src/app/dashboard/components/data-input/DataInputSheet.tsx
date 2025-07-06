@@ -589,11 +589,22 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                 `}
                               />
                             ) : colIndex === 0 && rowIndex < 5 ? (
-                              <span className="text-foreground font-bold overflow-hidden truncate block">
+                              <span className="text-foreground font-bold overflow-hidden truncate block" style={{ userSelect: 'none' }}>
                                 {SHEET_HEADER_LABELS[rowIndex]}
                               </span>
                             ) : (
-                              <span>{cell}</span>
+                              <span
+                                className={
+                                  rowIndex === 2 && colIndex > 0 && cell
+                                    ? getDynamicCellStyle(rowIndex, cell, planColorIdx)
+                                    : rowIndex < 5 && colIndex > 0
+                                      ? getDynamicCellStyle(rowIndex, cell, colIndex)
+                                      : ''
+                                }
+                                style={{ userSelect: 'none' }}
+                              >
+                                {cell}
+                              </span>
                             )}
                           </td>
                         );
