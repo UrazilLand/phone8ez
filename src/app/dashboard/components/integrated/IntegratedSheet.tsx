@@ -44,6 +44,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 interface IntegratedSheetProps {
   dataSets: DataSet[];
@@ -92,6 +102,8 @@ export default function IntegratedSheet({
   const [modelInfoData, setModelInfoData] = useState<Record<number, ModelInfo>>({});
   const [hoveredColumnIndex, setHoveredColumnIndex] = useState<number>(-1);
   const [columnToDelete, setColumnToDelete] = useState<number>(-1);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTargetCol, setDeleteTargetCol] = useState<number | null>(null);
 
   const [
     currentSheetData,
@@ -531,6 +543,24 @@ export default function IntegratedSheet({
     setColumnToDelete(-1);
   };
 
+  const handleHeaderDeleteClick = (colIndex: number) => {
+    setDeleteTargetCol(colIndex);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetCol !== null) {
+      handleDeleteColumn(deleteTargetCol);
+      setDeleteTargetCol(null);
+      setDeleteModalOpen(false);
+    }
+  };
+
+  const handleCancelDeleteModal = () => {
+    setDeleteTargetCol(null);
+    setDeleteModalOpen(false);
+  };
+
   return (
     <div className="flex flex-col w-full h-full">
       <div className="max-w-[61rem] mx-auto w-full px-4">
@@ -693,22 +723,11 @@ export default function IntegratedSheet({
                               <td
                                 key={colIndex}
                                 className={`h-6 text-sm border border-[#020817] p-0 whitespace-nowrap text-center font-bold${colIndex === 1 && rowIndex < 5 ? ' border-l border-l-gray-300 dark:border-l-gray-700' : ''} ${isDeleteMode ? 'bg-red-100 dark:bg-red-900' : carrierColor}`}
-                                onClick={e => { e.stopPropagation(); handleColumnClick(colIndex); }}
+                                onClick={e => { e.stopPropagation(); handleHeaderDeleteClick(colIndex); }}
                               >
                                 <span className="font-bold overflow-hidden truncate block z-10 relative">
                                   {cell}
                                 </span>
-                                {isDeleteMode && (
-                                  <button
-                                    className="absolute inset-0 w-full h-full flex items-center justify-center bg-red-500/80 hover:bg-red-600/90 transition-colors z-20"
-                                    onClick={e => {
-                                      e.stopPropagation();
-                                      handleDeleteColumn(colIndex);
-                                    }}
-                                  >
-                                    <span className="text-white text-lg font-bold">×</span>
-                                  </button>
-                                )}
                               </td>
                             );
                           }
@@ -838,6 +857,22 @@ export default function IntegratedSheet({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 삭제 확인 모달 */}
+      <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>열 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말 이 열을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDeleteModal}>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>삭제</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 } 
