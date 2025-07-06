@@ -560,6 +560,18 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                           : rowIndex < 5 && colIndex > 0
                             ? getDynamicCellStyle(rowIndex, cell, colIndex)
                             : '';
+                        // 선택 영역 외곽선(엑셀 스타일)
+                        let borderClass = '';
+                        if (selected && selection.start && selection.end) {
+                          const minRow = Math.min(selection.start.row, selection.end.row);
+                          const maxRow = Math.max(selection.start.row, selection.end.row);
+                          const minCol = Math.min(selection.start.col, selection.end.col);
+                          const maxCol = Math.max(selection.start.col, selection.end.col);
+                          if (rowIndex === minRow) borderClass += ' border-t-2 border-t-blue-500';
+                          if (rowIndex === maxRow) borderClass += ' border-b-2 border-b-blue-500';
+                          if (colIndex === minCol) borderClass += ' border-l-2 border-l-blue-500';
+                          if (colIndex === maxCol) borderClass += ' border-r-2 border-r-blue-500';
+                        }
                         return (
                           <td 
                             key={colIndex}
@@ -569,7 +581,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                 : colIndex === 0
                                   ? `sticky left-0 z-20 bg-gray-200 dark:bg-card text-center font-bold`
                                   : 'text-center'
-                            } ${selected ? 'bg-blue-200 dark:bg-blue-700' : ''} ${planCellClass}`}
+                            } ${selected ? 'bg-blue-200 dark:bg-blue-700' : ''} ${planCellClass}${borderClass}`}
                             onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
                             onMouseOver={e => e.buttons === 1 && handleCellMouseOver(rowIndex, colIndex)}
                             onMouseUp={handleCellMouseUp}
