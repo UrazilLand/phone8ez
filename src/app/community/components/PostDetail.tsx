@@ -97,13 +97,14 @@ const PostDetail: React.FC<PostDetailProps> = ({
         </div>
         <div className="border-t border-blue-100 dark:border-blue-800 my-3" />
         {imageUrls.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2">
+          <div className="mb-2 flex flex-col items-center">
             {imageUrls.map((url, idx) => (
               <img
                 key={idx}
                 src={url}
                 alt={`첨부 이미지 ${idx + 1}`}
-                className="w-full max-h-80 object-contain rounded border border-blue-100 dark:border-blue-800"
+                className="w-auto max-w-full max-h-[400px] rounded object-contain"
+                style={{ display: 'block', margin: '0 auto' }}
                 loading="lazy"
               />
             ))}
