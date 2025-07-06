@@ -54,34 +54,29 @@ const WritePage = () => {
         setLoading(false);
         return;
       }
-      try {
-        // Supabase access_token 가져오기
-        const { data: { session } } = await supabase.auth.getSession();
-        const accessToken = session?.access_token;
-        const response = await fetch('/api/posts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
-          },
-          body: JSON.stringify({
-            ...rest,
-            image_urls: imageUrl ? [imageUrl] : [],
-            video_url: videoUrl || '',
-            board_type: boardType,
-          }),
-        });
-        const result = await response.json();
+      // user.id로 users 테이블에서 nickname 조회
+      const { data: userRow, error: userError } = await supabase
+        .from('users')
+        .select('nickname')
+        .eq('id', user.id)
+        .single();
+      if (userError || !userRow) {
+        alert('닉네임 정보를 불러올 수 없습니다.');
         setLoading(false);
-        if (response.ok && result.id) {
-          alert('게시글이 등록되었습니다!');
-          router.push(`/community/${boardType}/${result.id}`);
-        } else {
-          alert(result.error || '게시글 등록에 실패했습니다.');
-        }
-      } catch (e) {
-        setLoading(false);
-        alert('네트워크 오류로 게시글 등록에 실패했습니다.');
+        return;
+      }
+      const { data: newPost, error } = await supabase.from('posts').insert({
+        ...rest,
+        image_urls: imageUrl ? [imageUrl] : [],
+        video_url: videoUrl || '',
+        board_type: boardType,
+        user_id: user.id,
+        nickname: userRow.nickname // nickname도 함께 저장
+      }).select('id').single();
+      setLoading(false);
+      if (!error && newPost) {
+        alert('게시글이 등록되었습니다!');
+        router.push(`/community/${boardType}/${newPost.id}`);
       }
     }
   };
