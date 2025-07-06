@@ -72,8 +72,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
       {/* 게시글 정보 */}
       <div className="mb-4 border-b border-blue-100 dark:border-blue-800 pb-2 relative min-h-[240px]">
         <h2 className="text-xl font-bold text-blue-700 dark:text-blue-200 mb-2 flex items-center justify-between">
-          <span>{post.title}</span>
-          <div className="flex flex-row items-center gap-2">
+          <span className="flex-1 truncate min-w-0">{post.title}</span>
+          <div className="flex flex-row items-center gap-2 flex-shrink-0">
             <button
               className="px-2 py-1 border border-red-300 text-red-500 bg-transparent rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-normal"
               onClick={onReport}

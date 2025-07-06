@@ -51,6 +51,7 @@ const PostDetailPage = () => {
           setPost({
             ...postData,
             createdAt: postData.created_at,
+            videoUrl: postData.video_url,
           });
           const mapComment = (arr: any[] = []) => arr.map(comment => ({
             ...comment,
