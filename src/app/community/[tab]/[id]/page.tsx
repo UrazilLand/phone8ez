@@ -92,7 +92,7 @@ const PostDetailPage = () => {
   const commentsWithAuth = comments.map(c => ({
     ...c,
     isMine: user && c.user_id === user.id,
-    isAdmin: false, // 관리자 여부는 별도 처리 필요시 확장
+    isAdmin: user && user.role === 'admin',
     author: c.nickname || '익명',
   }));
 
