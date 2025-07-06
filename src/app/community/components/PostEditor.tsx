@@ -35,6 +35,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ initialData, onSubmit, loading,
 
   const BOARD_TYPE_OPTIONS = [
     { value: 'free', label: '자유게시판' },
+    { value: 'humor', label: '유머게시판' },
     { value: 'mobile', label: '휴대폰 정보' },
     { value: 'review', label: '사용기/리뷰' },
   ];
