@@ -55,10 +55,14 @@ const WritePage = () => {
         return;
       }
       try {
+        // Supabase access_token 가져오기
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
         const response = await fetch('/api/posts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
           },
           body: JSON.stringify({
             ...rest,
