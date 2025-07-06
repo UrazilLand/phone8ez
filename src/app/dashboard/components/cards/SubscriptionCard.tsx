@@ -50,6 +50,8 @@ export default function SubscriptionCard() {
     }
   }
 
+  const hasSubscription = !!subscription;
+
   return (
     <div className="bg-card border-border border rounded-lg p-4 flex flex-col gap-2 h-full w-full">
       <div className="text-sm text-muted-foreground flex items-center gap-2">
@@ -57,14 +59,14 @@ export default function SubscriptionCard() {
       </div>
       <div className="text-2xl font-bold text-blue-600 dark:text-blue-500">{planLabel}</div>
       <div className="text-xs text-muted-foreground">{endsLabel}</div>
-      {!isPro && !loading && (
+      {!hasSubscription && !loading && (
         <Button asChild className="w-full mt-auto">
           <Link href="/intro#plans">
             7일 무료체험 등록
           </Link>
         </Button>
       )}
-      {isPro && !loading && (
+      {hasSubscription && !loading && (
         <Button asChild className="w-full mt-auto">
           <Link href="/intro#plans">
             구독하기
