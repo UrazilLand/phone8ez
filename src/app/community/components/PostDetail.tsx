@@ -73,7 +73,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
       <div className="mb-4 border-b border-blue-100 dark:border-blue-800 pb-2 relative min-h-[240px]">
         <h2 className="text-xl font-bold text-blue-700 dark:text-blue-200 mb-2 flex items-center justify-between">
           <span>{post.title}</span>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-row items-center gap-2">
             <button
               className="px-2 py-1 border border-red-300 text-red-500 bg-transparent rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-normal"
               onClick={onReport}
@@ -81,10 +81,10 @@ const PostDetail: React.FC<PostDetailProps> = ({
               신고
             </button>
             {(post.isMine || post.isAdmin) && (
-              <div className="flex gap-2 mt-1">
-                <button className="px-3 py-1 rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200" onClick={onEdit}>수정</button>
-                <button className="px-3 py-1 rounded bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200" onClick={onDelete}>삭제</button>
-              </div>
+              <>
+                <button className="px-2 py-1 border border-blue-300 text-blue-600 bg-transparent rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm font-normal" onClick={onEdit}>수정</button>
+                <button className="px-2 py-1 border border-gray-300 text-gray-600 bg-transparent rounded hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors text-sm font-normal" onClick={onDelete}>삭제</button>
+              </>
             )}
           </div>
         </h2>
