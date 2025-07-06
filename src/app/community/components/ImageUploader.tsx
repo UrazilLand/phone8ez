@@ -10,6 +10,46 @@ interface ImageUploaderProps {
 const ACCEPT = '.jpg,.jpeg,.png,.webp';
 const MAX_SIZE = 5 * 1024 * 1024;
 
+// 이미지 변환 및 리사이즈 함수 수정 (linter 에러 해결)
+async function resizeAndConvertToWebp(file: File, maxWidth = 800, maxHeight = 800, quality = 0.8): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('canvas context 생성 실패'));
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('webp 변환 실패'));
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = reject;
+      if (e.target && typeof e.target.result === 'string') {
+        img.src = e.target.result;
+      } else {
+        reject(new Error('FileReader 결과 오류'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 const ImageUploader: React.FC<ImageUploaderProps> = ({ value, previewUrl, onUpload }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
