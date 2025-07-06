@@ -53,10 +53,10 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
   // 이미지 배열 파싱
   let imageUrls: string[] = [];
-  try {
-    imageUrls = post.image_urls ? JSON.parse(post.image_urls) : [];
-  } catch {
-    imageUrls = [];
+  if (Array.isArray(post.image_urls)) {
+    imageUrls = post.image_urls;
+  } else if (typeof post.image_urls === "string") {
+    try { imageUrls = JSON.parse(post.image_urls); } catch { imageUrls = []; }
   }
 
   if (isDeleted) {
