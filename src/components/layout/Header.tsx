@@ -10,6 +10,8 @@ import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 import UserDefaultIcon from '@/components/ui/UserDefaultIcon';
+import { supabase } from '@/lib/supabaseClient';
+import dayjs from 'dayjs';
 
 const MAIN_COLOR = 'text-blue-600 border-blue-600';
 
@@ -27,10 +29,32 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const { user, signOut, loading } = useAuth();
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsPro(false);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('plan, ends_at')
+        .eq('user_id', user.id)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data && data.plan === 'pro' && data.ends_at && dayjs(data.ends_at).isAfter(dayjs())) {
+        setIsPro(true);
+      } else {
+        setIsPro(false);
+      }
+    })();
+  }, [user?.id]);
 
   const NavLinksContent = ({ mobile = false }: { mobile?: boolean }) => {
     return (
@@ -103,19 +127,21 @@ const Header = () => {
           </nav>
           {/* 우측: 다크모드, 로그인/로그아웃 */}
           <div className="hidden lg:flex items-center space-x-2 min-w-[180px] justify-end">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="text-muted-foreground hover:text-blue-600"
-            >
-              {theme === 'dark' ? (
-                <Moon className="h-5 w-5" />
-              ) : (
-                <Sun className="h-5 w-5" />
-              )}
-              <span className="sr-only">테마 변경</span>
-            </Button>
+            {isPro && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="text-muted-foreground hover:text-blue-600"
+              >
+                {theme === 'dark' ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5" />
+                )}
+                <span className="sr-only">테마 변경</span>
+              </Button>
+            )}
             
             {user ? (
               <div className="flex items-center space-x-4">
@@ -231,23 +257,25 @@ const Header = () => {
                   )}
                   
                   <hr className="my-3 border-border" />
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-center text-gray-900 dark:text-white"
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  >
-                    {theme === 'dark' ? (
-                      <>
-                        <Moon className="mr-2 h-4 w-4 hidden lg:inline" />
-                        다크 모드
-                      </>
-                    ) : (
-                      <>
-                        <Sun className="mr-2 h-4 w-4 hidden lg:inline" />
-                        라이트 모드
-                      </>
-                    )}
-                  </Button>
+                  {isPro && (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-center text-gray-900 dark:text-white"
+                      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    >
+                      {theme === 'dark' ? (
+                        <>
+                          <Moon className="mr-2 h-4 w-4 hidden lg:inline" />
+                          다크 모드
+                        </>
+                      ) : (
+                        <>
+                          <Sun className="mr-2 h-4 w-4 hidden lg:inline" />
+                          라이트 모드
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </nav>
               </SheetContent>
             </Sheet>
