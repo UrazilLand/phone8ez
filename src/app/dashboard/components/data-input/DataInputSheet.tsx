@@ -554,6 +554,12 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                           planColorIdx = uniquePlans.indexOf(cell);
                         }
                         const selected = isCellSelected(rowIndex, colIndex);
+                        // 3행 요금제 셀 색상 서식 td에 직접 적용
+                        const planCellClass = rowIndex === 2 && colIndex > 0 && cell
+                          ? getDynamicCellStyle(rowIndex, cell, planColorIdx)
+                          : rowIndex < 5 && colIndex > 0
+                            ? getDynamicCellStyle(rowIndex, cell, colIndex)
+                            : '';
                         return (
                           <td 
                             key={colIndex}
@@ -563,7 +569,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                 : colIndex === 0
                                   ? `sticky left-0 z-20 bg-gray-200 dark:bg-card text-center font-bold`
                                   : 'text-center'
-                            } ${selected ? 'bg-blue-200 dark:bg-blue-700' : ''}`}
+                            } ${selected ? 'bg-blue-200 dark:bg-blue-700' : ''} ${planCellClass}`}
                             onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
                             onMouseOver={e => e.buttons === 1 && handleCellMouseOver(rowIndex, colIndex)}
                             onMouseUp={handleCellMouseUp}
@@ -594,13 +600,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                               </span>
                             ) : (
                               <span
-                                className={
-                                  rowIndex === 2 && colIndex > 0 && cell
-                                    ? getDynamicCellStyle(rowIndex, cell, planColorIdx)
-                                    : rowIndex < 5 && colIndex > 0
-                                      ? getDynamicCellStyle(rowIndex, cell, colIndex)
-                                      : ''
-                                }
                                 style={{ userSelect: 'none' }}
                               >
                                 {cell}
