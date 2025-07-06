@@ -514,7 +514,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
 
   return (
     <div className="flex flex-col w-full h-full">
-      <div className="max-w-[61rem] mx-auto w-full px-4">
+      <div className="mx-auto w-[1200px] max-w-[1200px] min-w-[1200px] px-4">
         <DataInputHeader
           dataSets={dataSets}
           setDataSets={setDataSets}
@@ -534,7 +534,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         onKeyDown={handleCombinedKeyDown}
         tabIndex={-1}
       >
-        <div className="w-full">
+        <div className="overflow-x-auto">
           <div className="relative">
             <table className="border-collapse w-full" style={{ tableLayout: 'fixed' }}>
               <colgroup>
