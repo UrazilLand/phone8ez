@@ -34,10 +34,10 @@ interface PostDetailProps {
   onCommentReport: (id: string) => void;
 }
 
-// 동영상 embed URL 변환 함수 추가
+// 동영상 embed URL 변환 함수 확장 (YouTube Shorts, TikTok, Instagram Reels 포함)
 function getEmbedUrl(url: string) {
-  // YouTube
-  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  // YouTube (watch, youtu.be, shorts)
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]+)/);
   if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
   // Vimeo
   const vimeo = url.match(/vimeo\.com\/(\d+)/);
@@ -48,6 +48,12 @@ function getEmbedUrl(url: string) {
   // 카카오TV
   const kakao = url.match(/tv\.kakao\.com\/v\/(\d+)/);
   if (kakao) return `https://play-tv.kakao.com/embed/player/cliplink/${kakao[1]}`;
+  // TikTok
+  const tiktok = url.match(/tiktok\.com\/@[\w.-]+\/video\/(\d+)/);
+  if (tiktok) return `https://www.tiktok.com/embed/v2/${tiktok[1]}`;
+  // Instagram Reels
+  const insta = url.match(/instagram\.com\/reel\/([\w-]+)/);
+  if (insta) return `https://www.instagram.com/reel/${insta[1]}/embed`;
   // 기본: 원본 URL 반환
   return url;
 }
