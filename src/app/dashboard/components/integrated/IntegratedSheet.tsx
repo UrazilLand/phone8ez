@@ -692,7 +692,7 @@ export default function IntegratedSheet({
                             return (
                               <td
                                 key={colIndex}
-                                className={`h-6 text-sm border border-[#020817] p-0 whitespace-nowrap text-center font-bold cursor-pointer relative ${isDeleteMode ? 'bg-red-100 dark:bg-red-900' : carrierColor}`}
+                                className={`h-6 text-sm border border-[#020817] p-0 whitespace-nowrap text-center font-bold${colIndex === 1 && rowIndex < 5 ? ' border-l border-l-gray-300 dark:border-l-gray-700' : ''} ${isDeleteMode ? 'bg-red-100 dark:bg-red-900' : carrierColor}`}
                                 onClick={e => { e.stopPropagation(); handleColumnClick(colIndex); }}
                               >
                                 <span className="font-bold overflow-hidden truncate block z-10 relative">

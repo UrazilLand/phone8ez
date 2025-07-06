@@ -555,7 +555,9 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                 ? `sticky left-0 z-20 bg-gray-100 dark:bg-[#222222] text-center font-bold`
                                 : colIndex === 0
                                   ? `sticky left-0 z-20 bg-gray-100 dark:bg-[#222222] text-center font-bold`
-                                  : 'text-center'
+                                  : colIndex > 0 && rowIndex < 5
+                                    ? 'bg-white dark:bg-[#222222] text-center'
+                                    : 'text-center'
                             } ${selected ? 'bg-blue-200 dark:bg-blue-700' : ''} ${planCellClass}${borderClass}`}
                             onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
                             onMouseOver={e => e.buttons === 1 && handleCellMouseOver(rowIndex, colIndex)}
