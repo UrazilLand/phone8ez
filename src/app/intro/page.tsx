@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-react';
@@ -10,6 +8,7 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
+import IntroClientSection from './IntroClientSection';
 
 const plans = [
   {
@@ -259,6 +258,7 @@ export default function IntroPage() {
         </div>
       </section>
 
+      <IntroClientSection />
     </div>
   );
 }
