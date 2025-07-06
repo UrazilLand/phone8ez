@@ -19,6 +19,7 @@ const plans = [
     period: '',
     features: [
       '데이터 입력 및 통합',
+      '데이터셋 3개 이용 가능',
       '공시 지원금 자동 적용',
       '이메일 문의',
     ],
@@ -31,8 +32,9 @@ const plans = [
     price: '월/19,900원',
     period: '',
     features: [
-      '기본 통합 기능',
+      '모든 무료 기능',
       '모델별 데이터 상세보기',
+      '무제한 데이터셋',
       '로컬 및 Cloud 저장',
       '다크 모드 지원',
       '우선 고객 지원',
@@ -73,6 +75,11 @@ export default function IntroPage() {
       return;
     }
     setLoading(true);
+    const { data: userInfo } = await supabase
+      .from('users')
+      .select('email, nickname, provider')
+      .eq('id', user.id)
+      .maybeSingle();
     const now = dayjs();
     const ends = now.add(7, 'day').add(1, 'day').startOf('day');
     const { error } = await supabase.from('subscriptions').insert({
@@ -81,6 +88,9 @@ export default function IntroPage() {
       status: 'active',
       started_at: now.toISOString(),
       ends_at: ends.toISOString(),
+      email: userInfo?.email ?? null,
+      nickname: userInfo?.nickname ?? null,
+      provider: userInfo?.provider ?? null,
     });
     setLoading(false);
     if (!error) {
