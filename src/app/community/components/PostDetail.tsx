@@ -34,6 +34,24 @@ interface PostDetailProps {
   onCommentReport: (id: string) => void;
 }
 
+// 동영상 embed URL 변환 함수 추가
+function getEmbedUrl(url: string) {
+  // YouTube
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  // Vimeo
+  const vimeo = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  // 네이버TV
+  const naver = url.match(/tv\.naver\.com\/v\/(\d+)/);
+  if (naver) return `https://tv.naver.com/embed/${naver[1]}`;
+  // 카카오TV
+  const kakao = url.match(/tv\.kakao\.com\/v\/(\d+)/);
+  if (kakao) return `https://play-tv.kakao.com/embed/player/cliplink/${kakao[1]}`;
+  // 기본: 원본 URL 반환
+  return url;
+}
+
 const PostDetail: React.FC<PostDetailProps> = ({
   post,
   comments,
@@ -113,7 +131,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
         {post.videoUrl && (
           <div className="mb-2">
             <iframe
-              src={post.videoUrl}
+              src={getEmbedUrl(post.videoUrl)}
               title="동영상"
               className="w-full h-56 sm:h-80 rounded border border-blue-100 dark:border-blue-800"
               allowFullScreen
