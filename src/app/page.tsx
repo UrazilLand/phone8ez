@@ -41,3 +41,21 @@ export default function HomePage() {
     </div>
   );
 }
+
+export const metadata = {
+  title: 'Phone8ez - 휴대폰 정책 자동화 서비스',
+  description: '휴대폰 정책표를 자동으로 정리하고, 대시보드로 쉽게 분석하세요. 전국 대리점 데이터 통합 서비스.',
+  openGraph: {
+    title: 'Phone8ez - 휴대폰 정책 자동화 서비스',
+    description: '휴대폰 정책표를 자동으로 정리하고, 대시보드로 쉽게 분석하세요. 전국 대리점 데이터 통합 서비스.',
+    url: 'https://phone8ez.com/',
+    images: ['/og-image.png'],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Phone8ez - 휴대폰 정책 자동화 서비스',
+    description: '휴대폰 정책표를 자동으로 정리하고, 대시보드로 쉽게 분석하세요. 전국 대리점 데이터 통합 서비스.',
+    images: ['/og-image.png'],
+  },
+};
