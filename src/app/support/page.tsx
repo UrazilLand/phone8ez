@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, MessageSquare, Phone, Send, HelpCircle, ChevronDown, Plus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import dayjs from 'dayjs';
 
 const faqItems = [
@@ -78,12 +78,6 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState<{ plan: string; email: string; nickname: string } | null>(null);
 
-  // supabase client 생성
-  const supabaseClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   // 구독 정보 및 사용자 정보 로드
   useEffect(() => {
     if (!user?.id) {
@@ -94,7 +88,7 @@ export default function SupportPage() {
     let ignore = false;
     (async () => {
       // subscriptions에서 plan, email, nickname 조회
-      const { data } = await supabaseClient
+      const { data } = await supabase
         .from('subscriptions')
         .select('plan, email, nickname, ends_at')
         .eq('user_id', user.id)
