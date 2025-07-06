@@ -1,4 +1,9 @@
 import React from 'react';
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface PostDetailProps {
   post: {
@@ -115,7 +120,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-2 mb-2">
           <span>{post.author}</span>
           <span>·</span>
-          <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+          <span>{dayjs.utc(post.createdAt).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')}</span>
           <span>·</span>
           <span>조회 {post.views}</span>
         </div>
@@ -171,7 +176,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                 )}
               </div>
               {/* 날짜 */}
-              <span className="flex-shrink-0 w-[90px] text-xs text-gray-400 dark:text-gray-500 text-center">{new Date(c.createdAt).toLocaleDateString()}</span>
+              <span className="flex-shrink-0 w-[90px] text-xs text-gray-400 dark:text-gray-500 text-center">{dayjs.utc(c.createdAt).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')}</span>
               {/* 신고버튼 */}
               {!c.isDeleted && (
                 <button

@@ -1,5 +1,10 @@
 import React from 'react';
 import clsx from 'clsx';
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface Post {
   id: string;
@@ -25,8 +30,7 @@ interface CommunityTableProps {
 }
 
 const formatDate = (date: string) => {
-  const d = new Date(date);
-  return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return dayjs.utc(date).tz('Asia/Seoul').format('MM-DD');
 };
 
 const CommunityTable: React.FC<CommunityTableProps> = ({ posts, notices = [], page, pageSize, onRowClick }) => {
