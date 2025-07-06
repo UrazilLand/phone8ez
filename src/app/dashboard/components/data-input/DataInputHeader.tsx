@@ -69,7 +69,7 @@ export default function DataInputHeader({
     if (!isPro && normalCount >= 3) {
       toast({
         title: '데이터셋 개수 제한',
-        description: '무료 플랜은 3개 이상의 데이터셋을 입력할 수 없습니다.\n더 많은 데이터 입력을 원하신다면 프로 플랜으로 구독해 주세요.',
+        description: '무료 플랜은 3개의 데이터셋만 이용할 수 있습니다.\n\n프로 플랜으로 무제한 을 이용해 보세요.',
       });
       return;
     }

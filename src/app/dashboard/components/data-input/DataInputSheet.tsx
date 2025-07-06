@@ -552,9 +552,9 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                             key={colIndex}
                             className={`h-6 text-sm border border-[#020817] border-[1px] p-0 text-center ${
                               colIndex === 0 && rowIndex < 5
-                                ? `sticky left-0 z-20 bg-gray-200 dark:bg-[#222222] text-center font-bold`
+                                ? `sticky left-0 z-20 bg-gray-100 dark:bg-[#222222] text-center font-bold`
                                 : colIndex === 0
-                                  ? `sticky left-0 z-20 bg-gray-200 dark:bg-card text-center font-bold`
+                                  ? `sticky left-0 z-20 bg-gray-100 dark:bg-[#222222] text-center font-bold`
                                   : 'text-center'
                             } ${selected ? 'bg-blue-200 dark:bg-blue-700' : ''} ${planCellClass}${borderClass}`}
                             onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
@@ -572,7 +572,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                 onBlur={() => setEditingCell(null)}
                                 onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
                                 className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
-                                  ${colIndex === 0 && rowIndex >= 5 ? 'bg-gray-100 dark:bg-[#353535] text-left font-bold' : ''}
+                                  ${colIndex === 0 ? 'bg-gray-100 dark:bg-[#222222] text-left font-bold' : ''}
                                   ${colIndex > 0 ? 'text-center' : ''}
                                   ${rowIndex === 2 && colIndex > 0 && cell
                                     ? getDynamicCellStyle(rowIndex, cell, planColorIdx)

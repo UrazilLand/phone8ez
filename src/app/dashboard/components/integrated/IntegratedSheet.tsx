@@ -584,7 +584,7 @@ export default function IntegratedSheet({
                               return (
                                 <td
                                   key={colIndex}
-                                  className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-gray-200 dark:bg-[#222222] sticky left-0 z-20 text-center font-bold`}
+                                  className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-gray-100 dark:bg-[#222222] sticky left-0 z-20 text-center font-bold border-r border-r-gray-300 dark:border-r-gray-700`}
                                 >
                                   <span className="text-foreground font-bold overflow-hidden truncate block">
                                     {SHEET_HEADER_LABELS[rowIndex]}
@@ -599,7 +599,7 @@ export default function IntegratedSheet({
                             return (
                               <td
                                 key={colIndex}
-                                className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-gray-100 dark:bg-[#353535] sticky left-0 z-20 text-left font-bold overflow-hidden border-r border-r-gray-300 dark:border-r-gray-700`}
+                                className={`h-6 text-sm border border-[#020817] border-[1px] p-0 whitespace-nowrap bg-gray-100 dark:bg-[#222222] sticky left-0 z-20 text-left font-bold overflow-hidden border-r border-r-gray-300 dark:border-r-gray-700`}
                               >
                                 <Popover>
                                   <PopoverTrigger asChild>
