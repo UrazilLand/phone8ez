@@ -26,6 +26,13 @@ export interface DataInputSheetRef {
   loadData: (data: any) => void;
 }
 
+// 선택 영역 상태 타입
+interface CellPosition { row: number; col: number; }
+interface SelectionRange {
+  start: CellPosition | null;
+  end: CellPosition | null;
+}
+
 const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dataSets, setDataSets, onApplyData }, ref) => {
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
@@ -70,6 +77,75 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     
     return { aCol: aColWidth, otherCols: remainingWidth };
   }, [currentSheetData]);
+
+  const [selection, setSelection] = useState<SelectionRange>({ start: null, end: null });
+  const [editingCell, setEditingCell] = useState<CellPosition | null>(null);
+
+  // 셀 선택/드래그/Shift+방향키로 선택 영역 갱신
+  const handleCellMouseDown = (row: number, col: number) => {
+    setSelection({ start: { row, col }, end: { row, col } });
+    setEditingCell(null);
+  };
+  const handleCellMouseOver = (row: number, col: number) => {
+    if (selection.start && !editingCell) {
+      setSelection(sel => ({ ...sel, end: { row, col } }));
+    }
+  };
+  const handleCellMouseUp = () => {
+    // 드래그 종료
+  };
+
+  // 셀 더블클릭 또는 엔터로 입력 모드 진입
+  const handleCellDoubleClick = (row: number, col: number) => {
+    setEditingCell({ row, col });
+  };
+  const handleCellKeyDown = (e: React.KeyboardEvent, row: number, col: number) => {
+    if (e.key === 'Enter') {
+      setEditingCell({ row, col });
+    }
+  };
+
+  // 선택 영역 내 셀인지 확인
+  const isCellSelected = (row: number, col: number) => {
+    if (!selection.start || !selection.end) return false;
+    const r1 = Math.min(selection.start.row, selection.end.row);
+    const r2 = Math.max(selection.start.row, selection.end.row);
+    const c1 = Math.min(selection.start.col, selection.end.col);
+    const c2 = Math.max(selection.start.col, selection.end.col);
+    return row >= r1 && row <= r2 && col >= c1 && col <= c2;
+  };
+
+  // Delete 키 이벤트 처리
+  const handleSheetKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Delete' && selection.start && selection.end && !editingCell) {
+      e.preventDefault();
+      const r1 = Math.min(selection.start.row, selection.end.row);
+      const r2 = Math.max(selection.start.row, selection.end.row);
+      const c1 = Math.min(selection.start.col, selection.end.col);
+      const c2 = Math.max(selection.start.col, selection.end.col);
+      const newSheetData = currentSheetData.map(row => [...row]);
+      for (let row = r1; row <= r2; row++) {
+        for (let col = c1; col <= c2; col++) {
+          newSheetData[row][col] = '';
+        }
+      }
+      setCurrentSheetData(newSheetData);
+    }
+  }, [selection, editingCell, currentSheetData, setCurrentSheetData]);
+
+  // 기존 handleKeyDown (붙여넣기 등)
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+      // 붙여넣기 이벤트는 handlePaste에서 처리됨
+      return;
+    }
+  }, []);
+
+  // handleSheetKeyDown과 handleKeyDown을 통합
+  const handleCombinedKeyDown = useCallback((e: React.KeyboardEvent) => {
+    handleSheetKeyDown(e);
+    handleKeyDown(e);
+  }, [handleSheetKeyDown, handleKeyDown]);
 
   useImperativeHandle(ref, () => ({
     fillAllData: (modalData: any) => {
@@ -434,13 +510,6 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
     }
   }, [currentSheetData, setCurrentSheetData, toast, lastAppliedData, ref]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-      // 붙여넣기 이벤트는 handlePaste에서 처리됨
-      return;
-    }
-  }, []);
-
   return (
     <div className="flex flex-col w-full h-full">
       <div className="max-w-[61rem] mx-auto w-full px-4">
@@ -460,7 +529,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
         ref={tableRef}
         className="bg-card rounded-lg shadow-md mx-4 sm:mx-8 lg:mx-16 mb-4 h-[1200px]"
         onPaste={handlePaste}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleCombinedKeyDown}
         tabIndex={-1}
       >
         <div className="overflow-auto h-full w-full">
@@ -484,6 +553,7 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                         if (rowIndex === 2 && colIndex > 0 && cell) {
                           planColorIdx = uniquePlans.indexOf(cell);
                         }
+                        const selected = isCellSelected(rowIndex, colIndex);
                         return (
                           <td 
                             key={colIndex}
@@ -493,16 +563,20 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                 : colIndex === 0
                                   ? `sticky left-0 z-20 bg-gray-200 dark:bg-card text-center font-bold`
                                   : 'text-center'
-                            }`}
+                            } ${selected ? 'bg-blue-200 dark:bg-blue-700' : ''}`}
+                            onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
+                            onMouseOver={e => e.buttons === 1 && handleCellMouseOver(rowIndex, colIndex)}
+                            onMouseUp={handleCellMouseUp}
+                            onDoubleClick={() => handleCellDoubleClick(rowIndex, colIndex)}
+                            tabIndex={0}
+                            onKeyDown={e => handleCellKeyDown(e, rowIndex, colIndex)}
                           >
-                            {colIndex === 0 && rowIndex < 5 ? (
-                              <span className="text-foreground font-bold overflow-hidden truncate block">
-                                {SHEET_HEADER_LABELS[rowIndex]}
-                              </span>
-                            ) : (
+                            {editingCell && editingCell.row === rowIndex && editingCell.col === colIndex ? (
                               <input
                                 type="text"
                                 value={cell}
+                                autoFocus
+                                onBlur={() => setEditingCell(null)}
                                 onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
                                 className={`w-full h-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
                                   ${colIndex === 0 && rowIndex >= 5 ? 'bg-gray-100 dark:bg-[#353535] text-left font-bold' : ''}
@@ -514,6 +588,12 @@ const DataInputSheet = forwardRef<DataInputSheetRef, DataInputSheetProps>(({ dat
                                       : ''}
                                 `}
                               />
+                            ) : colIndex === 0 && rowIndex < 5 ? (
+                              <span className="text-foreground font-bold overflow-hidden truncate block">
+                                {SHEET_HEADER_LABELS[rowIndex]}
+                              </span>
+                            ) : (
+                              <span>{cell}</span>
                             )}
                           </td>
                         );
