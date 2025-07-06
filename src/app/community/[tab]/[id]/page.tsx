@@ -17,7 +17,24 @@ const PostDetailPage = () => {
 
   // 현재 로그인 유저 fetch
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+    (async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData?.user) {
+        setUser(null);
+        return;
+      }
+      // users 테이블에서 role, nickname 조회
+      const { data: userInfo } = await supabase
+        .from('users')
+        .select('role, nickname')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+      setUser({
+        ...authData.user,
+        role: userInfo?.role,
+        nickname: userInfo?.nickname,
+      });
+    })();
   }, []);
 
   // 게시글/댓글 fetch
