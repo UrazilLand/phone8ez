@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
-import IntroClientSection from './IntroClientSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-react';
