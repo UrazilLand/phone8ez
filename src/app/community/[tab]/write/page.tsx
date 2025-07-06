@@ -67,7 +67,7 @@ const WritePage = () => {
       }
       const { data: newPost, error } = await supabase.from('posts').insert({
         ...rest,
-        image_urls: imageUrl ? [imageUrl] : [],
+        image_urls: imageUrl ? JSON.stringify([imageUrl]) : JSON.stringify([]),
         video_url: videoUrl || '',
         board_type: boardType,
         user_id: user.id,
