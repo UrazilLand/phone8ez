@@ -66,7 +66,14 @@ export default function SubscriptionCard() {
           </Link>
         </Button>
       )}
-      {hasSubscription && !loading && (
+      {isPro && !loading && (
+        <Button asChild className="w-full mt-auto">
+          <Link href="/intro#plans">
+            구독 연장
+          </Link>
+        </Button>
+      )}
+      {hasSubscription && !isPro && !loading && (
         <Button asChild className="w-full mt-auto">
           <Link href="/intro#plans">
             구독하기
