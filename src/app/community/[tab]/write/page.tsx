@@ -54,12 +54,24 @@ const WritePage = () => {
         setLoading(false);
         return;
       }
+      // user.id로 users 테이블에서 nickname 조회
+      const { data: userRow, error: userError } = await supabase
+        .from('users')
+        .select('nickname')
+        .eq('id', user.id)
+        .single();
+      if (userError || !userRow) {
+        alert('닉네임 정보를 불러올 수 없습니다.');
+        setLoading(false);
+        return;
+      }
       const { data: newPost, error } = await supabase.from('posts').insert({
         ...rest,
         image_urls: imageUrl ? [imageUrl] : [],
         video_url: videoUrl || '',
         board_type: boardType,
-        user_id: user.id
+        user_id: user.id,
+        nickname: userRow.nickname // nickname도 함께 저장
       }).select('id').single();
       setLoading(false);
       if (!error && newPost) {
