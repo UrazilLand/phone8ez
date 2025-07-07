@@ -126,76 +126,48 @@ export default function IntroClientSection() {
     }
   };
 
-  // 구독하기 버튼 클릭 시 PortOne V2 결제창 호출
+  // 구독하기 버튼 클릭 시 PortOne V2 빌링키 발급(정기결제) 호출
   const handleSubscribe = async () => {
     if (!user) {
       router.push('/auth/temp-login');
       return;
     }
-    // PortOne V2 공식문서 기준 결제 요청 파라미터 세팅
     const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'store-b26b3486-4703-42cb-ae30-565c0eca1d6f';
     const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || 'channel-key-ce9f43b6-6001-49d1-a80e-0614438d985d';
-    const paymentId = `payment_${crypto.randomUUID()}`;
-    const amount = 19900;
-
     try {
-      const redirectUrl = `${window.location.origin}/payment-redirect`;
-      // 실제 결제 요청 파라미터 콘솔 출력
-      console.log({
+      // 빌링키 발급 요청
+      const issueResponse = await PortOne.requestIssueBillingKey({
         storeId,
         channelKey,
-        paymentId,
-        orderName: 'Phone8ez 구독 결제',
-        totalAmount: amount,
-        currency: 'CURRENCY_KRW',
-        payMethod: 'CARD',
+        billingKeyMethod: 'CARD',
         customer: {
           customerId: user?.id || 'guest',
           fullName: (user as any)?.nickname || 'easypower',
           email: user?.email || 'easypower@kakao.com',
         },
-        windowType: {
-          pc: 'IFRAME',
-        },
-        isCulturalExpense: false,
         locale: 'KO_KR',
-        redirectUrl,
       });
-      const response = await PortOne.requestPayment({
-        storeId,
-        channelKey,
-        paymentId,
-        orderName: 'Phone8ez 구독 결제',
-        totalAmount: amount,
-        currency: 'CURRENCY_KRW',
-        payMethod: 'CARD',
-        customer: {
-          customerId: user?.id || 'guest',
-          fullName: (user as any)?.nickname || 'easypower',
-          email: user?.email || 'easypower@kakao.com',
-        },
-        windowType: {
-          pc: 'IFRAME',
-        },
-        isCulturalExpense: false,
-        locale: 'KO_KR',
-        redirectUrl,
-      });
-
-      if (!response) return;
-      if (response.code !== undefined) {
-        alert(response.message);
-        return;
+      // 빌링키 발급 실패 시 에러 처리
+      if (!issueResponse || issueResponse.code !== undefined) {
+        return alert(issueResponse?.message || '빌링키 발급에 실패했습니다.');
       }
-
-      // 결제 성공 시 서버에 결제 완료 알림
-      await fetch('/api/payment/complete', {
+      // 빌링키 발급 성공 시 서버에 전달
+      const response = await fetch('/api/billings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId: response.paymentId }),
+        body: JSON.stringify({
+          billingKey: issueResponse.billingKey,
+          userId: user?.id,
+          email: user?.email,
+        }),
+      });
+      if (!response.ok) throw new Error(`response: ${await response.json()}`);
+      toast({
+        title: '구독 결제가 정상적으로 등록되었습니다.',
+        description: '정기결제용 빌링키가 발급되어 구독이 활성화됩니다.',
       });
     } catch (e) {
-      alert('결제창 호출에 실패했습니다.');
+      alert('빌링키 발급 또는 서버 연동에 실패했습니다.');
     }
   };
 
