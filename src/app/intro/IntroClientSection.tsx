@@ -10,6 +10,7 @@ import Image from 'next/image';
 import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import * as PortOne from '@portone/browser-sdk/v2';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -45,6 +46,20 @@ const plans = [
     buttonType: 'primary',
   },
 ];
+
+// [아임포트 결제 연동] - 결제 라이브러리 동적 로드 함수
+declare global {
+  interface Window {
+    IMP?: any;
+  }
+}
+const loadIamportScript = () => {
+  if (!window.IMP) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.iamport.kr/v1/iamport.js';
+    document.head.appendChild(script);
+  }
+};
 
 export default function IntroClientSection() {
   const { user } = useAuth();
@@ -109,8 +124,48 @@ export default function IntroClientSection() {
     }
   };
 
-  const handleSubscribe = () => {
-    alert('포트원 결제 연동 예정!');
+  // 구독하기 버튼 클릭 시 PortOne V2 결제창 호출
+  const handleSubscribe = async () => {
+    // storeId(상점ID)는 포트원 관리자 > 연동 정보 > API Keys > V2 API 왼쪽 값
+    const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'store-9bf6076d-beef-4729-9521-ae66c14e0569'; // 예시
+    const pgProvider = 'PG_PROVIDER_INICIS'; // KG이니시스(테스트)
+    const payMethod = 'CARD';
+    const paymentId = `payment_${Date.now()}`; // 주문ID(고유값)
+    const amount = 19900;
+
+    try {
+      await PortOne.requestPayment({
+        storeId,
+        orderName: 'Phone8ez 구독 결제',
+        totalAmount: amount,
+        pgProvider,
+        payMethod,
+        paymentId,
+        taxFreeAmount: 0,
+        customer: {
+          customerId: user?.id || 'guest',
+          fullName: (user as any)?.nickname || 'easypower',
+          email: user?.email || 'easypower@kakao.com',
+          phoneNumber: '010-5857-9410',
+          address: {
+            line1: '전라남도 광양시 공영로10',
+            line2: '',
+            postalCode: '57791',
+          },
+        },
+        windowType: {
+          pc: 'IFRAME',
+        },
+        // 필요시 noticeUrls, confirmUrl 등 추가 가능
+        // noticeUrls: ['https://www.naver.com'],
+        // confirmUrl: 'https://www.naver.com',
+        isCulturalExpense: false,
+        currency: 'CURRENCY_KRW',
+        locale: 'KO_KR',
+      });
+    } catch (e) {
+      alert('결제창 호출에 실패했습니다.');
+    }
   };
 
   return (
@@ -213,15 +268,16 @@ export default function IntroClientSection() {
                 ))}
               </ul>
               {plan.name === '프로페셔널' && (
-                hasSubscription === false ? (
-                  <button
-                    className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
-                    onClick={handleTrial}
-                    disabled={loading}
-                  >
-                    7일 무료체험 등록
-                  </button>
-                ) : hasSubscription === true ? (
+                // hasSubscription === false ? (
+                //   <button
+                //     className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
+                //     onClick={handleTrial}
+                //     disabled={loading}
+                //   >
+                //     7일 무료체험 등록
+                //   </button>
+                // ) : 
+                hasSubscription === true ? (
                   <button
                     className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
                     onClick={handleSubscribe}
