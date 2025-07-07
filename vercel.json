@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.phone8ez.com"
+        }
+      ],
+      "destination": "https://phone8ez.com/$1",
+      "permanent": true
+    }
+  ]
+} 
