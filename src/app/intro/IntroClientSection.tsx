@@ -133,8 +133,8 @@ export default function IntroClientSection() {
       return;
     }
     // PortOne V2 공식문서 기준 결제 요청 파라미터 세팅
-    const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || '';
-    const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || '';
+    const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'store-b26b3486-4703-42cb-ae30-565c0eca1d6f';
+    const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || 'channel-key-ce9f43b6-6001-49d1-a80e-0614438d985d';
     const paymentId = `payment_${crypto.randomUUID()}`;
     const amount = 19900;
 
