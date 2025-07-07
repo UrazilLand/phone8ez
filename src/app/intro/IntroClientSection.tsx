@@ -146,12 +146,6 @@ export default function IntroClientSection() {
           customerId: user?.id || 'guest',
           fullName: (user as any)?.nickname || 'easypower',
           email: user?.email || 'easypower@kakao.com',
-          phoneNumber: '010-5857-9410',
-          address: {
-            line1: '전라남도 광양시 공영로10',
-            line2: '',
-            postalCode: '57791',
-          },
         },
         windowType: {
           pc: 'IFRAME',
