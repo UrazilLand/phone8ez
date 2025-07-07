@@ -11,6 +11,7 @@ import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-reac
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import * as PortOne from '@portone/browser-sdk/v2';
+import { useRouter } from 'next/navigation';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -65,6 +66,7 @@ export default function IntroClientSection() {
   const { user } = useAuth();
   const [hasSubscription, setHasSubscription] = useState<boolean|null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!user?.id) {
@@ -126,6 +128,10 @@ export default function IntroClientSection() {
 
   // 구독하기 버튼 클릭 시 PortOne V2 결제창 호출
   const handleSubscribe = async () => {
+    if (!user) {
+      router.push('/auth/temp-login');
+      return;
+    }
     // storeId(상점ID)는 포트원 관리자 > 연동 정보 > API Keys > V2 API 왼쪽 값
     const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'store-9bf6076d-beef-4729-9521-ae66c14e0569'; // 예시
     const pgProvider = 'PG_PROVIDER_INICIS'; // KG이니시스(테스트)
@@ -262,30 +268,12 @@ export default function IntroClientSection() {
                 ))}
               </ul>
               {plan.name === '프로페셔널' && (
-                // hasSubscription === false ? (
-                //   <button
-                //     className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
-                //     onClick={handleTrial}
-                //     disabled={loading}
-                //   >
-                //     7일 무료체험 등록
-                //   </button>
-                // ) : 
-                hasSubscription === true ? (
-                  <button
-                    className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
-                    onClick={handleSubscribe}
-                  >
-                    구독하기
-                  </button>
-                ) : (
-                  <button
-                    className="w-full py-2 rounded-lg bg-blue-400 text-white font-bold opacity-60 cursor-not-allowed mt-auto"
-                    disabled
-                  >
-                    로딩 중...
-                  </button>
-                )
+                <button
+                  className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
+                  onClick={handleSubscribe}
+                >
+                  구독하기
+                </button>
               )}
               {plan.name !== '프로페셔널' && (
                 <Link href="/auth/signup" className="w-full">
