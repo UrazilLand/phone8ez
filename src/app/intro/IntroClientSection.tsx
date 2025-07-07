@@ -132,22 +132,22 @@ export default function IntroClientSection() {
       router.push('/auth/temp-login');
       return;
     }
-    // storeId(상점ID)는 포트원 관리자 > 연동 정보 > API Keys > V2 API 왼쪽 값
-    const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'store-9bf6076d-beef-4729-9521-ae66c14e0569'; // 예시
-    const pgProvider = 'PG_PROVIDER_INICIS'; // KG이니시스(테스트)
-    const payMethod = 'CARD';
-    const paymentId = `payment_${Date.now()}`; // 주문ID(고유값)
+    // PortOne V2 공식문서 기준 결제 요청 파라미터 세팅
+    const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || '';
+    const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || '';
+    const paymentId = `payment_${crypto.randomUUID()}`;
     const amount = 19900;
 
     try {
-      await PortOne.requestPayment({
+      const redirectUrl = `${window.location.origin}/payment-redirect`;
+      const response = await PortOne.requestPayment({
         storeId,
+        channelKey,
+        paymentId,
         orderName: 'Phone8ez 구독 결제',
         totalAmount: amount,
-        pgProvider,
-        payMethod,
-        paymentId,
-        taxFreeAmount: 0,
+        currency: 'CURRENCY_KRW',
+        payMethod: 'CARD',
         customer: {
           customerId: user?.id || 'guest',
           fullName: (user as any)?.nickname || 'easypower',
@@ -156,12 +156,22 @@ export default function IntroClientSection() {
         windowType: {
           pc: 'IFRAME',
         },
-        // 필요시 noticeUrls, confirmUrl 등 추가 가능
-        // noticeUrls: ['https://www.naver.com'],
-        // confirmUrl: 'https://www.naver.com',
         isCulturalExpense: false,
-        currency: 'CURRENCY_KRW',
         locale: 'KO_KR',
+        redirectUrl,
+      });
+
+      if (!response) return;
+      if (response.code !== undefined) {
+        alert(response.message);
+        return;
+      }
+
+      // 결제 성공 시 서버에 결제 완료 알림
+      await fetch('/api/payment/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId: response.paymentId }),
       });
     } catch (e) {
       alert('결제창 호출에 실패했습니다.');
