@@ -140,6 +140,27 @@ export default function IntroClientSection() {
 
     try {
       const redirectUrl = `${window.location.origin}/payment-redirect`;
+      // 실제 결제 요청 파라미터 콘솔 출력
+      console.log({
+        storeId,
+        channelKey,
+        paymentId,
+        orderName: 'Phone8ez 구독 결제',
+        totalAmount: amount,
+        currency: 'CURRENCY_KRW',
+        payMethod: 'CARD',
+        customer: {
+          customerId: user?.id || 'guest',
+          fullName: (user as any)?.nickname || 'easypower',
+          email: user?.email || 'easypower@kakao.com',
+        },
+        windowType: {
+          pc: 'IFRAME',
+        },
+        isCulturalExpense: false,
+        locale: 'KO_KR',
+        redirectUrl,
+      });
       const response = await PortOne.requestPayment({
         storeId,
         channelKey,
