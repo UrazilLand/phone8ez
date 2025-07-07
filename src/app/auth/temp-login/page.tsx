@@ -2,20 +2,27 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function TempLoginPage() {
   const router = useRouter();
-  const [id, setId] = useState('testpay');
-  const [pw, setPw] = useState('test11');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (id === 'testpay' && pw === 'test11') {
-      // 임시 로그인 상태 저장 (로컬스토리지)
-      localStorage.setItem('temp_login', 'true');
+  const handleLogin = async () => {
+    setError('');
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setLoading(false);
+    if (!error) {
       router.push('/');
     } else {
-      setError('ID 또는 비밀번호가 올바르지 않습니다.');
+      setError(error.message || '로그인에 실패했습니다.');
     }
   };
 
@@ -27,26 +34,28 @@ export default function TempLoginPage() {
         <div className="mb-4">
           <input
             className="w-full px-3 py-2 mb-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="ID"
-            value={id}
-            onChange={e => setId(e.target.value)}
+            placeholder="이메일"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             autoComplete="username"
           />
           <input
             className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="비밀번호"
             type="password"
-            value={pw}
-            onChange={e => setPw(e.target.value)}
+            value={password}
+            onChange={e => setPassword(e.target.value)}
             autoComplete="current-password"
           />
         </div>
         {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
         <button
-          className="w-full px-6 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+          className="w-full px-6 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors disabled:opacity-60"
           onClick={handleLogin}
+          disabled={loading || !email || !password}
         >
-          로그인
+          {loading ? '로그인 중...' : '로그인'}
         </button>
       </div>
     </div>
