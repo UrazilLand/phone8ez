@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { Users, BarChartBig, MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import * as PortOne from '@portone/browser-sdk/v2';
+import PortOne from "@portone/browser-sdk/v2";
 import { useRouter } from 'next/navigation';
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -67,6 +67,10 @@ export default function IntroClientSection() {
   const [hasSubscription, setHasSubscription] = useState<boolean|null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [item, setItem] = useState<any>(null);
+  const [paymentStatus, setPaymentStatus] = useState<{ status: string; message?: string }>({ status: 'IDLE' });
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) {
@@ -85,90 +89,95 @@ export default function IntroClientSection() {
     return () => { ignore = true; };
   }, [user?.id]);
 
-  const handleTrial = async () => {
-    if (!user?.id) {
-      toast({
-        title: '로그인이 필요합니다.',
-        description: '무료체험을 이용하려면 먼저 로그인해 주세요.',
-      });
-      return;
+  useEffect(() => {
+    async function loadItem() {
+      const response = await fetch("/api/item");
+      setItem(await response.json());
     }
-    setLoading(true);
-    const { data: userInfo } = await supabase
-      .from('users')
-      .select('email, nickname, provider')
-      .eq('id', user.id)
-      .maybeSingle();
-    const now = dayjs().tz('Asia/Seoul');
-    const ends = now.add(7, 'day').add(1, 'day').startOf('day');
-    const { error } = await supabase.from('subscriptions').insert({
-      user_id: user.id,
-      plan: 'pro',
-      status: 'active',
-      started_at: now.toISOString(),
-      ends_at: ends.toISOString(),
-      email: userInfo?.email ?? null,
-      nickname: userInfo?.nickname ?? null,
-      provider: userInfo?.provider ?? null,
-    });
-    setLoading(false);
-    if (!error) {
-      setHasSubscription(true);
-      toast({
-        title: '7일 무료체험이 시작되었습니다!',
-        description: `오늘부터 7일간 모든 프로 기능을 사용할 수 있습니다.\n만료일: ${ends.format('YYYY-MM-DD 00:00')}까지`,
-      });
-    } else {
-      toast({
-        title: '무료체험 등록에 실패했습니다.',
-        description: '이미 무료체험을 사용하셨거나, 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
-      });
-    }
-  };
+    loadItem().catch(console.error);
+  }, []);
 
-  // 구독하기 버튼 클릭 시 PortOne V2 빌링키 발급(정기결제) 호출
-  const handleSubscribe = async () => {
+  function randomId() {
+    return [...crypto.getRandomValues(new Uint32Array(2))]
+      .map((word) => word.toString(16).padStart(8, "0"))
+      .join("");
+  }
+
+  function isValidPhoneNumber(phone: string) {
+    return /^01[016789][0-9]{7,8}$/.test(phone);
+  }
+
+  const handlePayment = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (!user) {
       router.push('/auth/temp-login');
       return;
     }
-    const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'store-b26b3486-4703-42cb-ae30-565c0eca1d6f';
-    const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || 'channel-key-ce9f43b6-6001-49d1-a80e-0614438d985d';
-    try {
-      // 빌링키 발급 요청
-      const issueResponse = await PortOne.requestIssueBillingKey({
-        storeId,
-        channelKey,
-        billingKeyMethod: 'CARD',
-        customer: {
-          customerId: user?.id || 'guest',
-          fullName: (user as any)?.nickname || 'easypower',
-          email: user?.email || 'easypower@kakao.com',
-        },
-        locale: 'KO_KR',
-      });
-      // 빌링키 발급 실패 시 에러 처리
-      if (!issueResponse || issueResponse.code !== undefined) {
-        return alert(issueResponse?.message || '빌링키 발급에 실패했습니다.');
-      }
-      // 빌링키 발급 성공 시 서버에 전달
-      const response = await fetch('/api/billings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          billingKey: issueResponse.billingKey,
-          userId: user?.id,
-          email: user?.email,
-        }),
-      });
-      if (!response.ok) throw new Error(`response: ${await response.json()}`);
-      toast({
-        title: '구독 결제가 정상적으로 등록되었습니다.',
-        description: '정기결제용 빌링키가 발급되어 구독이 활성화됩니다.',
-      });
-    } catch (e) {
-      alert('빌링키 발급 또는 서버 연동에 실패했습니다.');
+    if (!item) {
+      toast({ title: '상품 정보를 불러오지 못했습니다.' });
+      return;
     }
+    if (!isValidPhoneNumber(phoneNumber)) {
+      toast({ title: '올바른 휴대폰 번호를 입력해 주세요.' });
+      return;
+    }
+    setPaymentStatus({ status: 'PENDING' });
+    const paymentId = randomId();
+    const payment = await PortOne.requestPayment({
+      storeId: "store-b26b3486-4703-42cb-ae30-565c0eca1d6f",
+      channelKey: "channel-key-f09f5e87-d694-4bff-ba1e-d411390254ef",
+      paymentId,
+      orderName: item.name,
+      totalAmount: item.price,
+      currency: item.currency,
+      payMethod: "CARD",
+      customer: {
+        fullName: (user && 'nickname' in user && (user as any).nickname) ? (user as any).nickname : "포트원",
+        email: user?.email || "example@portone.io",
+        phoneNumber,
+      },
+      customData: {
+        item: item.id,
+      },
+    });
+    if (!payment || payment.code !== undefined) {
+      setPaymentStatus({
+        status: "FAILED",
+        message: payment?.message,
+      });
+      return;
+    }
+    const completeResponse = await fetch("/api/payment/complete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        paymentId: payment.paymentId,
+        phoneNumber,
+      }),
+    });
+    if (completeResponse.ok) {
+      const paymentComplete = await completeResponse.json();
+      setPaymentStatus({
+        status: paymentComplete.status,
+      });
+      setHasSubscription(true);
+      toast({ title: '구독 결제가 정상적으로 완료되었습니다.' });
+    } else {
+      setPaymentStatus({
+        status: "FAILED",
+        message: await completeResponse.text(),
+      });
+    }
+  };
+
+  const isWaitingPayment = paymentStatus.status !== "IDLE";
+  const handleClose = () => setPaymentStatus({ status: "IDLE" });
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setPhoneNumber("");
   };
 
   return (
@@ -273,7 +282,7 @@ export default function IntroClientSection() {
               {plan.name === '프로페셔널' && (
                 <button
                   className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mt-auto"
-                  onClick={handleSubscribe}
+                  onClick={() => setIsModalOpen(true)}
                 >
                   구독하기
                 </button>
@@ -301,6 +310,58 @@ export default function IntroClientSection() {
           </ul>
         </div>
       </section>
+      {/* 결제 결과 다이얼로그 UI 추가 */}
+      {paymentStatus.status === "FAILED" && (
+        <dialog open>
+          <header>
+            <h1>결제 실패</h1>
+          </header>
+          <p>{paymentStatus.message}</p>
+          <button type="button" onClick={handleClose}>
+            닫기
+          </button>
+        </dialog>
+      )}
+      <dialog open={paymentStatus.status === "PAID"}>
+        <header>
+          <h1>결제 성공</h1>
+        </header>
+        <p>결제에 성공했습니다.</p>
+        <button type="button" onClick={handleClose}>
+          닫기
+        </button>
+      </dialog>
+      {/* 결제 모달 */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h2 className="text-xl font-bold mb-4">구독 결제</h2>
+            <label className="block mb-2 font-medium">휴대폰 번호</label>
+            <input
+              type="tel"
+              className="w-full mb-4 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="연락처를 입력하세요 (예: 01012345678)"
+              value={phoneNumber}
+              onChange={e => setPhoneNumber(e.target.value)}
+              maxLength={11}
+              required
+            />
+            <button
+              className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors mb-2"
+              onClick={async (e) => { await handlePayment(e); closeModal(); }}
+              disabled={!isValidPhoneNumber(phoneNumber) || isWaitingPayment}
+            >
+              KG이니시스로 결제
+            </button>
+            <button
+              className="w-full py-2 rounded-lg border mt-2"
+              onClick={closeModal}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

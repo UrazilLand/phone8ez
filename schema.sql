@@ -90,6 +90,9 @@ CREATE TABLE subscriptions (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- subscriptions 테이블에 phone_number 칼럼 추가
+ALTER TABLE subscriptions ADD COLUMN phone_number VARCHAR(20);
+
 -- 8. 이메일 인증 테이블 (email_verifications)
 CREATE TABLE email_verifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

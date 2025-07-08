@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
-  const { imp_uid, merchant_uid, user_id } = await req.json();
+  const { imp_uid, merchant_uid, user_id, phoneNumber } = await req.json();
 
   // 1. 아임포트 REST API로 결제 검증
   const getTokenRes = await fetch('https://api.iamport.kr/users/getToken', {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     status: 'active',
     started_at: now.toISOString(),
     ends_at: newEndsAt.toISOString(),
-    // 기타 필요한 정보 추가 가능
+    phone_number: phoneNumber,
   }, { onConflict: 'user_id' });
 
   if (error) {
