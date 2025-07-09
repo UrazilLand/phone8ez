@@ -153,7 +153,7 @@ const CommunityPage = () => {
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold text-sm"
+                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold text-sm whitespace-nowrap min-w-[64px]"
               >
                 검색
               </button>
