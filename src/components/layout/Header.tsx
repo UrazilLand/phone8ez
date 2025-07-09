@@ -122,7 +122,7 @@ const Header = () => {
             <Logo />
           </div>
           {/* 중앙: 네비게이션 (항상 중앙 고정) */}
-          <nav className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 h-10 flex items-center justify-center">
+          <nav className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 h-10 items-center justify-center">
             <NavLinksContent />
           </nav>
           {/* 우측: 다크모드, 로그인/로그아웃 */}
@@ -188,7 +188,7 @@ const Header = () => {
           </div>
 
           {/* 모바일 메뉴 트리거 */}
-          <div className="lg:hidden">
+          <div className="flex md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -230,7 +230,7 @@ const Header = () => {
                       </button>
                       <Button
                         variant="outline"
-                        className="w-full justify-center"
+                        className="w-full justify-center text-gray-900 dark:text-white"
                         onClick={() => {
                           signOut();
                           setIsMobileMenuOpen(false);
@@ -244,12 +244,12 @@ const Header = () => {
                   ) : (
                     <div className="space-y-2">
                       <Link href="/auth/temp-login" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-center">
+                        <Button variant="ghost" className="w-full justify-center text-gray-900 dark:text-white">
                           로그인
                         </Button>
                       </Link>
                       <Link href="/auth/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Button variant="outline" className="w-full justify-center">
+                        <Button variant="outline" className="w-full justify-center text-gray-900 dark:text-white">
                           회원가입
                         </Button>
                       </Link>
