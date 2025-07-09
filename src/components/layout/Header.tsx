@@ -210,26 +210,26 @@ const Header = () => {
                   
                   {user ? (
                     <div className={`w-full ${isPro ? 'flex flex-row items-center gap-2' : 'flex flex-col items-stretch gap-2'}`}>
-                      <div className="flex items-center gap-2 w-full">
-                        <button
-                          onClick={() => {
-                            window.location.href = '/profile/edit';
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="focus:outline-none"
-                          title="내 정보 수정"
-                        >
-                          {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
-                            <img
-                              src={user.user_metadata?.avatar_url || user.user_metadata?.picture}
-                              alt="프로필 이미지"
-                              className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
-                            />
-                          ) : (
-                            <UserDefaultIcon className="w-9 h-9 rounded-full border border-gray-300 bg-white shadow-sm p-1 text-gray-400 hover:ring-2 hover:ring-blue-400 transition-all" />
-                          )}
-                        </button>
-                        {isPro && (
+                      {isPro ? (
+                        <div className="flex items-center gap-2 w-full">
+                          <button
+                            onClick={() => {
+                              window.location.href = '/profile/edit';
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="focus:outline-none"
+                            title="내 정보 수정"
+                          >
+                            {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                              <img
+                                src={user.user_metadata?.avatar_url || user.user_metadata?.picture}
+                                alt="프로필 이미지"
+                                className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
+                              />
+                            ) : (
+                              <UserDefaultIcon className="w-9 h-9 rounded-full border border-gray-300 bg-white shadow-sm p-1 text-gray-400 hover:ring-2 hover:ring-blue-400 transition-all" />
+                            )}
+                          </button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -239,8 +239,29 @@ const Header = () => {
                             {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                             <span className="sr-only">테마 변경</span>
                           </Button>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-center w-full">
+                          <button
+                            onClick={() => {
+                              window.location.href = '/profile/edit';
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="focus:outline-none"
+                            title="내 정보 수정"
+                          >
+                            {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                              <img
+                                src={user.user_metadata?.avatar_url || user.user_metadata?.picture}
+                                alt="프로필 이미지"
+                                className="w-9 h-9 rounded-full object-cover border border-gray-300 shadow-sm hover:ring-2 hover:ring-blue-400 transition-all"
+                              />
+                            ) : (
+                              <UserDefaultIcon className="w-9 h-9 rounded-full border border-gray-300 bg-white shadow-sm p-1 text-gray-400 hover:ring-2 hover:ring-blue-400 transition-all" />
+                            )}
+                          </button>
+                        </div>
+                      )}
                       <Button
                         variant="outline"
                         className="w-full justify-center text-gray-900 dark:text-white mt-2"
