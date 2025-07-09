@@ -233,20 +233,22 @@ export default function IntroClientSection() {
       
       <section className="bg-card p-8 rounded-lg shadow-md">
           <h2 className="text-3xl font-suit font-semibold text-center text-blue-600 dark:text-blue-500 mb-8">Phone8ez가 지키는 핵심 가치</h2>
-          <div className="flex flex-row items-center gap-8">
-              <div className="w-1/2 flex justify-end">
-                  <Image src="/why_phone8ez.png" alt="Phone8ez 소개 이미지" width={600} height={400} className="rounded-lg shadow-lg ring-2 ring-border" data-ai-hint="team collaboration" />
+          <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-6 md:mb-0">
+                  <Image src="/why_phone8ez.png" alt="Phone8ez 소개 이미지" width={600} height={400} className="rounded-lg shadow-lg ring-2 ring-border max-w-xs md:max-w-lg w-full h-auto" data-ai-hint="team collaboration" />
               </div>
-              <div className="w-1/2 space-y-4">
-                  <p className="text-lg text-muted-foreground font-pretendard">우리는 복잡한 정책표 작업을 단순화하는 것을 넘어서,<br/>
-                        현장에서 일하는 사람들의 시간을 아껴주는 것을 가장 큰 가치로 삼습니다.<br/><br/>
-                        데이터를 빠르게 정리하고, 누구나 이해할 수 있도록 보여주는 것. <br/>
-                        그 과정에서 사용자의 경험이 불편하지 않도록 꾸준히 개선해 나가는 것.<br/>
-                        Phone8ez는 기능보다 실용성, 기술보다 사람을 먼저 생각하며,<br/>
-                        사용자와 함께 성장하는 플랫폼이 되고자 합니다.<br/><br/>
-                        기능보다 실용성을, 기술보다 사용자 경험을 우선시하며,<br/>
-                        사용자의 피드백을 서비스 개선의 중심에 둡니다.<br/>
-                        언제나 현장의 목소리를 먼저 듣고, 거기서부터 시작합니다.</p>
+              <div className="w-full md:w-1/2 space-y-4 text-base md:text-lg leading-relaxed px-2 md:px-0 text-gray-800 dark:text-gray-100">
+                  <p className="font-pretendard">
+                    우리는 복잡한 정책표 작업을 단순화하는 것을 넘어서,<br/>
+                    현장에서 일하는 사람들의 시간을 아껴주는 것을 가장 큰 가치로 삼습니다.<br/><br/>
+                    데이터를 빠르게 정리하고, 누구나 이해할 수 있도록 보여주는 것.<br/>
+                    그 과정에서 사용자의 경험이 불편하지 않도록 꾸준히 개선해 나가는 것.<br/>
+                    Phone8ez는 기능보다 실용성, 기술보다 사람을 먼저 생각하며,<br/>
+                    사용자와 함께 성장하는 플랫폼이 되고자 합니다.<br/><br/>
+                    기능보다 실용성을, 기술보다 사용자 경험을 우선시하며,<br/>
+                    사용자의 피드백을 서비스 개선의 중심에 둡니다.<br/>
+                    언제나 현장의 목소리를 먼저 듣고, 거기서부터 시작합니다.
+                  </p>
               </div>
           </div>
       </section>
@@ -254,7 +256,7 @@ export default function IntroClientSection() {
       {/* 구독 플랜(가격 정책) 카드 */}
       <section className="py-20 bg-transparent">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-600 dark:text-blue-500">구독 플랜 및 가격 정책</h2>
-        <div id="plans" className="flex flex-col md:flex-row justify-center items-stretch gap-8 max-w-4xl mx-auto">
+        <div id="plans" className="flex flex-col md:flex-row justify-center items-center md:items-stretch gap-8 max-w-4xl mx-auto">
           {plans.map((plan, idx) => (
             <div
               key={plan.name}
