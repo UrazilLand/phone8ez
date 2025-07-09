@@ -29,20 +29,6 @@ const CommunityTabs: React.FC<CommunityTabsProps> = ({ current, onChange }) => {
           {tab.label}
         </button>
       ))}
-      {/* 모바일: 하단 고정 */}
-      <style jsx>{`
-        @media (max-width: 640px) {
-          div {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            border-radius: 0;
-            border-top: 1px solid #dbeafe;
-            z-index: 50;
-          }
-        }
-      `}</style>
     </div>
   );
 };
