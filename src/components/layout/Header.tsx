@@ -173,7 +173,7 @@ const Header = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link href="/auth/temp-login">
+                <Link href="/auth/login">
                   <Button variant="ghost" size="sm">
                     로그인
                   </Button>
@@ -277,7 +277,7 @@ const Header = () => {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <Link href="/auth/temp-login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
                         <Button variant="ghost" className="w-full justify-center text-gray-900 dark:text-white">
                           로그인
                         </Button>

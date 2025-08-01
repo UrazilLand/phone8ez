@@ -13,7 +13,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ isLoggedIn, onLoginClick, childre
     if (onLoginClick) {
       onLoginClick();
     } else {
-      router.push('/auth/temp-login');
+      router.push('/auth/login');
     }
   };
   if (!isLoggedIn) {

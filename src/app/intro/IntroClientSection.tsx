@@ -36,10 +36,10 @@ const plans = [
     price: '월/19,900원',
     period: '',
     features: [
-      '모든 무료 기능',
-      '모델별 데이터 상세보기',
+      '모든 기본 기능',
       '무제한 데이터셋',
       '로컬 및 Cloud 저장',
+      '모델별 데이터 상세보기',
       '다크 모드 지원',
       '우선 고객 지원',
     ],
@@ -110,7 +110,7 @@ export default function IntroClientSection() {
   const handlePayment = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     if (!user) {
-      router.push('/auth/temp-login');
+      router.push('/auth/login');
       return;
     }
     if (!item) {

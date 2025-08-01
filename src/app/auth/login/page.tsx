@@ -2,9 +2,13 @@
 
 import { useAuth } from '../../../lib/auth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState } from 'react';
 
 export default function LoginPage() {
-  const { signInWithGoogle, signInWithKakao, loading, error } = useAuth();
+  const { signInWithGoogle, signInWithKakao, signIn, loading, error } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showEmailForm, setShowEmailForm] = useState(false);
 
   const handleGoogleLogin = async () => {
     try {
@@ -19,6 +23,15 @@ export default function LoginPage() {
       await signInWithKakao();
     } catch (error) {
       console.error('Kakao 로그인 오류:', error);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await signIn({ email, password });
+    } catch (error) {
+      console.error('이메일 로그인 오류:', error);
     }
   };
 
@@ -90,6 +103,50 @@ export default function LoginPage() {
               <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">또는</span>
             </div>
           </div>
+
+          {/* 이메일 로그인 토글 버튼 */}
+          <div className="text-center mb-4">
+            <button
+              type="button"
+              onClick={() => setShowEmailForm(!showEmailForm)}
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline transition-colors"
+            >
+              {showEmailForm ? '소셜 로그인으로 돌아가기' : '이메일로 로그인'}
+            </button>
+          </div>
+
+          {/* 이메일 로그인 폼 */}
+          {showEmailForm && (
+            <form onSubmit={handleEmailLogin} className="space-y-4 mb-6">
+              <div>
+                <input
+                  type="email"
+                  placeholder="이메일"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  required
+                />
+              </div>
+              <div>
+                <input
+                  type="password"
+                  placeholder="비밀번호"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !email || !password}
+                className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? '로그인 중...' : '이메일로 로그인'}
+              </button>
+            </form>
+          )}
 
           {/* 회원가입 링크 */}
           <div className="text-center">
